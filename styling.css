@@ -1,0 +1,23 @@
+:root {
+    --primary: #1b1b1f;
+    --secondary: #424658;
+    --accentBorder: #252f53;
+    --accent: #364478;
+    --accent2: #5b3d56;
+    --highlight: #5b3d56;
+    --text: #bbc6ff;
+    --translucent: #00000033;
+    --semi-transparent: #000000c5;
+    --neutralColor: #80808080;
+  }
+  @keyframes gradient {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
