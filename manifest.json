@@ -3,7 +3,7 @@
     "name": "AutoMade",
     "description": "Automate actions in chrome",
     "version": "1.0",
-    "permissions": ["scripting", "activeTab","storage","unlimitedStorage"],
+    "permissions": ["scripting", "activeTab","storage","unlimitedStorage","favicon"],
     "content_scripts": [
       {
         "matches": ["https://*/*"],
@@ -16,5 +16,12 @@
     "action": {
       "default_popup": "index.html",
       "default_icon": "icon.png"
-    }
+    },
+    "web_accessible_resources": [
+      {
+        "resources": ["_favicon/*"],
+        "matches": ["<all_urls>"],
+        "extension_ids": ["*"]
+      }
+    ]
   }

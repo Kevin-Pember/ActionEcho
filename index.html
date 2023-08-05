@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AutoMade</title>
     <link rel="stylesheet" href="styling.css">
+    <script src="libraries/jQuery.js"></script>
 </head>
 
 <body id="bodyID">
@@ -37,39 +38,38 @@
             position: relative;
             left: 0px;
         }
-        .hiddenPage{
+
+        .hiddenPage {
             visibility: hidden;
             position: absolute;
         }
 
         #historyBar {
-            overflow-y: auto;
-            overflow-x: none;
+            overflow-y: hidden;
+            overflow-x: auto;
             display: grid;
             grid-auto-flow: column;
             grid-auto-columns: 50%;
             column-gap: 10px;
-            height: 200px;
+            height: 125px;
             width: 400px;
             position: relative;
         }
-
-        .actionButton {
-            background-color: var(--highlight);
-            border-radius: 20px;
-            height: 100%;
-            width: 100%;
-        }
-
-        button {
+        button,
+        input,
+        .inputArea {
             border-radius: 20px;
             border: 2px solid var(--accentBorder);
             height: 50px;
             background-image: linear-gradient(45deg, var(--accent), var(--accent2));
             background-size: 400% 400%;
             animation: gradient 15s ease infinite;
+            outline: none;
         }
-
+        .inputArea{
+            height: 100px;
+            position: relative;
+        }
         #recordButton {
             border-radius: 50%;
             width: 125px;
@@ -79,11 +79,31 @@
             justify-content: center;
             align-items: center;
         }
-        #recordSquare{
+
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            width: 5px;
+            background: #00000080;
             border-radius: 10px;
-            height: 45px;
-            width: 45px;
-            background-color: var(--translucent);
+        }
+
+        ::-webkit-scrollbar-button:end:increment {
+            height: 7px;
+            display: block;
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-button:start:increment {
+            height: 7px;
+            display: block;
+            background: transparent;
         }
     </style>
     <h1 id="Title">AutoMade</h1>
@@ -92,19 +112,29 @@
         <div>
             <h3>History</h3>
             <div id="historyBar">
-                <button class="actionButton"></button>
             </div>
         </div>
     </div>
     <div id="recordPage" class="contentPage hiddenPage" style="display: grid; grid-auto-flow: row;  justify-items: center;
-    align-items: center;"> 
+    align-items: center;">
         <button id="recordButton">
-            <div id="recordSquare"></div>
+            <div style="border-radius: 10px;height: 45px;width: 45px;background-color: var(--translucent);"></div>
         </button>
         <h2 style="text-align: center;">Click to stop recording</h2>
     </div>
     <div id="editPage" class="contentPage hiddenPage">
 
+    </div>
+    <div id="namePopup"
+        style="top:100%;background-color: var(--translucent);position: absolute;left: 0px;height: 100%;width: 100%;display: grid;justify-content: center;align-items: center;z-index: 100;transition: 0.5s ease-in-out;">
+        <div style="border-radius:20px; background-color:var(--primary);padding: 10px;">
+            <h2>Enter Name</h2>
+            <div style="height: 50px; display: flex; gap: 5px">
+                <input type="text" id="nameInput"
+                    style="width:150px;height: 46px;padding: 0 5px 0 5px;font-size: 25px;">
+                <button id="enterNameButton" style="aspect-ratio: 1; font-size: 30px;">↳</button>
+            </div>
+        </div>
     </div>
 </body>
 <script src="JS/index.js"></script>

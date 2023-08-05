@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <input type='text' id='txtNome' name='txtNome' value=''>
+    <div contenteditable="true" style="border: solid 1px black"></div>
+    <textarea name="" id="" cols="30" rows="10"></textarea>
+</body>
+<script>
+    let logList = JSON.parse(localStorage.getItem("logList")) || [];
+    let lastLog = {};
+    function getSpecifier(element) {
+        let specifier = {};
+        if (element.id) {
+            specifier.id = element.id;
+        } else if (element.className) {
+            specifier.class = element.className;
+            specifier.index = [...document.getElementsByClassName(element.className)].indexOf(element);
+        } else {
+            specifier.tag = element.tagName;
+            specifier.index = [...document.getElementsByTagName(element.tagName)].indexOf(element);
+        }
+        return specifier;
+    }
+    function genLog(event) {
+        let target = event.target;
+        let log;
+        log = {
+            location: location.href,
+            action: "Log",
+            type: "input",
+            key: event.key,
+            targetTag: target.tagName,
+            ...getSpecifier(target)
+        };
+        if((target.tagName == "INPUT" && target.type == "text") || target.tagName == "TEXTAREA"){
+            log.selection = target.selectionStart + "-" + target.selectionEnd
+        }else{
+            let sel = window.getSelection()
+            if(sel.baseOffset > sel.extentOffset){
+                log.selection = sel.extentOffset + "-" + sel.baseOffset;
+            }else {
+                log.selection = sel.baseOffset + "-" + sel.extentOffset;
+            }
+        }
+        lastLog = log;
+        return log
+    }
+    function runLog(log) {
+        if (log.type == "input") {
+            let target = getElement(log);
+            let area = log.selection.split("-");
+            if (log.targetTag == "INPUT" || log.targetTag == "TEXTAREA") {
+                target.value = target.value.slice(0, Number(area[0])) + log.key + target.value.slice(Number(area[1]));
+            } else {
+                target.innerHTML = target.innerHTML.slice(0, log.selection.split("-")[0]) + log.key + target.innerHTML.slice(log.selection.split("-")[1]);
+            }
+        }
+    }
+    function typeEditable(element, range){
+        
+    }
+    function typeInput(element, key, range){
+        element.value = element.value.slice(0, Number(area[0])) + log.key + element.value.slice(Number(area[1]));
+    }
+    function getElement(msg) {
+        console.log(msg)
+        if (msg.id) {
+            return document.getElementById(msg.id);
+        } else if (msg.class) {
+            console.log(msg)
+            return document.getElementsByClassName(msg.class)[msg.index];
+        } else {
+            return document.getElementsByTagName(msg.tag)[msg.index];
+        }
+    }
+    document.addEventListener('keyup', (e) => {
+        console.log(window.getSelection())
+        console.log(e)
+        if (e.target.tagName == "INPUT") {
+            console.log(e.target.selection)
+        }
+    });
+</script>
+
+</html>
