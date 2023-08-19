@@ -22,9 +22,12 @@
         } else if (element.className) {
             specifier.class = element.className;
             specifier.index = [...document.getElementsByClassName(element.className)].indexOf(element);
-        } else {
+        } else if (element.tagName) {
             specifier.tag = element.tagName;
             specifier.index = [...document.getElementsByTagName(element.tagName)].indexOf(element);
+        } else {
+            specifier.parentSpecifier = getSpecifier(element.parentElement);
+            specifier.index = [...element.parentElement.childNodes].indexOf(element);
         }
         return specifier;
     }
@@ -35,21 +38,24 @@
             location: location.href,
             action: "Log",
             type: "input",
-            key: event.key,
+            key: translateKey(event.key),
             targetTag: target.tagName,
             ...getSpecifier(target)
         };
-        if((target.tagName == "INPUT" && target.type == "text") || target.tagName == "TEXTAREA"){
+        if ((target.tagName == "INPUT" && target.type == "text") || target.tagName == "TEXTAREA") {
             log.selection = target.selectionStart + "-" + target.selectionEnd
-        }else{
+        } else {
             let sel = window.getSelection()
-            if(sel.baseOffset > sel.extentOffset){
+            if (sel.baseOffset > sel.extentOffset) {
                 log.selection = sel.extentOffset + "-" + sel.baseOffset;
-            }else {
+            } else {
                 log.selection = sel.baseOffset + "-" + sel.extentOffset;
             }
+            console.log(getSpecifier(sel.focusNode))
+            log.focusNode = getSpecifier(sel.focusNode);
         }
         lastLog = log;
+        console.log(log)
         return log
     }
     function runLog(log) {
@@ -63,12 +69,7 @@
             }
         }
     }
-    function typeEditable(element, range){
-        
-    }
-    function typeInput(element, key, range){
-        element.value = element.value.slice(0, Number(area[0])) + log.key + element.value.slice(Number(area[1]));
-    }
+    
     function getElement(msg) {
         console.log(msg)
         if (msg.id) {
@@ -76,17 +77,64 @@
         } else if (msg.class) {
             console.log(msg)
             return document.getElementsByClassName(msg.class)[msg.index];
-        } else {
+        } else if (msg.tag) {
             return document.getElementsByTagName(msg.tag)[msg.index];
+        } else {
+            let parent = getElement(msg.parentSpecifier);
+            if (msg.index == 0 && parent.childNodes.length == 0) {
+                let textNode = document.createTextNode("");
+                parent.appendChild(textNode);
+                return textNode;
+            } else {
+                return parent.childNodes[msg.index];
+            }
         }
     }
-    document.addEventListener('keyup', (e) => {
-        console.log(window.getSelection())
+    function throwButtonEvents(elem, key) {
+        elem.dispatchEvent(new KeyboardEvent('keydown', { key: key }));
+        elem.dispatchEvent(new KeyboardEvent('keypress', { key: key }));
+        elem.dispatchEvent(new KeyboardEvent('keyup', { key: key }));
+    }
+    document.addEventListener('keydown', (e) => {
         console.log(e)
-        if (e.target.tagName == "INPUT") {
-            console.log(e.target.selection)
-        }
     });
+    /*document.addEventListener('keyup', (e) => {
+        console.log(window.getSelection())
+        console.log(genLog(e))
+        if (e.target.tagName == "INPUT") {
+            console.log("input ")
+            console.log(e.target.selection)
+            typeInput(e.target, e.key, [e.target.selectionStart, e.target.selectionEnd]);
+        } else if (e.target.contentEditable == "true") {
+            typeEditable(e.target, e.key, genLog(e));
+        }
+    });*/
+    document.addEventListener('mousedown', (e) => {
+        console.log(e)
+    });
+    document.addEventListener('mouseup', (e) => {
+        console.log(e)
+    });
+    document.addEventListener('input', (e) => {
+        console.log(e)
+    });
+    function translateKey(event) {
+        const platform = window.navigator.platform.toLowerCase();
+        const isMac = platform.includes('mac');
+
+        if (isMac) {
+            // Map Mac-specific modifier keys to common keys
+            switch (event.key) {
+                case 'Meta':
+                    return 'Ctrl';
+                default:
+                    return event.key;
+            }
+        } else {
+            return event.key;
+        }
+    }
+
 </script>
 
 </html>

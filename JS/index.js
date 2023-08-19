@@ -1,6 +1,42 @@
-let autoStartButton = document.getElementById('autoStartButton');
-let recordButton = document.getElementById('recordButton');
-let actionSets = [];
+let data = {
+  actionsData: [],
+  saveActionList(){
+    chrome.storage.local.set({ "actionSets": this.actionsData });
+  },
+  addAction(action){
+    if(this.actionsData.length >= 10){
+      this.actionsData.pop();
+    }
+    this.actionsData.unshift(action);
+    createActionEntry(action);
+    this.saveActionList();
+  },
+  removeAction(action){
+    this.actionsData.splice(this.actionsData.indexOf(action), 1);
+    this.saveActionList();
+  },
+  clearActionList(){
+    //Currently set for debugging purposes
+    chrome.storage.local.clear(function() {
+      var error = chrome.runtime.lastError;
+      if (error) {
+        console.error(error);
+      }
+      });
+    /* Proper code
+    chrome.storage.local.set({ "actionSets": [] });
+    */
+    for(let act of ui.actionButtons){
+      act.remove();
+    }
+  }
+}
+let ui = {
+  recordStart: document.getElementById('recordStart'),
+  recordStop: document.getElementById('recordStop'),
+  clearHistory: document.getElementById('clearHistory'),
+  actionButtons: []
+};
 class ActionSet extends HTMLElement {
   constructor() {
     super();
@@ -12,27 +48,36 @@ class ActionSet extends HTMLElement {
     </div>
     `;
   }
-  setIdentifier(identifier) {
-    console.log(identifier);
-    this.shadowRoot.getElementById("nameArea").innerText = identifier.name;
-    this.shadowRoot.getElementById("imgArea").src = faviconURL(identifier.faviconURL);
+  faviconURL(u) {
+    const url = new URL(chrome.runtime.getURL("/_favicon/"));
+    url.searchParams.set("pageUrl", u);
+    url.searchParams.set("size", "32");
+    return url.toString();
+  }
+  linkAction(action) {
+    this.action = action
+    this.shadowRoot.getElementById("nameArea").innerText = action.name;
+    this.shadowRoot.getElementById("imgArea").src = this.faviconURL(action.originURL[0]);
     this.shadowRoot.getElementById("actionButton").addEventListener("click", () => {
-      chrome.runtime.sendMessage({ action: "runActionSet", set:identifier}, (response) =>{
+      chrome.runtime.sendMessage({ action: "runActionSet", set:action}, (response) =>{
 
       });
     });
   }
+  removeAction(){
+    data.removeAction(this.action);
+    this.remove();
+  }
 }
 window.customElements.define('action-set', ActionSet);
 chrome.storage.local.get(["actionSets"]).then((result) => {
-
-  actionSets = result.actionSets == undefined ? [] : result.actionSets;
+  console.log(result)
+  data.actionsData = result.actionSets == undefined ? [] : result.actionSets;
   if (result.actionSets != undefined || Array.isArray(result.actionSets)) {
-    for (let action of actionSets) {
+    for (let action of data.actionsData.reverse()) {
       createActionEntry(action);
     }
   }
-  console.log(actionSets);
 });
 chrome.storage.local.get(["recording"]).then((result) => {
   console.log(result)
@@ -40,9 +85,10 @@ chrome.storage.local.get(["recording"]).then((result) => {
     setPage("recordPage");
   }
 });
-
-
-autoStartButton.addEventListener('click', async () => {
+ui.clearHistory.addEventListener('click', () => {
+  data.clearActionList();
+});
+ui.recordStart.addEventListener('click', async () => {
   chrome.runtime.sendMessage({ action: "startRecord" }, (response) => {
     if (response.log == "started") {
       console.log("Started recording");
@@ -54,24 +100,16 @@ autoStartButton.addEventListener('click', async () => {
     }
   });
 });
-recordButton.addEventListener('click', async () => {
+ui.recordStop.addEventListener('click', async () => {
   chrome.runtime.sendMessage({ action: "stopRecord" }, (response) => {
     if (response.log == "finished") {
       console.log("Stopped recording");
-      let actionSet = {};
       getName().then((name) => {
-        actionSet = {
+        data.addAction({
           name: name,
           actions: response.actions,
           originURL: response.originURL,
-          faviconURL: response.faviconURL,
-        };
-        if(actionSets.length >= 10){
-          actionSets.pop();
-        }
-        actionSets.unshift(actionSet);
-        createActionEntry(actionSet);
-        chrome.storage.local.set({ "actionSets": actionSets });
+        });
       });
       chrome.storage.local.set({ recording: false }).then(() => {
         setPage("mainPage");
@@ -90,13 +128,6 @@ function setPage(name) {
       page.classList.add('hiddenPage');
     }
   }
-}
-
-function faviconURL(u) {
-  const url = new URL(chrome.runtime.getURL("/_favicon/"));
-  url.searchParams.set("pageUrl", u);
-  url.searchParams.set("size", "32");
-  return url.toString();
 }
 function getName() {
   return new Promise((resolve, reject) => {
@@ -119,8 +150,9 @@ function getName() {
 }
 function createActionEntry(action){
   let actionElem = document.createElement("action-set");
-  actionElem.setIdentifier(action);
+  actionElem.linkAction(action);
   actionElem.classList.add("inputArea");
+  ui.actionButtons.push(actionElem);
   let actionsContainer = document.getElementById("historyBar");
   actionsContainer.insertBefore(actionElem, actionsContainer.firstChild);
 }

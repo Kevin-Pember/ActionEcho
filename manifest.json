@@ -3,7 +3,7 @@
     "name": "AutoMade",
     "description": "Automate actions in chrome",
     "version": "1.0",
-    "permissions": ["scripting", "activeTab","storage","unlimitedStorage","favicon"],
+    "permissions": ["scripting", "activeTab","storage","unlimitedStorage","favicon", "webNavigation"],
     "content_scripts": [
       {
         "matches": ["https://*/*"],

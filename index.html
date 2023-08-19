@@ -55,6 +55,7 @@
             width: 400px;
             position: relative;
         }
+
         button,
         input,
         .inputArea {
@@ -66,18 +67,10 @@
             animation: gradient 15s ease infinite;
             outline: none;
         }
-        .inputArea{
+
+        .inputArea {
             height: 100px;
             position: relative;
-        }
-        #recordButton {
-            border-radius: 50%;
-            width: 125px;
-            height: 125px;
-            aspect-ratio: 1/1;
-            display: grid;
-            justify-content: center;
-            align-items: center;
         }
 
         ::-webkit-scrollbar {
@@ -107,8 +100,18 @@
         }
     </style>
     <h1 id="Title">AutoMade</h1>
+    <svg id="clearHistory" style="aspect-ratio: 1; height: 35px; position: absolute; right: 10px; top: 23.450px;" viewBox="0 0 617 740" xmlns="http://www.w3.org/2000/svg">
+        <path d="M617 89.9388C617 40.267 478.88 0 308.5 0C138.12 0 0 40.267 0 89.9388H617Z" fill="var(--accent)" />
+        <path
+            d="m0 111.43c0-11.869 11.335-21.49 25.318-21.49h566.36c13.983 0 25.318 9.6213 25.318 21.49v23.081c0 11.869-11.335 21.49-25.318 21.49h-566.36c-13.982 0-25.318-9.621-25.318-21.49v-23.081z"
+            fill="var(--accent)" />
+        <path d="M0 89.9388H617V122.571H0V89.9388Z" fill="var(--accent)" />
+        <path
+            d="m46 192c0-1.343 0.04-2.677 0.1191-4h524.76c0.079 1.323 0.119 2.657 0.119 4v482c0 36.451-29.549 66-66 66h-393c-36.451 0-66-29.549-66-66v-482zm270.04 87.844c0-8.75 7.093-15.844 15.843-15.844s15.844 7.094 15.844 15.844v88.863c0 8.75-7.094 15.843-15.844 15.843s-15.843-7.093-15.843-15.843v-88.863zm-15.005 177.19 194.04 74.018-42.686 42.687 55.617 55.617-34.647 34.647-55.617-55.617-42.687 42.686-74.018-194.04zm-193.03 30.848c0 8.751 7.093 15.844 15.844 15.844h88.863c8.75 0 15.843-7.093 15.843-15.844 0-8.75-7.093-15.844-15.843-15.844h-88.863c-8.751 0-15.844 7.094-15.844 15.844zm65.573-158.31c-6.188 6.187-6.188 16.219 0 22.406l62.835 62.836c6.187 6.187 16.219 6.187 22.406 0 6.188-6.188 6.188-16.219 0-22.407l-62.835-62.835c-6.187-6.188-16.219-6.188-22.406 0zm253.78 85.242c-6.187 6.187-16.219 6.187-22.406 0-6.188-6.188-6.188-16.219 0-22.407l62.835-62.835c6.187-6.188 16.219-6.188 22.407 0 6.187 6.187 6.187 16.219 0 22.406l-62.836 62.836zm-231.37 231.37c-6.187 6.187-16.219 6.187-22.406 0-6.188-6.188-6.188-16.219 0-22.407l62.835-62.835c6.187-6.188 16.219-6.188 22.406 0 6.188 6.187 6.188 16.219 0 22.406l-62.835 62.836z"
+            clip-rule="evenodd" fill="var(--accent)" fill-rule="evenodd" />
+    </svg>
     <div id="mainPage" class="contentPage">
-        <button class="important" id="autoStartButton">Create Automation</button>
+        <button class="important" id="recordStart">Create Automation</button>
         <div>
             <h3>History</h3>
             <div id="historyBar">
@@ -117,7 +120,7 @@
     </div>
     <div id="recordPage" class="contentPage hiddenPage" style="display: grid; grid-auto-flow: row;  justify-items: center;
     align-items: center;">
-        <button id="recordButton">
+        <button id="recordStop" style="border-radius: 50%;width: 125px;height: 125px;aspect-ratio: 1/1;display: grid;justify-content: center;align-items: center;">
             <div style="border-radius: 10px;height: 45px;width: 45px;background-color: var(--translucent);"></div>
         </button>
         <h2 style="text-align: center;">Click to stop recording</h2>
