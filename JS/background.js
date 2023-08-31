@@ -5,12 +5,33 @@ let data = {
     push: (promise) => {
       data.promiseTabs.tabs.push(promise);
     },
-    resolveTarget: (target) => {
-      let promiseTarget = data.promiseTabs.tabs.find((promiseTab) => target == promiseTab.url);
-      if (promiseTarget) {
-        promiseTarget.resolve(port);
+    resolveTarget: (port) => {
+      let idx;
+      let target = data.promiseTabs.tabs.find((promiseTab, index) => {
+        if(port.name == promiseTab.url){
+          idx = index;
+          return true;
+        }
+      })
+      if(target){
+        target.resolve(port);
+        data.promiseTabs.tabs.splice(idx, 1);
       }
     }
+  },
+  openTab: (url) => {
+    return new Promise((resolve, reject) => {
+      let match = data.portArray.find((port) => {
+        return port.name == url;
+      });
+      if(match){
+        resolve(match);
+      }else{
+        chrome.tabs.create({ url: url, active: true }, function (tab) {
+        });
+        data.promiseTabs.push({ url: url, resolve: resolve, reject: reject });
+      }
+    });
   },
 }
 let head = {
@@ -28,11 +49,19 @@ let head = {
     console.log(head.stageLog);
     if (head.stageLog.text) {
       head.currentLog.actions.push(head.stageLog);
+      head.stageLog = {};
     }
     head.editHistory = [];
     head.redoHistory = [];
   }
 }
+chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+  console.log(tab);
+  let port = data.portArray.find((port) => port.tabId == tabId);
+  if(port){
+    port.name = tab.url;
+  }
+});
 chrome.tabs.onRemoved.addListener((tabId) => {
   let port = data.portArray.find((port) => port.tabId == tabId);
   if (port) {
@@ -42,58 +71,55 @@ chrome.tabs.onRemoved.addListener((tabId) => {
       head.currentPort = data.portArray[portIndex - 1];
     }
     data.portArray.splice(portIndex, 1);
+    console.log(data.portArray);
+    console.log(data.promiseTabs)
   }
 
 });
 chrome.runtime.onConnect.addListener(function (port) {
   port.onMessage.addListener(function (msg) {
     if (msg.action == "Log") {
-      //head.currentLog.actions.push(msg);
-      /*if (head.currentLog.originURL == undefined) {
-        head.currentLog.originURL = msg.location;
-      } else if (!Array.isArray(head.currentLog.originURL) && head.currentLog.originURL != msg.location) {
-        head.currentLog.originURL = [head.currentLog.originURL, msg.location];
-      } else if (Array.isArray(head.currentLog.originURL) && !head.currentLog.originURL.includes(msg.location)) {
+      if(!head.currentLog.originURL.includes(msg.location)){
         head.currentLog.originURL.push(msg.location);
-      }*/
-      head.currentLog.originURL.push(msg.location);
+      }
       if (msg.type == "click") {
         if (msg.textContext != undefined) {
           head.stageLog = {
             type: "input",
             text: msg.textContext,
-            specifier: msg.specifier
+            specifier: msg.specifier,
+            location: msg.location,
           };
         }
         head.currentLog.actions.push(msg);
       } else if (msg.type == "input") {
         if (msg.specifier != head.stageLog.specifier) {
           head.resetHead();
-        } else {
-          if (msg.focusNode) {
-            head.stageLog.focusNode = msg.focusNode;
+        }
+        if (msg.focusNode) {
+          head.stageLog.focusNode = msg.focusNode;
+        }
+        if (msg.key.length == 1) {
+          inputHandler(msg.key, msg.selection.split("-"));
+        } else if (msg.key == "undo") {
+          if (head.editHistory.length > 0) {
+            head.redoHistory.push(head.stageLog.text);
+            head.stageLog.text = head.editHistory.pop();
           }
-          if (msg.key == "undo") {
-            if (head.editHistory.length > 0) {
-              head.redoHistory.push(head.stageLog.text);
-              head.stageLog.text = head.editHistory.pop();
-            }
-          } else if (msg.key == "redo") {
-            if (head.redoHistory.length > 0) {
-              head.editHistory.push(head.stageLog.text);
-              head.stageLog.text = head.redoHistory.pop();
-            }
-          } else if (msg.key == "paste") {
-            inputHandler(msg.text, msg.selection.split("-"));
-          } else if (msg.key == "cut") {
-            let range = msg.selection.split("-");
+        } else if (msg.key == "redo") {
+          if (head.redoHistory.length > 0) {
             head.editHistory.push(head.stageLog.text);
-            head.stageLog.text = head.stageLog.text.substring(0, range[0]) + head.stageLog.text.substring(range[1], head.stageLog.text.length);
-          } else {
-            if (msg.key.length == 1) {
-              inputHandler(msg.key, msg.selection.split("-"));
-            }
+            head.stageLog.text = head.redoHistory.pop();
           }
+        } else if (msg.key == "paste") {
+          inputHandler(msg.text, msg.selection.split("-"));
+        } else if (msg.key == "cut") {
+          let range = msg.selection.split("-");
+          head.editHistory.push(head.stageLog.text);
+          head.stageLog.text = head.stageLog.text.substring(0, range[0]) + head.stageLog.text.substring(range[1], head.stageLog.text.length);
+        } else {
+          head.resetHead();
+          head.currentLog.actions.push(msg);
         }
         head.lastTextLog = msg;
       }
@@ -105,50 +131,56 @@ chrome.runtime.onConnect.addListener(function (port) {
   head.currentPort = port;
   data.portArray.push(port);
   console.log("Port Name: " + port.name)
-  data.promiseTabs.resolveTarget(port.name);
+  data.promiseTabs.resolveTarget(port);
 });
 chrome.runtime.onMessage.addListener((request, sender, reply) => {
-  if (request.action == "startRecord") {
-    head.currentPort.postMessage({ action: "startRecord" });
-    reply({ log: "started" });
-  } else if (request.action == "stopRecord") {
-    head.currentPort.postMessage({ action: "stopRecord" });
-    console.log(head.stageLog)
-    head.currentLog.log = "finished";
-    head.resetHead();
-    reply(head.currentLog);
-  } else if (request.action == "runActionSet") {
-    let actions = request.set.actions;
-    let originURL = Array.isArray(request.set.originURL) ? request.set.originURL[0] : request.set.originURL;
-    let runMethod = async (port) => {
-      for (let action of actions) {
-        await new Promise((resolve, reject) => {
-          head.currentAction = { resolve: resolve, reject: reject };
-          action.action = "action";
-          port.postMessage(action);
-        })
-      }
-    }
-    let match = data.portArray.find((port) => {
-      return port.name == originURL;
-    });
-    if (match) {
-      runMethod(match);
-    } else {
-      openTab(originURL).then((port) => {
-        runMethod(port);
+  switch (request.action) {
+    case "startRecord":
+      head.currentPort.postMessage({ action: "startRecord" });
+      reply({ log: "started" });
+      break;
+    case "stopRecord":
+      head.currentPort.postMessage({ action: "stopRecord" });
+      console.log(head.stageLog)
+      head.currentLog.log = "finished";
+      head.resetHead();
+      reply(head.currentLog);
+      break;
+    case "runActionSet":
+      let actions = request.set.actions;
+      let originURL = Array.isArray(request.set.originURL) ? request.set.originURL[0] : request.set.originURL;
+      data.openTab(originURL).then( async (port) => {
+        for (let action of actions) {
+          await new Promise((resolve, reject) => {
+            head.currentAction = { resolve: resolve, reject: reject };
+            action.action = "action";
+            port.postMessage(action);
+          })
+        }
       });
+      ///Here is where you stopped
+      break;
+    case "highlight":
+      let tabHight = data.portArray.find((port) => {
+        return port.name == request.url;
+      });
+      if (tabHight) {
+        tabHight.postMessage({ action: "highlight", target: request.target });
+      }
+      reply({ log: "highlighted" });
+      break;
+    case "openTab":
+      data.openTab(chrome.runtime.getURL("edit.html")).then((port) => {
+        reply({ log: "opened" });
+      });
+      
+      break;
+    case "testLog":
+      console.log("test log");
+      reply({ log: "test" });
     }
-  }
-  return true;
-});
-function openTab(url) {
-  return new Promise((resolve, reject) => {
-    chrome.tabs.create({ url: url }, function (tab) {
-    });
-    data.promiseTabs.push({ url: url, resolve: resolve, reject: reject });
+    return true;
   });
-}
 function inputHandler(key, range) {
   let text = head.stageLog.text;
   let pre = text;

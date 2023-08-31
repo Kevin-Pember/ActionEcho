@@ -5,16 +5,63 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <script src="JS/components.js"></script>
+    <link rel="stylesheet" href="styling.css">
 </head>
 
-<body>
-    <input type='text' id='txtNome' name='txtNome' value=''>
-    <div contenteditable="true" style="border: solid 1px black"></div>
-    <textarea name="" id="" cols="30" rows="10"></textarea>
+<body style="background-color: var(--primary);">
+    <style>
+        .inputArea {
+            border-radius: 20px;
+            border: 2px solid var(--accentBorder);
+            height: 75px;
+            background-image: linear-gradient(45deg, var(--accent), var(--accent2));
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            outline: none;
+        }
+
+        .entry {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            position: relative;
+            transition: all 0.5s ease;
+        }
+    </style>
+    <div id="entryContainer" style="width: 300px; margin-bottom: 300px;">
+        <input-entry class="entry" type="click" message="Click"></input-entry>
+        <input-spacer></input-spacer>
+        <input-entry class="entry" type="input" message="Input"></input-entry>
+        <input-spacer></input-spacer>
+        <input-entry class="entry" type="key" message="test"></input-entry>
+    </div>
+    <space-indicator></space-indicator>
+    <input type='text' id='txtNome' name='txtNome' value=''
+        style="background-color: var(--accent); border: solid var(--accentBorder); border-radius: 25px;">
+    <div contenteditable="true"
+        style="background-color: var(--accent); border: solid var(--accentBorder); border-radius: 25px;"></div>
+    <textarea name="" id="" cols="30" rows="10"
+        style="background-color: var(--accent); border: solid var(--accentBorder); border-radius: 25px;"></textarea>
 </body>
 <script>
     let logList = JSON.parse(localStorage.getItem("logList")) || [];
     let lastLog = {};
+    let delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+    let stagerChildren = async (element) => {
+        let entryChildren = [...element.childNodes];
+        for (let child of entryChildren) {
+            console.log(child)
+            if(child.open){
+                child.open();
+            }
+            
+            await delay(60);
+        }
+    }
+    stagerChildren(document.getElementById("entryContainer"));
+
     function getSpecifier(element) {
         let specifier = {};
         if (element.id) {
@@ -69,7 +116,7 @@
             }
         }
     }
-    
+
     function getElement(msg) {
         console.log(msg)
         if (msg.id) {
@@ -115,7 +162,10 @@
     document.addEventListener('mouseup', (e) => {
         console.log(e)
     });
-    document.addEventListener('input', (e) => {
+    document.addEventListener('keydown', (e) => {
+        console.log(e)
+    });
+    document.addEventListener('keyup', (e) => {
         console.log(e)
     });
     function translateKey(event) {

@@ -35,41 +35,23 @@ let ui = {
   recordStart: document.getElementById('recordStart'),
   recordStop: document.getElementById('recordStop'),
   clearHistory: document.getElementById('clearHistory'),
-  actionButtons: []
+  editBack: document.getElementById('editBack'),
+  editSave: document.getElementById('editSave'),
+  editNameEntry: document.getElementById('editName'),
+  editEntryContainer: document.getElementById('editEntry'),
+  actionButtons: [],
+  setPage: () =>{
+    let pages = document.getElementsByClassName('contentPage');
+    for (let page of pages) {
+      if (page.id == name) {
+        page.classList.remove('hiddenPage');
+      } else {
+        page.classList.add('hiddenPage');
+      }
+    }
+  }
 };
-class ActionSet extends HTMLElement {
-  constructor() {
-    super();
-    this.attachShadow({ mode: 'open' });
-    this.shadowRoot.innerHTML = `
-    <div id="actionButton" style="background-color: transparent; height: 100%; width: 100%; position: relative; display:grid;justify-content: center;align-items: center; grid-auto-flow: column; gap: 10px;">
-      <img id="imgArea" style="border-radius: 50%;background-color: var(--primary);border: 2px solid var(--accentBorder);">
-      <h2 id="nameArea"></h2>
-    </div>
-    `;
-  }
-  faviconURL(u) {
-    const url = new URL(chrome.runtime.getURL("/_favicon/"));
-    url.searchParams.set("pageUrl", u);
-    url.searchParams.set("size", "32");
-    return url.toString();
-  }
-  linkAction(action) {
-    this.action = action
-    this.shadowRoot.getElementById("nameArea").innerText = action.name;
-    this.shadowRoot.getElementById("imgArea").src = this.faviconURL(action.originURL[0]);
-    this.shadowRoot.getElementById("actionButton").addEventListener("click", () => {
-      chrome.runtime.sendMessage({ action: "runActionSet", set:action}, (response) =>{
 
-      });
-    });
-  }
-  removeAction(){
-    data.removeAction(this.action);
-    this.remove();
-  }
-}
-window.customElements.define('action-set', ActionSet);
 chrome.storage.local.get(["actionSets"]).then((result) => {
   console.log(result)
   data.actionsData = result.actionSets == undefined ? [] : result.actionSets;
@@ -82,7 +64,7 @@ chrome.storage.local.get(["actionSets"]).then((result) => {
 chrome.storage.local.get(["recording"]).then((result) => {
   console.log(result)
   if (result.recording == true) {
-    setPage("recordPage");
+    ui.setPage("recordPage");
   }
 });
 ui.clearHistory.addEventListener('click', () => {
@@ -93,7 +75,7 @@ ui.recordStart.addEventListener('click', async () => {
     if (response.log == "started") {
       console.log("Started recording");
       chrome.storage.local.set({ recording: true }).then(() => {
-        setPage("recordPage");
+        ui.setPage("recordPage");
       });
     } else {
       throw new Error("Failed to start recording");
@@ -112,23 +94,13 @@ ui.recordStop.addEventListener('click', async () => {
         });
       });
       chrome.storage.local.set({ recording: false }).then(() => {
-        setPage("mainPage");
+        ui.setPage("mainPage");
       });
     } else {
       throw new Error("Failed to stop recording");
     }
   });
 });
-function setPage(name) {
-  let pages = document.getElementsByClassName('contentPage');
-  for (let page of pages) {
-    if (page.id == name) {
-      page.classList.remove('hiddenPage');
-    } else {
-      page.classList.add('hiddenPage');
-    }
-  }
-}
 function getName() {
   return new Promise((resolve, reject) => {
     document.getElementById("namePopup").style.top = "0px";
@@ -147,6 +119,30 @@ function getName() {
       }
   });
   }, { once: true })
+}
+let delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+let stagerChildren = async (element) => {
+  let entryChildren = [...element.childNodes];
+  for (let child of entryChildren) {
+      console.log(child)
+      if(child.open){
+          child.open();
+      }
+      
+      await delay(60);
+  }
+}
+function editActionSet(actionSet){
+  ui.setPage("editPage");
+  
+  chrome.runtime.sendMessage({ action: "openTab", url: actionSet.originURL[0]}, (response) => {
+    if (response.log == "opened") {
+      console.log("Opened tab");
+    } else {
+      throw new Error("Failed to stop recording");
+    }
+  });
+  stagerChildren(ui.editEntryContainer);
 }
 function createActionEntry(action){
   let actionElem = document.createElement("action-set");
