@@ -32,6 +32,7 @@ let data = {
   }
 }
 let ui = {
+  backgroundDiv: document.getElementById('bgDiv'),
   recordStart: document.getElementById('recordStart'),
   recordStop: document.getElementById('recordStop'),
   clearHistory: document.getElementById('clearHistory'),
@@ -40,7 +41,7 @@ let ui = {
   editNameEntry: document.getElementById('editName'),
   editEntryContainer: document.getElementById('editEntry'),
   actionButtons: [],
-  setPage: () =>{
+  setPage: (name) =>{
     let pages = document.getElementsByClassName('contentPage');
     for (let page of pages) {
       if (page.id == name) {
@@ -49,6 +50,30 @@ let ui = {
         page.classList.add('hiddenPage');
       }
     }
+  },
+  getName: () => {
+    return new Promise((resolve, reject) => {
+      document.getElementById("namePopup").style.top = "0px";
+      ui.backgroundDiv.blurFocus();
+      let completeMethod = () => {
+        document.getElementById("namePopup").style.top = "100%";
+        let name = document.getElementById("nameInput").value;
+        document.getElementById("nameInput").value = "";
+        ui.backgroundDiv.returnFocus();
+        resolve(name);
+      }
+      document.getElementById("enterNameButton").addEventListener("click", () => {
+        completeMethod()
+      });
+      document.getElementById('nameInput').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+          completeMethod()
+        }
+    });
+    }, { once: true })
+  },
+  getBool:() => {
+
   }
 };
 
@@ -86,11 +111,11 @@ ui.recordStop.addEventListener('click', async () => {
   chrome.runtime.sendMessage({ action: "stopRecord" }, (response) => {
     if (response.log == "finished") {
       console.log("Stopped recording");
-      getName().then((name) => {
+      ui.getName().then((name) => {
         data.addAction({
           name: name,
           actions: response.actions,
-          originURL: response.originURL,
+          urls: response.urls,
         });
       });
       chrome.storage.local.set({ recording: false }).then(() => {
@@ -101,25 +126,7 @@ ui.recordStop.addEventListener('click', async () => {
     }
   });
 });
-function getName() {
-  return new Promise((resolve, reject) => {
-    document.getElementById("namePopup").style.top = "0px";
-    let completeMethod = () => {
-      document.getElementById("namePopup").style.top = "100%";
-      let name = document.getElementById("nameInput").value;
-      document.getElementById("nameInput").value = "";
-      resolve(name);
-    }
-    document.getElementById("enterNameButton").addEventListener("click", () => {
-      completeMethod()
-    });
-    document.getElementById('nameInput').addEventListener('keypress', function (e) {
-      if (e.key === 'Enter') {
-        completeMethod()
-      }
-  });
-  }, { once: true })
-}
+
 let delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 let stagerChildren = async (element) => {
   let entryChildren = [...element.childNodes];
@@ -132,7 +139,8 @@ let stagerChildren = async (element) => {
       await delay(60);
   }
 }
-function editActionSet(actionSet){
+//Deprecated
+/*function editActionSet(actionSet){
   ui.setPage("editPage");
   
   chrome.runtime.sendMessage({ action: "openTab", url: actionSet.originURL[0]}, (response) => {
@@ -143,7 +151,7 @@ function editActionSet(actionSet){
     }
   });
   stagerChildren(ui.editEntryContainer);
-}
+}*/
 function createActionEntry(action){
   let actionElem = document.createElement("action-set");
   actionElem.linkAction(action);

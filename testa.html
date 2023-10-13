@@ -30,15 +30,10 @@
             transition: all 0.5s ease;
         }
     </style>
-    <div id="entryContainer" style="width: 300px; margin-bottom: 300px;">
-        <input-entry class="entry" type="click" message="Click"></input-entry>
-        <input-spacer></input-spacer>
-        <input-entry class="entry" type="input" message="Input"></input-entry>
-        <input-spacer></input-spacer>
-        <input-entry class="entry" type="key" message="test"></input-entry>
-    </div>
-    <space-indicator></space-indicator>
-    <input type='text' id='txtNome' name='txtNome' value=''
+    <uni-query style="padding: 100px; background-color: var(--primary); border-radius: 25px; 
+    border: 1px solid grey; position: relative; 
+    overflow: hidden; box-sizing: content-box;"></uni-query>
+    <input style="margin-top: 800px;" type='text' id='txtNome' name='txtNome' value=''
         style="background-color: var(--accent); border: solid var(--accentBorder); border-radius: 25px;">
     <div contenteditable="true"
         style="background-color: var(--accent); border: solid var(--accentBorder); border-radius: 25px;"></div>

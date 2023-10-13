@@ -1,36 +1,20 @@
+let colors = {
+    primary: "#1b1b1f",
+    secondary: "#424658",
+    accentBorder: "#252f53",
+    accent: "#364478",
+    accent2: "#5b3d56",
+    highlight: "#5b3d56",
+    text: "#bbc6ff",
+}
+let delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 class basicElement extends HTMLElement {
     constructor() {
         super();
         this.attachShadow({ mode: 'open' })
-        this.shadowRoot.innerHTML = `
-        <style>
-        *{
-            font-family: 'Roboto', sans-serif;
-            color: var(--text);
-        }
-        </style>
-        `
         this.ui = {};
     }
 }
-class backgroundDiv extends basicElement {
-    constructor(){
-        super();
-        this.shadowRoot.innerHTML = `
-        <div id="mainDiv" style="z-index: -1; opacity: 0; transition: opacity 0.25s ease; filter: blur(10px); width: 100%; height: 100%; position: absolute; left:0; right:0; background-color: #000000;"></div>
-        `;
-        this.ui.mainDiv = this.shadowRoot.getElementById("mainDiv");
-    }
-    blurFocus(){
-        this.ui.mainDiv.style.zIndex = "100";
-        this.ui.mainDiv.style.opacity = "0.5";
-    }
-    returnFocus(){
-        this.ui.mainDiv.style.opacity = "0";
-        setTimeout(() => {this.ui.mainDiv.style.zIndex = "-1";}, 250);
-    }
-}
-customElements.define('background-div', backgroundDiv);
 class ButtonGeneric extends basicElement {
     constructor() {
         super();
@@ -53,15 +37,15 @@ class ButtonGeneric extends basicElement {
             
         }
         #svgContainer:hover{
-            background-color: var(--accent2);
-            border: 2px solid var(--accentBorder);
+            background-color: #5b3d56;
+            border: 2px solid #252f53;
             padding: calc(25% - 2px);
         }
         .accent{
-            background-color: var(--accent);
+            background-color: #364478;
         }
         .secondary{
-            background-color: var(--secondary);
+            background-color: #424658;
         }
         </style>
         <div id="svgContainer" class="secondary">
@@ -73,11 +57,9 @@ class ButtonGeneric extends basicElement {
     connectedCallback() {
         setTimeout(() => {
             let svgIcon = this.querySelector("svg");
-            if(svgIcon){
-                console.log(svgIcon)
-                svgIcon.id = "svgButton";
-                this.svgContainer.appendChild(svgIcon);
-            }
+            console.log(svgIcon)
+            svgIcon.id = "svgButton";
+            this.svgContainer.appendChild(svgIcon);
         });
     }
     static get observedAttributes() {
@@ -148,9 +130,9 @@ class InputEntry extends basicElement {
             display: flex;
             align-items: center;
             border-radius: 15px;
-            border: 2px solid var(--accentBorder);
+            border: 2px solid ${colors.accentBorder};
             height: 75px;
-            background-image: linear-gradient(45deg, var(--accent), var(--accent2));
+            background-image: linear-gradient(45deg, ${colors.accent}, ${colors.accent2});
             background-size: 400% 400%;
             animation: gradient 15s ease infinite;
             outline: none;
@@ -172,7 +154,7 @@ class InputEntry extends basicElement {
             height: 100%; 
             background-color: #994F89; 
             border-radius: 15px; 
-            border: 2px solid var(--accentBorder);
+            border: 2px solid ${colors.accentBorder};
             border-left: none;
             display: grid; 
             justify-content: center; 
@@ -185,7 +167,7 @@ class InputEntry extends basicElement {
             transition: opacity 0.5s ease;
             position: absolute;
             opacity: 0;
-            color: var(--text);
+            color: ${colors.text};
             font-size: 20px;
             font-weight: 500;
             padding-left: 5px;
@@ -222,6 +204,10 @@ class InputEntry extends basicElement {
 
     }
     set(action) {
+        this.action = action;
+        let element
+        let startA;
+        let returnA;
         if (action.type == "click") {
             this.ui.iconContainer.innerHTML = `
             <svg viewBox="0 0 447 448" xmlns="http://www.w3.org/2000/svg" style="width: 35px">
@@ -233,7 +219,22 @@ class InputEntry extends basicElement {
             this.ui.displayText.textContent = action.targetTag;
             this.ui.typeText.textContent = "clicked";
             this.ui.iconContainer.style.backgroundColor = "#994F89";
-        } else if (action.type == "input" && action.text) {
+            startA = (element) => {
+                //ui.highlight.style.visibility = "visible";
+                //ui.highlight.style.zIndex = "2100000000";
+                let highElem = data.getElement(element);
+                highElem.classList.add("highlightElem");
+            },
+                returnA = (element) => {
+                    //ui.highlight.style.visibility = "hidden";
+                    //ui.highlight.style.zIndex = "-1";
+                    let highElem = data.getElement(element);
+                    highElem.addEventListener("animationiteration", () => {
+                        highElem.classList.remove("highlightElem");
+                    }, { once: true });
+
+                }
+        } else if (action.type == "input" && action.text != undefined) {
             this.ui.iconContainer.innerHTML = `
             <svg viewBox="0 0 617 421" xmlns="http://www.w3.org/2000/svg" style="width: 50px">
             <path d="m234.1 0h-13.801c-34.921 0-65.559 18.786-82.803 47.029-17.245-28.243-47.882-47.029-82.803-47.029h-13.801v50.48h10.843c26.676 0 48.302 22.148 48.302 49.47v221.1c0 27.322-21.625 49.47-48.302 49.47h-10.843v50.48h13.801c34.921 0 65.558-18.786 82.803-47.029 17.244 28.243 47.882 47.029 82.803 47.029h13.801v-50.48h-10.844c-26.676 0-48.301-22.148-48.301-49.47v-221.1c0-27.322 21.625-49.47 48.301-49.47h10.844v-50.48z" fill-opacity=".3"/>
@@ -244,7 +245,7 @@ class InputEntry extends basicElement {
             this.ui.displayText.textContent = action.text;
             this.ui.typeText.textContent = "typed";
             this.ui.iconContainer.style.backgroundColor = "#157B3E";
-        } else if (action.type == "input" && action.key) {
+        } else if (action.type == "input" && action.key != undefined) {
             this.ui.iconContainer.innerHTML = `
             <svg viewBox="0 0 420 432" xmlns="http://www.w3.org/2000/svg" style="width: 40px;">
             <path d="m166.73 139.87-26.092-73.5h-1.272l-26.092 73.5h53.456z" fill="#fff" fill-opacity=".25"/>
@@ -260,14 +261,18 @@ class InputEntry extends basicElement {
         }
         //this.ui.displayText.innerHTML = action.targetTag;
         this.ui.displayText.addEventListener("mouseover", async () => {
+            ui.highlightElement(this.action.specifier)
             //****Add method before implementation */
-            chrome.runtime.sendMessage({ action: "highlight", url: action.location, target: action.specifier }, (response) => {
+            /*chrome.runtime.sendMessage({ action: "highlight", url: action.location, target: action.specifier }, (response) => {
                 if (response.log == "highlighted") {
                     console.log("highlighted")
                 } else {
                     throw new Error("Failed to highlight")
                 }
-            });
+            });*/
+        });
+        this.ui.displayText.addEventListener("mouseout", async () => {
+            ui.returnElement(this.action.specifier)
         });
     }
     open() {
@@ -314,10 +319,11 @@ customElements.define('input-entry', InputEntry)
 class InputSpacer extends basicElement {
     constructor() {
         super();
+        this.elemType = "spacer";
         this.shadowRoot.innerHTML = `
         <style>
             #indicator{
-                background-color: var(--secondary);
+                background-color: ${colors.secondary};
                 height: 5px; 
                 width: 70px; 
                 border-radius: 25px;
@@ -327,11 +333,11 @@ class InputSpacer extends basicElement {
             @keyframes close {
                 0% {
                     width: 70px;
-                    background-color: var(--secondary);
+                    background-color: ${colors.secondary};
                 }
                 40%{
                     width: 5px;
-                    background-color: var(--accent2);
+                    background-color: ${colors.accent2};
                     opacity: 1;
                     
                 }
@@ -362,116 +368,213 @@ class InputSpacer extends basicElement {
     }
 }
 customElements.define('input-spacer', InputSpacer)
-class ActionSet extends basicElement {
+class entrySpacer extends InputSpacer {
+    constructor() {
+        super();
+        this.elemType = "spacer";
+        this.shadowRoot.innerHTML += `
+            <style>
+            @keyframes close {
+                0% {
+                    width: 100px;
+                    background-color: ${colors.secondary};
+                }
+                40%{
+                    width: 45px;
+                    background-color: ${colors.accent2};
+                    opacity: 1;
+                    
+                }
+                60%{
+                    transform: translateY(0px);
+                }
+                100%{
+                    width: 45px;
+                    opacity: 0;
+                    transform: translateY(-32.5px);
+                }
+            }
+                #iconSvg{
+                    height: 35px;
+                    aspect-ratio: 1;
+                    padding: 5px;
+                    box-sizing: border-box;
+                    flex-shrink: 0;
+                }
+                #entryTitle{
+                    font-size: 20px; 
+                    font-weight: 500; 
+                    opacity: 0;
+                    position: absolute;
+                    transition: all 0.25s ease;
+                }
+                #indicator{
+                    height : 45px;
+                    max-width: 300px;
+                    width: fit-content;
+                    display: inline-flex;
+                    justify-content: center;
+                    align-items: center;
+                    border: 2px solid ${colors.accentBorder};
+                }
+            </style>
+        `;
+        this.indicator = this.shadowRoot.getElementById("indicator");
+
+    }
+    open() {
+        super.open();
+        /*this.indicator.style.visibility = "inherit";
+        this.indicator.style.width = "45px";*/
+
+        setTimeout(() => {
+            this.shadowRoot.getElementById("entryTitle").style.position = "relative";
+            this.shadowRoot.getElementById("entryTitle").style.opacity = "1";
+            this.shadowRoot.getElementById("indicator").style.padding = "0 5px 0 5px";
+        }, 500);
+    }
+    setType(type, url) {
+        this.indicator.innerHTML = `
+            ${type == "newTab" ? `
+                <svg id="iconSvg" fill="none" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+                    <path d="m50 0h200v75h-150c-13.807 0-25 11.193-25 25v300c0 13.807 11.193 25 25 25h300c13.807 0 25-11.193 25-25v-150h75v200c0 27.614-22.386 50-50 50h-400c-27.614 0-50-22.386-50-50v-400c0-27.614 22.386-50 50-50zm261 0v75h60.563l-153.48 153.49 53.033 53.033 153.89-153.89v61.37h75v-139c0-27.614-22.386-50-50-50h-139z" clip-rule="evenodd" fill="#bbc6ff" fill-rule="evenodd"/>
+                </svg>
+            ` :
+                `
+                <svg id="iconSvg" viewBox="0 0 581 582" xmlns="http://www.w3.org/2000/svg">
+                    <path d="m540.63 41.119c53.637 53.638 53.637 140.6 0 194.24l-116.31 116.31-57.58-57.581 116.31-116.31c21.837-21.836 21.837-57.24 0-79.077-21.836-21.837-57.24-21.837-79.077 0l-116.31 116.31-57.58-57.58 116.31-116.31c53.637-53.637 140.6-53.638 194.24-1e-4z" fill="#bbc6ff"/>
+                    <path d="m40.652 541.14c-53.637-53.638-53.637-140.6 0-194.24l116.31-116.31 57.58 57.58-116.31 116.31c-21.837 21.837-21.837 57.241 0 79.077 21.836 21.837 57.24 21.837 79.077 0l116.31-116.31 57.58 57.58-116.31 116.31c-53.637 53.637-140.6 53.637-194.24 0z" fill="#bbc6ff"/>
+                </svg>
+            `}
+            <h2 id="entryTitle">${document.title}</h2>
+        `
+    }
+}
+customElements.define('entry-spacer', entrySpacer)
+class ActionEditor extends basicElement {
     constructor() {
         super();
         this.shadowRoot.innerHTML = `
-      <div id="actionButton" style="background-color: transparent; height: 100%; width: 100%; position: relative; display:grid;justify-content: center;align-items: center; grid-auto-flow: column; gap: 10px;">
-        <img id="imgArea" style="border-radius: 50%;background-color: var(--primary);border: 2px solid var(--accentBorder);">
-        <h2 id="nameArea"></h2>
-        <Button-Generic id="editButton" style="aspect-ratio: 1; width: 34px; position: relative;">
-        <svg viewBox="0 0 1079 1078" xmlns="http://www.w3.org/2000/svg">
-        <path d="m644.42 231.79c11.715-11.716 30.71-11.716 42.426 0l159.81 159.81c11.716 11.716 11.716 30.711 0 42.426l-453.96 453.96c-11.716 11.716-30.711 11.716-42.427 0l-159.81-159.81c-11.716-11.716-11.716-30.711 0-42.427l453.96-453.96z" fill="#FFF" fill-opacity=".3"/>
-        <path d="m1063.7 216.94c30.86-30.852 10.59-101.13-45.25-156.98-55.846-55.845-126.13-76.106-156.98-45.255l-111.02 111.02c-11.716 11.715-11.716 30.711 0 42.426l159.81 159.81c11.715 11.716 30.71 11.716 42.426 0l111.01-111.02z" fill="#FFF" fill-opacity=".3"/>
-        <path d="m39.79 1076.3c-23.172 7.33-44.992-14.49-37.656-37.66l73.756-232.96c6.7914-21.451 33.904-28.069 49.814-12.158l159.2 159.2c15.91 15.91 9.293 43.022-12.158 49.813l-232.96 73.76z" fill="#FFF" fill-opacity=".3"/>
-        </svg>
-        </Button-Generic>
-      </div>
-      `;
-        this.ui = {};
-        this.ui.actionButton = this.shadowRoot.getElementById("actionButton");
-        this.ui.imgArea = this.shadowRoot.getElementById("imgArea");
-        this.ui.nameArea = this.shadowRoot.getElementById("nameArea");
-        this.ui.editButton = this.shadowRoot.getElementById("editButton");
-    }
-    faviconURL(u) {
-        const url = new URL(chrome.runtime.getURL("/_favicon/"));
-        url.searchParams.set("pageUrl", u);
-        url.searchParams.set("size", "32");
-        return url.toString();
-    }
-    linkAction(action) {
-        this.action = action
-        this.ui.nameArea.innerText = action.name;
-        this.ui.imgArea.src = this.faviconURL(action.urls[0]);
-        this.ui.actionButton.addEventListener("click", (e) => {
-            if (this.ui.editButton.contains(e.target)) {
-                chrome.runtime.sendMessage({ action: "editAction", urls: action.urls, actionSet: action }, (response) => {
-                    if (response.log == "opened") {
-                        console.log("Opened Action Editor");
-                    } else if (response.log == "alreadyOpen"){
-                        
-                    }else {
-                        throw new Error(`Failed to open action editor: ${action.name}`);
-                    }
-                });
-            } else {
-                console.log("run action set")
-                chrome.runtime.sendMessage({ action: "runActionSet", set: action }, (response) => {
-
-                });
-            }
-        });
-    }
-    removeAction() {
-        data.removeAction(this.action);
-        this.remove();
-    }
-}
-customElements.define('action-set', ActionSet);
-class uniQuery extends basicElement{
-    constructor(){
-        super();
-        this.shadowRoot.innerHTML += `
         <style>
-            .handlerButtons{
-                height: 35px; 
-                aspect-ratio:1; 
-                position: relative; 
-                display: block; 
+        * {
+            color: #bbc6ff;
+            background-color: #1b1b1f;
+        }
+
+        button,
+        input,
+        .inputArea {
+            border-radius: 20px;
+            border: 2px solid #252f53;
+            height: 50px;
+            background-image: linear-gradient(45deg, #364478, #5b3d56);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            outline: none;
+        }
+        .entry-spacer{
+            height: 60px;
+            display: block;
+        }
+        @keyframes gradient {
+            0% {
+              background-position: 0% 50%;
             }
+            50% {
+              background-position: 100% 50%;
+            }
+            100% {
+              background-position: 0% 50%;
+            }
+          }
+          .entry {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            position: relative;
+            transition: all 0.5s ease;
+        }
         </style>
-        <div
-        style="top:0; right: 0;position: absolute;left: 0px;height: 100%;width: 100%;
-        display: grid;justify-content: center;align-items: center;
-        z-index: 100;transition: 0.25s ease;">
-                <h2 id="title">Alert</h2>
-                <div id="inputContainer">
-                
-                </div>
-                <div style="height: 35px; display: flex; gap: 5px; position: absolute; right: 5px; bottom: 5px;">
-                    <button-generic id="acceptButton" class="handlerButtons">
-                        <svg fill="none" viewBox="0 0 1324 1033" xmlns="http://www.w3.org/2000/svg">
-                            <path
-                                d="m1162 8.7868c-11.71-11.716-30.71-11.716-42.42-1e-5l-646.5 646.5-269.08-269.08c-11.715-11.716-30.71-11.716-42.426 0l-152.74 152.74c-11.716 11.716-11.716 30.711-1e-5 42.427l442.74 442.74c5.932 5.93 13.732 8.86 21.507 8.78 7.771 0.08 15.565-2.85 21.495-8.78l820.16-820.16c11.71-11.715 11.71-30.71 0-42.426l-152.74-152.74z"
-                                fill="#000" fill-opacity=".3" />
-                        </svg>
-                    </button-generic>
-                    <button-generic id="quitButton" class="handlerButtons">
-                        <svg fill="none" viewBox="0 0 1002 1002" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M9.21265 797.872C-2.50317 809.588 -2.50317 828.583 9.21265 840.299L161.948 993.034C173.664 1004.75 192.659 1004.75 204.375 993.034L501.123 696.285L797.872 993.034C809.588 1004.75 828.583 1004.75 840.298 993.034L993.033 840.299C1004.75 828.583 1004.75 809.588 993.033 797.872L696.284 501.124L993.033 204.375C1004.75 192.659 1004.75 173.664 993.033 161.948L840.299 9.2132C828.583 -2.50238 809.588 -2.50238 797.872 9.2132L501.123 305.962L204.374 9.2132C192.658 -2.50238 173.664 -2.50238 161.948 9.2132L9.21265 161.948C-2.50317 173.664 -2.50317 192.659 9.21265 204.375L305.962 501.124L9.21265 797.872Z" fill="black" fill-opacity="0.3"/>
-                        </svg>
-                    </button-generic>
-            </div>
+        <div style="width: 100%; height: 100%; background-color: #1b1b1f; padding: 10px; box-sizing: border-box;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px">
+            <button-generic id="editBack" style="height: 35px; aspect-ratio:1; position: relative; display: block; ">
+                <svg fill="none" viewBox="0 0 1272 1124" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="m516.15 700 219.97 219.97c11.715 11.715 11.715 30.71 0 42.426l-152.74 152.74c-11.716 11.71-30.711 11.71-42.427 0l-531.74-531.75c-11.716-11.716-11.715-30.711 0-42.427l531.74-531.74c11.716-11.716 30.711-11.716 42.427 0l152.74 152.73c11.715 11.716 11.715 30.711 0 42.426l-219.62 219.63h725.5c16.57 0 30 13.431 30 30v216c0 16.569-13.43 30-30 30h-725.85z"
+                        clip-rule="evenodd" fill="#FFF" fill-opacity=".3" fill-rule="evenodd" />
+                </svg>
+            </button-generic>
+            <input id="editName" type="text" style="width: 150px; height: 50px; font-size: 30px; text-align: center; ">
+            <button-generic id="editSave" style="height: 35px; aspect-ratio:1; position: relative; display: block; ">
+                <svg fill="none" viewBox="0 0 1324 1033" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="m1162 8.7868c-11.71-11.716-30.71-11.716-42.42-1e-5l-646.5 646.5-269.08-269.08c-11.715-11.716-30.71-11.716-42.426 0l-152.74 152.74c-11.716 11.716-11.716 30.711-1e-5 42.427l442.74 442.74c5.932 5.93 13.732 8.86 21.507 8.78 7.771 0.08 15.565-2.85 21.495-8.78l820.16-820.16c11.71-11.715 11.71-30.71 0-42.426l-152.74-152.74z"
+                        fill="#FFF" fill-opacity=".3" />
+                </svg>
+            </button-generic>
+        </div>
+        <div id="editEntry" style="width: 100%; height: 400px; padding-top: 10px;">
+
+        </div>
         </div>
         `
-        this.ui.title = this.shadowRoot.getElementById("title");
-        this.ui.acceptButton = this.shadowRoot.getElementById("acceptButton");
-        this.ui.inputContainer = this.shadowRoot.getElementById("inputContainer");
-        this.ui.quitButton = this.shadowRoot.getElementById("quitButton");
-    }
-    setQueryType(type){
-        switch(type){
-            case("text"):
-
-            break;
-            case("bool"):
-                if(arguments[1]){
-                    this.ui.title.
-                }
-            break;
+        this.ui = {
+            editNameEntry: this.shadowRoot.getElementById("editName"),
+            editEntryContainer: this.shadowRoot.getElementById("editEntry"),
+            editBack: this.shadowRoot.getElementById("editBack"),
+            editSave: this.shadowRoot.getElementById("editSave"),
         }
-        this.ui.containerDiv
+    }
+    openEditor(actionSet) {
+        this.ui.editNameEntry.value = actionSet.name;
+        for (let action of actionSet.actions) {
+            if (action.action != "newTab" && action.action != "newUrl") {
+                if (actionSet.actions[0] != action && this.ui.editEntryContainer.lastChild.elemType != "spacer") {
+                    let spacer = document.createElement("input-spacer");
+                    this.ui.editEntryContainer.appendChild(spacer);
+                }
+                let actionEntry = new InputEntry();
+                actionEntry.set(action)
+                actionEntry.classList.add("entry");
+                this.ui.editEntryContainer.appendChild(actionEntry);
+            } else {
+                let spacer = document.createElement("entry-spacer");
+                spacer.setType(action.action, action.url);
+                spacer.classList.add("entry-spacer");
+                this.ui.editEntryContainer.appendChild(spacer);
+            }
+        }
+        //this.ui.
+        if(ui.editor != undefined){
+            ui.editor.style.marginRight = "0px"; 
+        }
+        this.ui.editBack.addEventListener("click", this.closeEditor);
+        this.ui.editSave.addEventListener("click", this.saveEdit);
+        this.showEntry();
+    }
+    closeEditor() {
+        ui.editor.style.marginRight = "-500px";
+        this.ui.editBack.removeEventListener("click", this.closeEditor);
+        this.ui.editSave.removeEventListener("click", this.saveEdit);
+    }
+    saveEdit(){
+        data.port.postMessage({ action: "saveEditor" });
+    }
+    async showEntry() {
+        let entryChildren = [...this.ui.editEntryContainer.childNodes];
+        for (let child of entryChildren) {
+            console.log(child)
+            if (child.open) {
+                child.open();
+            }
+
+            await delay(60);
+        }
     }
 }
-customElements.define("uni-query", uniQuery);
+customElements.define('editor-view', ActionEditor)
+ui.editor = document.createElement("editor-view");
+ui.editor.style.marginRight = "0px";
+ui.editor.style = `position: fixed; bottom: 10px; right: 10px; width: 400px; height: 500px; border-radius: 25px; z-index: 10000000000; overflow: hidden; border: 2px solid #252f53; transition: margin-right 0.5s ease; margin-right: -500px;`
+document.body.appendChild(ui.editor);
