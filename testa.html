@@ -30,9 +30,10 @@
             transition: all 0.5s ease;
         }
     </style>
-    <uni-query style="padding: 100px; background-color: var(--primary); border-radius: 25px; 
-    border: 1px solid grey; position: relative; 
-    overflow: hidden; box-sizing: content-box;"></uni-query>
+    <uni-query style="top:100%; background-color: transparent;
+    position: absolute;left: 0px;height: 100%;width: 100%;display: grid;
+    justify-content: center;align-items: center;z-index: 100;
+    transition: top 0.25s ease;"></uni-query>
     <input style="margin-top: 800px;" type='text' id='txtNome' name='txtNome' value=''
         style="background-color: var(--accent); border: solid var(--accentBorder); border-radius: 25px;">
     <div contenteditable="true"
@@ -41,6 +42,8 @@
         style="background-color: var(--accent); border: solid var(--accentBorder); border-radius: 25px;"></textarea>
 </body>
 <script>
+    let queryElem = document.querySelector("uni-query");
+    queryElem.setQueryType("bool", "Close Editor", "Close editor for test")
     let logList = JSON.parse(localStorage.getItem("logList")) || [];
     let lastLog = {};
     let delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));

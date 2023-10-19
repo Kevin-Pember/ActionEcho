@@ -553,10 +553,13 @@ class ActionEditor extends basicElement {
         this.ui.editSave.addEventListener("click", this.saveEdit);
         this.showEntry();
     }
-    closeEditor() {
+    async closeEditor() {
+        let list = [];
         ui.editor.style.marginRight = "-500px";
         this.ui.editBack.removeEventListener("click", this.closeEditor);
         this.ui.editSave.removeEventListener("click", this.saveEdit);
+        //plan to add a compile method to create the return list
+        return list;
     }
     saveEdit(){
         data.port.postMessage({ action: "saveEditor" });

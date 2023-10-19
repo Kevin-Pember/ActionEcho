@@ -5,6 +5,7 @@ let data = {
   create an array of open editors with all ports in order 
   and unique identifier of the action set name and get the 
   data of each */
+  currentEditor: undefined,
   siteCache: undefined,
   promisePorts: {
     tabs: [],
@@ -32,6 +33,7 @@ let data = {
         return port.name == url;
       });
       if (match) {
+        chrome.tabs.update(match.tabId, { active: true }, (tab) => { });
         resolve(match);
       } else {
         chrome.tabs.create({ url: url, active: true }, function (tab) {
@@ -50,7 +52,7 @@ let data = {
     data.siteCache = { location: location };
     switch (type) {
       case "newTab":
-        data.cacheSite("newTab", location);
+        //data.cacheSite("newTab", location);
         //head.siteCache = { action: "newTab", location: location };
         data.siteCache.action = "newTab";
         break;
@@ -72,12 +74,26 @@ let data = {
       }
       data.siteCache = undefined;
     }
+  },
+  closeEditor: async () => {
+    let compiledActions = [];
+    for (let editor of data.currentEditor.portList) {
+      if (!editor.disconnect) {
+        let promiseLevel = new Promise((resolve, reject) => {
+          data.currentEditor.editPromises.push({ tabId: editor.tabId, resolve: resolve, reject: reject });
+        });
+        editor.postMessage({ action: "closeEditor" });
+        compiledActions.concat(await promiseLevel);
+      }
+    }
+    data.currentEditor = undefined;
+    return compiledActions;
   }
 }
 let head = {
   currentPort: undefined,
+  currentTab: undefined,
   currentAction: undefined,
-  currentURL: undefined,
   trackLoad: {
     loading: true,
     loadAction: false,
@@ -100,26 +116,36 @@ let head = {
     head.redoHistory = [];
   },
   setCurrentPort: (port) => {
-    head.currentPort.postMessage({ action: "stopRecord" });
+    if (head.currentPort && head.currentPort.disconnect == false) {
+      head.currentPort.postMessage({ action: "stopRecord" });
+    }
     head.resetHead();
     port.postMessage({ action: "startRecord" });
+    head.currentPort = port;
   },
 }
-
+chrome.storage.local.get(["recording"]).then((result) => {
+  data.recording = result.recording == undefined ? false : result.recording;
+});
 //Tab Management ***************************************************************
 chrome.tabs.onRemoved.addListener((tabId) => {
+  console.log("Tab Removed")
   let port = data.portArray.find((port) => port.tabId == tabId);
   if (port) {
     console.log("Port removed: " + port.name);
     let portIndex = data.portArray.indexOf(port);
-    if (head.currentPort == port) {
-      head.currentPort = data.portArray[portIndex - 1];
+    if (data.portArray.length <= 1) {
+      head.currentPort = undefined;
+    } else if (head.currentPort == port) {
+      head.setCurrentPort(data.portArray[portIndex - 1]);
     }
+    port.disconnect();
     data.portArray.splice(portIndex, 1);
   }
 
 });
 chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+  console.log("Tab Updated")
   if (changeInfo.title) {
     head.trackLoad.loading = false;
     head.trackLoad.loadAction = false;
@@ -134,13 +160,12 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
       let port = data.portArray.find((port) => port.tabId == activeInfo.tabId);
       if (port) {
         data.cacheSite("newTab", tab.url);
-        if (data.recording) {
-          head.setCurrentPort(port);
-        }
+        head.setCurrentPort(port);
       }
-      head.currentPort = port;
     }
+    head.currentTab = activeInfo.tabId;
   })
+  console.log(head)
 });
 //Tab Management end ***********************************************************
 chrome.runtime.onConnect.addListener(function (port) {
@@ -203,9 +228,13 @@ chrome.runtime.onConnect.addListener(function (port) {
       }
     } else if (msg.action == "resolve") {
       head.currentAction.resolve(msg);
-    } else if (msg.action == "closeEditor") {
-      port.editorActive = false;
-
+    } else if (msg.action == "closedEditor") {
+      //port.editorActive = false;
+      let match = data.currentEditor.editPromises.find((promise) => promise.tabId == port.tabId);
+      if (match) {
+        match.resolve(msg.actionList);
+        data.currentEditor.editPromises.splice(data.currentEditor.editPromises.indexOf(match), 1);
+      }
     }
   });
   port.tabId = port.sender.tab.id;
@@ -217,7 +246,7 @@ chrome.runtime.onConnect.addListener(function (port) {
     //if the port it is replacing is the current port, replace it
     if (head.currentPort == tabMatch) {
       data.cacheSite("newUrl", tabMatch.name);
-      head.currentPort = port;
+      head.setCurrentPort(port);
       if (data.recording) {
         port.postMessage({ action: "startRecord" });
         head.resetHead();
@@ -226,8 +255,8 @@ chrome.runtime.onConnect.addListener(function (port) {
     //remove the old port from the array
     data.portArray.splice(data.portArray.indexOf(tabMatch), 1)
   }
-  if (!head.currentPort) {
-    data.cacheSite("newUrl", port.name);
+  if (port.tabId == head.currentTab) {
+    data.cacheSite("newTab", port.name);
     head.currentPort = port;
   }
   //head.currentPort = port;
@@ -247,17 +276,19 @@ chrome.runtime.onMessage.addListener((request, sender, reply) => {
       break;
     case "stopRecord":
       head.currentPort.postMessage({ action: "stopRecord" });
-      console.log(head.stageLog)
       head.currentLog.log = "finished";
       head.resetHead();
+      data.recording = false;
       reply(head.currentLog);
+      head.currentLog = {
+        actions: [],
+        urls: [],
+      };
       break;
     case "runActionSet":
       let actions = request.set.actions;
-      let initUrl = request.set.urls[0];
       let runActions = async () => {
         for (let action of actions) {
-          console.log(action);
           switch (action.action) {
             case "log":
               await new Promise((resolve, reject) => {
@@ -284,11 +315,11 @@ chrome.runtime.onMessage.addListener((request, sender, reply) => {
       ///Here is where you stopped
       break;
     case "editAction":
-      if (data.currentEditor != undefined) {
+      if (!data.currentEditor) {
         let editorEntry = {
           id: request.actionSet.name,
           portList: [],
-          pCom: []
+          editPromises: []
         }
         for (let url of request.urls) {
           let portActions = request.actionSet.actions.filter((action) => action.location == url);
@@ -307,17 +338,24 @@ chrome.runtime.onMessage.addListener((request, sender, reply) => {
             }
           });
         }
-        /*data.openTab(request.url).then((port) => {
-          chrome.scripting.executeScript({ target: { tabId: port.tabId }, files: ["JS/editorUI.js"] }).then(() => {
-            reply({ log: "opened" });
-            port.postMessage({ action: "setEditor", actionSet: request.actionSet });
-          });
-          port.editorActive = true;
-          port.hasEditor = true;
-        });*/
-      }else{
-        reply({log: "alreadyOpen"});
+        data.currentEditor = editorEntry;
+      } else if (data.currentEditor.id != request.actionSet.name) {
+        reply({ log: "alreadyOpen" });
+      } else {
+        reply({ log: "noAction" });
       }
+      break;
+    case "closeEditor":
+      if (data.currentEditor) {
+        console.log("running close editor")
+        data.closeEditor().then((actionList) => {
+          console.log("closed editor finished")
+          reply({ log: "closed", actionList: actionList });
+        });
+      } else {
+        reply({ log: "noEditor" });
+      }
+      break;
     case "testLog":
       console.log("test log");
       reply({ log: "test" });

@@ -1,32 +1,32 @@
 let data = {
   actionsData: [],
-  saveActionList(){
+  saveActionList() {
     chrome.storage.local.set({ "actionSets": this.actionsData });
   },
-  addAction(action){
-    if(this.actionsData.length >= 10){
+  addAction(action) {
+    if (this.actionsData.length >= 10) {
       this.actionsData.pop();
     }
     this.actionsData.unshift(action);
     createActionEntry(action);
     this.saveActionList();
   },
-  removeAction(action){
+  removeAction(action) {
     this.actionsData.splice(this.actionsData.indexOf(action), 1);
     this.saveActionList();
   },
-  clearActionList(){
+  clearActionList() {
     //Currently set for debugging purposes
-    chrome.storage.local.clear(function() {
+    chrome.storage.local.clear(function () {
       var error = chrome.runtime.lastError;
       if (error) {
         console.error(error);
       }
-      });
+    });
     /* Proper code
     chrome.storage.local.set({ "actionSets": [] });
     */
-    for(let act of ui.actionButtons){
+    for (let act of ui.actionButtons) {
       act.remove();
     }
   }
@@ -40,8 +40,9 @@ let ui = {
   editSave: document.getElementById('editSave'),
   editNameEntry: document.getElementById('editName'),
   editEntryContainer: document.getElementById('editEntry'),
+  uniEntry: document.getElementById('uniPopup'),
   actionButtons: [],
-  setPage: (name) =>{
+  setPage: (name) => {
     let pages = document.getElementsByClassName('contentPage');
     for (let page of pages) {
       if (page.id == name) {
@@ -51,29 +52,42 @@ let ui = {
       }
     }
   },
-  getName: () => {
+  getName: (message) => {
     return new Promise((resolve, reject) => {
-      document.getElementById("namePopup").style.top = "0px";
+      ui.uniEntry.setQueryType("text", message);
+      ui.uniEntry.style.top = "0px";
       ui.backgroundDiv.blurFocus();
-      let completeMethod = () => {
-        document.getElementById("namePopup").style.top = "100%";
-        let name = document.getElementById("nameInput").value;
-        document.getElementById("nameInput").value = "";
+      let completeMethod = (complete, value) => {
+        console.log("Complete called as: " + complete)
+        ui.uniEntry.style.top = "100%";
         ui.backgroundDiv.returnFocus();
-        resolve(name);
-      }
-      document.getElementById("enterNameButton").addEventListener("click", () => {
-        completeMethod()
-      });
-      document.getElementById('nameInput').addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') {
-          completeMethod()
+        if (complete) {
+          resolve(value);
+        } else {
+          reject();
         }
-    });
-    }, { once: true })
-  },
-  getBool:() => {
 
+      }
+      ui.uniEntry.setMethods(completeMethod);
+    })
+  },
+  getBool: (message, description) => {
+    return new Promise((resolve, reject) => {
+      ui.uniEntry.setQueryType("bool", message, description);
+      ui.uniEntry.style.top = "0px";
+      ui.backgroundDiv.blurFocus();
+      let completeMethod = (complete, value) => {
+        ui.uniEntry.style.top = "100%";
+        ui.backgroundDiv.returnFocus();
+        if (complete) {
+          resolve(value);
+        } else {
+          reject();
+        }
+
+      }
+      ui.uniEntry.setMethods(completeMethod);
+    })
   }
 };
 
@@ -95,7 +109,8 @@ chrome.storage.local.get(["recording"]).then((result) => {
 ui.clearHistory.addEventListener('click', () => {
   data.clearActionList();
 });
-ui.recordStart.addEventListener('click', async () => {
+ui.recordStart.addEventListener('click', () => {
+  console.log("Starting recording");
   chrome.runtime.sendMessage({ action: "startRecord" }, (response) => {
     if (response.log == "started") {
       console.log("Started recording");
@@ -107,20 +122,22 @@ ui.recordStart.addEventListener('click', async () => {
     }
   });
 });
-ui.recordStop.addEventListener('click', async () => {
+ui.recordStop.addEventListener('click', () => {
+  chrome.storage.local.set({ recording: false }).then(() => {
+    ui.setPage("mainPage");
+  });
   chrome.runtime.sendMessage({ action: "stopRecord" }, (response) => {
     if (response.log == "finished") {
       console.log("Stopped recording");
-      ui.getName().then((name) => {
-        data.addAction({
-          name: name,
-          actions: response.actions,
-          urls: response.urls,
-        });
-      });
-      chrome.storage.local.set({ recording: false }).then(() => {
-        ui.setPage("mainPage");
-      });
+      if (response.actions.length > 0) {
+        ui.getName("Enter Name").then((name) => {
+          data.addAction({
+            name: name,
+            actions: response.actions,
+            urls: response.urls,
+          });
+        }, () => { });
+      }
     } else {
       throw new Error("Failed to stop recording");
     }
@@ -131,12 +148,12 @@ let delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 let stagerChildren = async (element) => {
   let entryChildren = [...element.childNodes];
   for (let child of entryChildren) {
-      console.log(child)
-      if(child.open){
-          child.open();
-      }
-      
-      await delay(60);
+    console.log(child)
+    if (child.open) {
+      child.open();
+    }
+
+    await delay(60);
   }
 }
 //Deprecated
@@ -152,7 +169,7 @@ let stagerChildren = async (element) => {
   });
   stagerChildren(ui.editEntryContainer);
 }*/
-function createActionEntry(action){
+function createActionEntry(action) {
   let actionElem = document.createElement("action-set");
   actionElem.linkAction(action);
   actionElem.classList.add("inputArea");

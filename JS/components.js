@@ -400,7 +400,26 @@ class ActionSet extends basicElement {
                     if (response.log == "opened") {
                         console.log("Opened Action Editor");
                     } else if (response.log == "alreadyOpen"){
-                        
+                        ui.getBool("Editor Already Open", "Do you want to close the editor for "+ action.name).then((bool) => {
+                            console.log("boolean got: " + bool)
+                            if(bool){
+                                chrome.runtime.sendMessage({ action: "closeEditor"}, (response) => {
+                                    console.log(response)
+                                    if(response.log == "closed"){
+                                        console.log("opening new editor")
+                                        chrome.runtime.sendMessage({ action: "editAction", urls: action.urls, actionSet: action }, (response) => {
+                                            if (response.log == "opened") {
+                                                console.log("Opened Action Editor");
+                                            } else if (response.log == "alreadyOpen"){
+                                                throw new Error("Editor conflict");
+                                            }
+                                        });
+                                    }else if (response.log == "noEditor"){
+                                        throw new Error("Editor conflict");
+                                    }
+                                });
+                            }
+                        });
                     }else {
                         throw new Error(`Failed to open action editor: ${action.name}`);
                     }
@@ -423,7 +442,23 @@ class uniQuery extends basicElement{
     constructor(){
         super();
         this.shadowRoot.innerHTML += `
+        <link rel="stylesheet" href="styling.css">
         <style>
+            *{
+                margin: 0;
+            }
+            input{
+                border-radius: 20px;
+                border: 2px solid var(--accentBorder);
+                height: 50px;
+                width: 100%;
+                background-image: linear-gradient(45deg, var(--accent), var(--accent2));
+                background-size: 400% 400%;
+                animation: gradient 15s ease infinite;
+                outline: none;
+                padding: 0 5px 0 5px;
+                font-size: 25px;
+            }
             .handlerButtons{
                 height: 35px; 
                 aspect-ratio:1; 
@@ -432,11 +467,11 @@ class uniQuery extends basicElement{
             }
         </style>
         <div
-        style="top:0; right: 0;position: absolute;left: 0px;height: 100%;width: 100%;
-        display: grid;justify-content: center;align-items: center;
-        z-index: 100;transition: 0.25s ease;">
-                <h2 id="title">Alert</h2>
-                <div id="inputContainer">
+        style="position: relative; height: fit-content; width: fit-content;
+        z-index: 100; padding: 10px; transition: 0.25s ease; box-sizing: border-box; 
+        padding-bottom: 45px; border-radius:20px; background-color:var(--primary);">
+                <h2 id="title" style="margin: 0 0 5px 0;">Alert</h2>
+                <div id="inputContainer" style="display: flex;">
                 
                 </div>
                 <div style="height: 35px; display: flex; gap: 5px; position: absolute; right: 5px; bottom: 5px;">
@@ -459,19 +494,71 @@ class uniQuery extends basicElement{
         this.ui.acceptButton = this.shadowRoot.getElementById("acceptButton");
         this.ui.inputContainer = this.shadowRoot.getElementById("inputContainer");
         this.ui.quitButton = this.shadowRoot.getElementById("quitButton");
+        this.ui.containedElements = [];
     }
     setQueryType(type){
+        if(this.ui.containedElements){
+            this.clearContext();
+        }
+        if(arguments[1]){
+            this.ui.title.textContent = arguments[1];
+        }
         switch(type){
             case("text"):
-
+                this.type = "text";
+                let input = document.createElement("input");
+                input.type = "text";
+                this.ui.containedElements.push(input);
+                this.ui.inputContainer.appendChild(input);
             break;
             case("bool"):
-                if(arguments[1]){
-                    this.ui.title.
+                this.type = "bool";
+                if(arguments[2]){
+                    let contextHeader = document.createElement("h5");
+                    contextHeader.textContent = arguments[2];
+                    this.ui.containedElements.push(contextHeader);
+                    this.ui.inputContainer.appendChild(contextHeader);
                 }
             break;
         }
         this.ui.containerDiv
+    }
+    setMethods(complete){
+        let close = () => {
+            complete(false);
+            closeMethod();
+        }
+        let save = () => {
+            complete(true, this.type == "text" ? this.ui.containedElements[0].value: true);
+            closeMethod();
+        }
+        let keySave;
+        if(this.type == "text"){
+            keySave = (e) => {
+                if(e.key == "Enter"){
+                    save();
+                }
+            }
+        }
+        let closeMethod = () => {
+            this.ui.acceptButton.removeEventListener("click", save);
+            this.ui.quitButton.removeEventListener("click", close);
+            if(this.type == "text"){
+                this.ui.containedElements[0].removeEventListener("keypress", keySave);
+            }
+        };
+        this.ui.quitButton.addEventListener("click", close);
+        this.ui.acceptButton.addEventListener("click", save);
+        if(this.type == "text"){
+            this.ui.containedElements[0].addEventListener("keypress", keySave);
+        }
+    }
+    clearContext(){
+        this.ui.title.textContent = "";
+        for(let element of this.ui.containedElements){
+            element.remove();
+        }
+        this.ui.containedElements = [];
     }
 }
 customElements.define("uni-query", uniQuery);

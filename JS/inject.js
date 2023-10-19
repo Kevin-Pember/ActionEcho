@@ -1,9 +1,9 @@
 console.log("AutoMade script loaded")
-
+console.log("inject.js loaded")
+window.addEventListener("load", () => {data.fullyLoaded = true});
 //editor.style = `position: fixed; bottom: 10px; right: 10px; width: 300px; height: 300px; background-color: white; z-index: 10000000000;`
 let ui = {
     body: document.body,
-    html: document.documentElement,
     highlight: document.createElement("div"),
     styles: document.createElement("style"),
     highlightElement: (element) => {
@@ -13,8 +13,6 @@ let ui = {
         highElem.classList.add("highlightElem");
     },
     returnElement: (element) => {
-        //ui.highlight.style.visibility = "hidden";
-        //ui.highlight.style.zIndex = "-1";
         ui.body.style = ""
         let highElem = data.getElement(element);
         highElem.addEventListener("animationiteration", () => {
@@ -24,8 +22,10 @@ let ui = {
     }
 }
 let data = {
+    fullyLoaded: false,
     port: chrome.runtime.connect({ name: location.href }),
     targetElement: undefined,
+    actionQueue: [],
     buttons: {
         Enter: 13,
     },
@@ -137,6 +137,28 @@ let data = {
     }
 }
 let input = {
+    throwAction: (msg) => {
+        if (msg.type == "click") {
+            let element = data.getElement(msg.specifier);
+            console.log(element)
+            element.dispatchEvent(new MouseEvent('click', {
+                bubbles: true,
+                cancelable: true,
+                view: window
+            }));
+            element.focus();
+            console.log("click event dispatched");
+        } else if (msg.type == "input") {
+            console.log("Running input action")
+            console.log(msg)
+            let element = data.getElement(msg.specifier);
+            if (msg.text != undefined) {
+                input.typeText(element, msg);
+            } else if (msg.key != undefined) {
+                input.throwKeyEvents(element, msg.key);
+            }
+        }
+    },
     typeText: (element, log) => {
         console.log("typing")
         console.log(log)
@@ -198,7 +220,8 @@ let input = {
         elem.dispatchEvent(new KeyboardEvent('keypress', eventObject));
         elem.dispatchEvent(new KeyboardEvent('keyup', eventObject));
         elem.dispatchEvent(new InputEvent('input', { data: key, inputType: "insertText", bubbles: true }));
-    }
+    },
+    runQueue: () => {}
 }
 data.port.onMessage.addListener(function (msg) {
     console.log("message recieved")
@@ -221,26 +244,7 @@ data.port.onMessage.addListener(function (msg) {
             break;
         case "action":
             console.log("completing Action")
-            if (msg.type == "click") {
-                let element = data.getElement(msg.specifier);
-                console.log(element)
-                element.dispatchEvent(new MouseEvent('click', {
-                    bubbles: true,
-                    cancelable: true,
-                    view: window
-                }));
-                element.focus();
-                console.log("click event dispatched");
-            } else if (msg.type == "input") {
-                console.log("Running input action")
-                console.log(msg)
-                let element = data.getElement(msg.specifier);
-                if (msg.text != undefined) {
-                    input.typeText(element, msg);
-                } else if (msg.key != undefined) {
-                    input.throwKeyEvents(element, msg.key);
-                }
-            }
+            throwAction(msg);
             data.port.postMessage({ action: "resolve" });
             break;
         case "openEditor":
@@ -255,7 +259,9 @@ data.port.onMessage.addListener(function (msg) {
         case "closeEditor":
             if(ui.editor != undefined){
                 console.log("Editor Closed")
-                ui.editor.closeEditor();
+                ui.editor.closeEditor().then((list) => {
+                    data.port.postMessage({ action: "closedEditor", actionList: list });
+                });
             }else {
                 throw new Error("Editor not found");
             }
