@@ -393,10 +393,10 @@ class ActionSet extends basicElement {
     linkAction(action) {
         this.action = action
         this.ui.nameArea.innerText = action.name;
-        this.ui.imgArea.src = this.faviconURL(action.urls[0]);
+        this.ui.imgArea.src = this.faviconURL(action.actions[0].url);
         this.ui.actionButton.addEventListener("click", (e) => {
             if (this.ui.editButton.contains(e.target)) {
-                chrome.runtime.sendMessage({ action: "editAction", urls: action.urls, actionSet: action }, (response) => {
+                chrome.runtime.sendMessage({ action: "openEditor", actionSet: action }, (response) => {
                     if (response.log == "opened") {
                         console.log("Opened Action Editor");
                     } else if (response.log == "alreadyOpen"){
@@ -407,7 +407,7 @@ class ActionSet extends basicElement {
                                     console.log(response)
                                     if(response.log == "closed"){
                                         console.log("opening new editor")
-                                        chrome.runtime.sendMessage({ action: "editAction", urls: action.urls, actionSet: action }, (response) => {
+                                        chrome.runtime.sendMessage({ action: "openEditor", actionSet: action }, (response) => {
                                             if (response.log == "opened") {
                                                 console.log("Opened Action Editor");
                                             } else if (response.log == "alreadyOpen"){
@@ -421,6 +421,7 @@ class ActionSet extends basicElement {
                             }
                         });
                     }else {
+                        console.log(response.log)
                         throw new Error(`Failed to open action editor: ${action.name}`);
                     }
                 });

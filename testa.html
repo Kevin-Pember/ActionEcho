@@ -9,56 +9,77 @@
     <link rel="stylesheet" href="styling.css">
 </head>
 
-<body style="background-color: var(--primary);">
+<body style="background-color: var(--primary); height: 100%; width: 100%; top: 0px; left: 0px;">
     <style>
         .inputArea {
             border-radius: 20px;
+            margin: 10px;
+            padding: 3.5px;
             border: 2px solid var(--accentBorder);
-            height: 75px;
             background-image: linear-gradient(45deg, var(--accent), var(--accent2));
             background-size: 400% 400%;
+            width: 150px;
             animation: gradient 15s ease infinite;
             outline: none;
         }
 
-        .entry {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-            position: relative;
-            transition: all 0.5s ease;
+        .Button {
+            border: 2px solid rgb(117, 117, 117);
+            aspect-ratio: 1/1;
+            background-color: rgb(64, 64, 64);
+            border-radius: 50%;
+            width: 50px;
+
+        }
+        #testCases{
+            display: grid;
+            grid-template-columns: 100%;
+            row-gap: 10px;
+            margin-bottom: 10px;
+            width: 210px;
+        }
+        .indicatorContainer{
+            display: grid;
+            grid-template-columns: calc(100% - 50px) 50px;
+        }
+        .indicator{
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            background-color: red;
+            margin: auto;
+        }
+        .complete{
+            background-color: green;
         }
     </style>
-    <uni-query style="top:100%; background-color: transparent;
-    position: absolute;left: 0px;height: 100%;width: 100%;display: grid;
-    justify-content: center;align-items: center;z-index: 100;
-    transition: top 0.25s ease;"></uni-query>
-    <input style="margin-top: 800px;" type='text' id='txtNome' name='txtNome' value=''
-        style="background-color: var(--accent); border: solid var(--accentBorder); border-radius: 25px;">
-    <div contenteditable="true"
-        style="background-color: var(--accent); border: solid var(--accentBorder); border-radius: 25px;"></div>
-    <textarea name="" id="" cols="30" rows="10"
-        style="background-color: var(--accent); border: solid var(--accentBorder); border-radius: 25px;"></textarea>
+    <div id="testCases">
+        <div class="indicatorContainer">
+            <input style="margin-top: 10px;" type='text' id='inputElem' name='txtNome' value='' class="inputArea">
+            <div id="inputIndicator" class="indicator"></div>
+        </div>
+        <div class="indicatorContainer">
+            <div id="editableElem" contenteditable="true" class="inputArea" onkeyup="checkInput"></div>
+            <div id="editableIndicator" class="indicator"></div>
+        </div>
+        <div class="indicatorContainer">
+            <textarea name="" id="areaElem" class="inputArea" onkeyup="checkInput"></textarea>
+            <div id="areaIndicator" class="indicator"></div>
+        </div>
+        <div class="indicatorContainer">
+            <button id="clickableElem" class="Button" onclick="clickEvent()">click me!</button>
+            <div id="clickableIndicator" class="indicator"></div>
+        </div>
+    </div>
+    <button id="testButton" class="Button" onclick="checkTest()">check</button>
+    <button id="testButton" class="Button" onclick="resetTest()">reset</button>
+    <h1 id="resultHeader" style="visibility: hidden;">Pass</h1>
 </body>
 <script>
-    let queryElem = document.querySelector("uni-query");
-    queryElem.setQueryType("bool", "Close Editor", "Close editor for test")
+    /*let queryElem = document.querySelector("uni-query");
     let logList = JSON.parse(localStorage.getItem("logList")) || [];
     let lastLog = {};
     let delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-    let stagerChildren = async (element) => {
-        let entryChildren = [...element.childNodes];
-        for (let child of entryChildren) {
-            console.log(child)
-            if(child.open){
-                child.open();
-            }
-            
-            await delay(60);
-        }
-    }
-    stagerChildren(document.getElementById("entryContainer"));
 
     function getSpecifier(element) {
         let specifier = {};
@@ -142,18 +163,12 @@
     }
     document.addEventListener('keydown', (e) => {
         console.log(e)
-    });
-    /*document.addEventListener('keyup', (e) => {
-        console.log(window.getSelection())
-        console.log(genLog(e))
-        if (e.target.tagName == "INPUT") {
-            console.log("input ")
-            console.log(e.target.selection)
-            typeInput(e.target, e.key, [e.target.selectionStart, e.target.selectionEnd]);
-        } else if (e.target.contentEditable == "true") {
-            typeEditable(e.target, e.key, genLog(e));
+        if(e.target.contentEditable){
+            console.log(e.target)
+            console.log(" vs. ")
+            console.log(window.getSelection().focusNode)
         }
-    });*/
+    });
     document.addEventListener('mousedown', (e) => {
         console.log(e)
     });
@@ -181,8 +196,63 @@
         } else {
             return event.key;
         }
+    }*/
+    let checks = {
+        clickCheck: false,
     }
-
+    let clickEvent = () => {
+        console.log('click');
+        checks.clickCheck = true;
+        document.getElementById("clickableIndicator").classList.add("complete");
+    };
+    let resetTest = () => {
+        checks = {};
+        document.getElementById("inputElem").value = "";
+        document.getElementById("editableElem").textContent = "";
+        document.getElementById("areaElem").value = "";
+        document.getElementById("resultHeader").style = "visibility: hidden";
+        document.getElementById("inputIndicator").classList.remove("complete");
+        document.getElementById("editableIndicator").classList.remove("complete");
+        document.getElementById("areaIndicator").classList.remove("complete");
+        document.getElementById("clickableIndicator").classList.remove("complete");
+    }
+    let checkInput = (e) => {
+        let element = e.target;
+        let test = false;
+        let indicator = element.id.substring(0,element.id.indexOf("Elem")) + "Indicator";
+        console.log(indicator);
+        if (element.contentEditable === "true"){
+            test = element.textContent == "test";
+        }else{
+            test = element.value == "test";
+        }
+        console.log(`the test is ${test}`);
+        if (test) {
+            document.getElementById(indicator).classList.add("complete");
+        } else {
+            document.getElementById(indicator).classList.remove("complete");
+        }
+    }
+    document.getElementById("inputElem").addEventListener("keyup", checkInput);
+    document.getElementById("editableElem").addEventListener("keyup", checkInput);
+    document.getElementById("areaElem").addEventListener("keyup", checkInput);
+    let checkTest = () => {
+        let inputHasValue = document.getElementById("inputElem").value == "test";
+        let editableHasValue = document.getElementById("editableElem").textContent == "test";
+        let areaHasValue = document.getElementById("areaElem").value == "test";
+        let header = document.getElementById("resultHeader");
+        console.log(`Input Elem: ${inputHasValue}`);
+        console.log(`Editable Elem: ${editableHasValue}`);
+        console.log(`Area Elem: ${areaHasValue}`);
+        console.log(`Click Elem: ${checks.clickCheck}`);
+        if (inputHasValue && editableHasValue && areaHasValue && checks.clickCheck) {
+            header.style = "color: green; visibility: visible";
+            header.innerHTML = "Pass";
+        } else {
+            header.style = "color: red; visibility: visible";
+            header.innerHTML = "Fail";
+        }
+    }
 </script>
 
 </html>

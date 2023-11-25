@@ -1,10 +1,12 @@
 let data = {
-  recording: false,
-  portArray: [], /*
-  ended here working on close and save edit here we need to 
-  create an array of open editors with all ports in order 
-  and unique identifier of the action set name and get the 
-  data of each */
+  current: {
+    actionSet: undefined,
+    port: undefined,
+    tab: undefined,
+    actionPacket: undefined,
+    editor: undefined,
+  },
+  portArray: [],
   currentEditor: undefined,
   siteCache: undefined,
   promisePorts: {
@@ -44,113 +46,358 @@ let data = {
   },
   openURL: (port, url) => {
     return new Promise((resolve, reject) => {
-      port.postMessage({ action: "newUrl", url: url });
+      port.postMessage({ action: "setURL", url: url });
       data.promisePorts.push({ url: url, resolve: resolve, reject: reject });
     });
   },
-  cacheSite: (type, location) => {
-    data.siteCache = { location: location };
-    switch (type) {
-      case "newTab":
-        //data.cacheSite("newTab", location);
-        //head.siteCache = { action: "newTab", location: location };
-        data.siteCache.action = "newTab";
-        break;
-      case "newUrl":
-        if (data.recording) {
-          data.siteCache.action = "newUrl";
-          data.siteCache.autoLoad = head.trackLoad.loadAction;
-        } else {
-          data.siteCache.action = "newTab";
-        }
-        break;
+
+
+  disconnectPort: (port) => {
+    port.disconnected = true;
+    let index = data.portArray.findIndex((test) => test.tabId == port.tabId);
+    data.portArray.splice(index, 1);
+    if (data.portArray.length == 0) {
+      data.current.port = undefined;
+    } else if (data.current.port == port) {
+      console.log("this is a test")
+      console.log(data.portArray[index]);
+      recorder.setCurrentPort(data.portArray[index]);
     }
+    if (port.editorActive) {
+      data.closeEditor();
+    }
+    if (!port.disconnected) {
+      port.disconnect();
+    }
+
+    console.log(data.current.editor)
   },
-  cacheCallback: () => {
-    if (data.siteCache) {
-      if (head.currentLog.urls[-1] != data.siteCache.location) {
-        head.currentLog.urls.push(data.siteCache.location);
-        head.currentLog.actions.push(data.siteCache);
-      }
-      data.siteCache = undefined;
-    }
-  },
-  closeEditor: async () => {
-    let compiledActions = [];
-    for (let editor of data.currentEditor.portList) {
-      if (!editor.disconnect) {
-        let promiseLevel = new Promise((resolve, reject) => {
-          data.currentEditor.editPromises.push({ tabId: editor.tabId, resolve: resolve, reject: reject });
-        });
-        editor.postMessage({ action: "closeEditor" });
-        compiledActions.concat(await promiseLevel);
-      }
-    }
-    data.currentEditor = undefined;
-    return compiledActions;
-  }
 }
-let head = {
-  currentPort: undefined,
-  currentTab: undefined,
-  currentAction: undefined,
-  trackLoad: {
+let runner = {
+  templates: {
+    actionPacket: {
+      v: 1.0,
+      site: undefined,
+      action: "actionPacket",
+      actions: [],
+    },
+  },
+  runActions: async (actions) => {
+    console.log("running actions (background)");
+    let packets = runner.getPackets(actions);
+    packets.forEach(async (packet) => {
+      let url = packet.site;
+      if (!url.autoLoad && url.format == "url") {
+        if (data.current.port) {
+          await data.openURL(data.current.port, url.url)
+        }
+      } else {
+        await data.openTab(url.url);
+      }
+      data.current.port.postMessage(packet);
+    });
+    /*let urls = runner.getUrls(actions);
+    console.log("the urls are:")
+    console.log(urls)
+    urls.forEach(async (url, index) => {
+      console.log(url)
+      if(!url.autoLoad && url.format == "url"){
+        if (head.currentPort) {
+          await data.openURL(head.currentPort, url.location)
+        }
+      }else{
+        await data.openTab(url.location);
+      }
+      
+      
+      data.current.port.postMessage(actionPacket);
+    });*/
+    /*for (let action of actions) {
+      switch (action.action) {
+        case "newUrl":
+          if (!action.autoLoad) {
+            if (head.currentPort) {
+              await data.openURL(head.currentPort, action.location)
+            }
+          }
+          break;
+        case "newTab":
+          await data.openTab(action.location);
+          break;
+        default:
+          await new Promise((resolve, reject) => {
+            head.currentAction = { resolve: resolve, reject: reject };
+            action.action = "action";
+            console.log("reach here")
+            head.currentPort.postMessage(action);
+          })
+          break;
+      }
+    }*/
+  },
+  getUrls: (set) => {
+    let urls = [];
+    for (let action of set) {
+      if (action.type == "site" && !urls.includes(action.url)) {
+        urls.push(action.url);
+      }
+    }
+    return urls;
+  },
+  getPackets: (actions) => {
+    let urls = actions.filter((action) => action.type == "site");
+    console.log(urls);
+    let packets = [];
+    urls.forEach((url, index) => {
+      let actionPacket = structuredClone(runner.templates.actionPacket);
+      actionPacket.actions = actions.slice(actions.indexOf(url) + 1, index < urls.length - 1 ? actions.indexOf(urls[index + 1]) : actions.length);
+      actionPacket.site = url;
+      packets.push(actionPacket);
+    });
+    return packets;
+  },
+}
+let recorder = {
+  recording: false,
+  v: 1.0,
+  templates: {
+    actionSet: {
+      v: 1.0,
+      name: "",
+      actions: [],
+    },
+    site: {
+      type: "site",
+      url: "",
+      format: "",
+      autoLoad: false,
+    },
+    textAction: {
+      type: "input",
+      text: "",
+      specifier: "",
+    }
+  },
+  history: {
+    edit: [],
+    redo: [],
+  },
+  urlLoad: {
     loading: true,
     loadAction: false,
   },
-  currentLog: {
-    actions: [],
-    urls: [],
+  parseData: {
+    site: {},
+    textAction: {}
   },
-  stageLog: {},
-  editHistory: [],
-  redoHistory: [],
-  resetHead: () => {
-    console.log("reset head");
-    console.log(head.stageLog);
-    if (head.stageLog.text) {
-      head.currentLog.actions.push(head.stageLog);
-      head.stageLog = {};
+  startRecord: () => {
+    recorder.recording = true;
+    data.current.actionSet = structuredClone(recorder.templates.actionSet);
+    data.current.port.postMessage({ action: "startRecord" });
+  },
+  stopRecord: () => {
+    data.current.port.postMessage({ action: "stopRecord" });
+    data.current.actionSet.log = "finished";
+    recorder.resetRecorder();
+    recorder.recording = false;
+  },
+  cacheSite: (type, location) => {
+    recorder.parseData.site = structuredClone(recorder.templates.site);
+    recorder.parseData.site.url = location;
+    if (type == "newUrl" && recorder.recording) {
+      recorder.parseData.site.autoLoad = recorder.urlLoad.loadAction;
+      recorder.parseData.site.format = "url";
+    } else {
+      recorder.parseData.site.format = "tab";
     }
-    head.editHistory = [];
-    head.redoHistory = [];
+    /*switch (type) {
+      case "newTab":
+        //recorder.cacheSite("newTab", location);
+        //head.siteCache = { action: "newTab", location: location };
+        //actionSet.currentSite.action = "newTab";
+        
+        break;
+      case "newUrl":
+        if (recorder.recording) {
+          actionSet.currentSite.action = "newUrl";
+          actionSet.currentSite.autoLoad = head.trackLoad.loadAction;
+        } else {
+          actionSet.currentSite.action = "newTab";
+        }
+        break;
+    }*/
+  },
+  postCacheSite: () => {
+    if (recorder.parseData.site) {
+      let urls = runner.getUrls(data.current.actionSet.actions);
+      if (urls[-1] != recorder.parseData.site.url) {
+        data.current.actionSet.actions.push(recorder.parseData.site);
+      }
+      recorder.parseData.site = undefined;
+    }
   },
   setCurrentPort: (port) => {
-    if (head.currentPort && head.currentPort.disconnect == false) {
-      head.currentPort.postMessage({ action: "stopRecord" });
+    if (recorder.recording) {
+      if (data.current.port && data.current.port.disconnected == false) {
+        data.current.port.postMessage({ action: "stopRecord" });
+      }
+      port.postMessage({ action: "startRecord" });
+      recorder.resetRecorder();
     }
-    head.resetHead();
-    port.postMessage({ action: "startRecord" });
-    head.currentPort = port;
+    data.current.port = port;
+  },
+  parseLog: (msg) => {
+    recorder.postCacheSite();
+    console.log(msg);
+    switch (msg.type) {
+      case "click":
+        console.log("click log")
+        console.log(msg.textContext)
+        if (msg.textContext != undefined) {
+          if(!recorder.parseData.textAction.type){
+            recorder.parseData.textAction = structuredClone(recorder.templates.textAction)
+          }else{
+            recorder.resetRecorder();
+          };
+          recorder.parseData.textAction.text = msg.textContext;
+          recorder.parseData.textAction.specifier = msg.specifier;
+        }
+        if(msg.specifier !== recorder.parseData.textAction.specifier){
+          recorder.resetRecorder();
+          recorder.parseData.textAction.specifier = msg.specifier;
+        }
+        data.current.actionSet.actions.push(msg);
+        break;
+      case "input":
+        console.log("input log")
+        console.log(recorder.parseData.textAction)
+        /*if(!recorder.parseData.textAction.specifier){
+          recorder.parseData.textAction.specifier = msg.specifier;
+        }
+        console.log(`${msg.specifier} vs. ${recorder.parseData.textAction.specifier}`)
+        if (msg.specifier !== recorder.parseData.textAction.specifier) {
+          console.log("resetting recorder")
+          recorder.resetRecorder();
+        }*/
+        recorder.inputHandler(msg.key, msg.selection.split("-"));
+        recorder.lastTextLog = msg;
+        break;
+      case "key":
+        console.log("key log")
+        if (msg.key == "undo") {
+          if (recorder.history.edit.length > 0) {
+            recorder.history.redo.push(recorder.parseData.textAction.text);
+            recorder.parseData.textAction.text = recorder.history.edit.pop();
+          }
+        } else if (msg.key == "redo") {
+          if (recorder.history.redo.length > 0) {
+            recorder.history.edit.push(recorder.parseData.textAction.text);
+            recorder.parseData.textAction.text = recorder.history.redo.pop();
+          }
+        } else if (msg.key == "paste") {
+          recorder.inputHandler(msg.text, msg.selection.split("-"));
+        } else if (msg.key == "cut") {
+          let range = msg.selection.split("-");
+          recorder.history.edit.push(recorder.parseData.textAction.text);
+          recorder.parseData.textAction.text = recorder.parseData.textAction.text.substring(0, range[0]) + recorder.parseData.textAction.text.substring(range[1], recorder.parseData.textAction.text.length);
+        } else {
+          //recorder.resetRecorder();
+          data.current.actionSet.actions.push(msg);
+        }
+        break;
+    }
+    if (recorder.urlLoad.loading) {
+      recorder.urlLoad.loadAction = true;
+    }
+
+  },
+  inputHandler: (key, range) => {
+    let text = recorder.parseData.textAction.text;
+    let pre = text;
+    console.log("input handler with key: " + key + " and range: " + range + "< add to " + text);
+    if (range[0] > -1 && range[1] > -1 && range[0] <= text.length && range[1] <= text.length) {
+      let textBefore = text.substring(0, range[0]);
+      let textAfter = text.substring(range[1], text.length);
+      recorder.parseData.textAction.text = textBefore + key + textAfter;
+      recorder.history.edit.push(pre);
+    }
+  },
+  resetRecorder: () => {
+    console.log("reset head");
+    console.log(recorder.parseData.textAction);
+    if (recorder.parseData.textAction.text && recorder.parseData.textAction.text.length > 0) {
+      data.current.actionSet.actions.push(recorder.parseData.textAction);
+      recorder.parseData.textAction = structuredClone(recorder.templates.textAction);
+    }
+    recorder.history.edit = [];
+    recorder.history.redo = [];
+  },
+
+}
+let editor = {
+  openEditor: async (request) => {
+    let editorEntry = {
+      id: request.actionSet.name,
+      portList: [],
+      editPromises: []
+    }
+    let urls = recorder.getUrls(request.actionSet);
+    for (let url of urls) {
+      let portActions = request.actionSet.actions.filter((action) => action.location == url);
+      data.openTab(url).then((port) => {
+        editorEntry.portList.push(port);
+        if (!port.hasEditor) {
+          chrome.scripting.executeScript({ target: { tabId: port.tabId }, files: ["JS/editorUI.js"] }).then(() => {
+
+            port.postMessage({ action: "openEditor", actionSet: { name: request.actionSet.name, actions: portActions } });
+          });
+          port.editorActive = true;
+          port.hasEditor = true;
+        } else {
+          port.postMessage({ action: "openEditor", actionSet: { name: request.actionSet.name, actions: portActions } });
+          port.editorActive = true;
+        }
+      });
+    }
+    data.current.editor = editorEntry;
+  },
+  closeEditor: async () => {
+    console.log("running close editor")
+    console.log(data.current.editor.portList)
+    let compiledActions = []
+    for (let editor of data.current.editor.portList) {
+      console.log(editor)
+      if (!editor.disconnected) {
+        let promiseLevel = new Promise((resolve, reject) => {
+          data.current.editor.editPromises.push({ tabId: editor.tabId, resolve: resolve, reject: reject });
+        });
+        editor.editorActive = false;
+        editor.postMessage({ action: "closeEditor" });
+        let retActions = await promiseLevel;
+        console.log("returned actions")
+        console.log(retActions)
+        compiledActions = compiledActions.concat(retActions);
+        console.log("compiled actions")
+        console.log(compiledActions)
+      }
+    }
+    data.current.editor = undefined;
+    console.log("close editor finished")
+    console.log(compiledActions)
+    return compiledActions;
   },
 }
 chrome.storage.local.get(["recording"]).then((result) => {
-  data.recording = result.recording == undefined ? false : result.recording;
+  recorder.recording = result.recording == undefined ? false : result.recording;
 });
 //Tab Management ***************************************************************
-chrome.tabs.onRemoved.addListener((tabId) => {
-  console.log("Tab Removed")
-  let port = data.portArray.find((port) => port.tabId == tabId);
-  if (port) {
-    console.log("Port removed: " + port.name);
-    let portIndex = data.portArray.indexOf(port);
-    if (data.portArray.length <= 1) {
-      head.currentPort = undefined;
-    } else if (head.currentPort == port) {
-      head.setCurrentPort(data.portArray[portIndex - 1]);
-    }
-    port.disconnect();
-    data.portArray.splice(portIndex, 1);
-  }
-
-});
 chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
   console.log("Tab Updated")
   if (changeInfo.title) {
-    head.trackLoad.loading = false;
-    head.trackLoad.loadAction = false;
+    recorder.urlLoad.loading = false;
+    recorder.urlLoad.loadAction = false;
   } else if (changeInfo.status == "loading" && changeInfo.url) {
-    head.trackLoad.loading = true;
+    recorder.urlLoad.loading = true;
   }
 });
 chrome.tabs.onActivated.addListener((activeInfo) => {
@@ -159,194 +406,108 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
     if (tab.url != "chrome://newtab/") {
       let port = data.portArray.find((port) => port.tabId == activeInfo.tabId);
       if (port) {
-        data.cacheSite("newTab", tab.url);
-        head.setCurrentPort(port);
+        console.log(`cached new site: ${tab.url}`)
+        recorder.cacheSite("newTab", tab.url);
+        recorder.setCurrentPort(port);
       }
     }
-    head.currentTab = activeInfo.tabId;
+    data.current.tab = activeInfo.tabId;
   })
-  console.log(head)
 });
 //Tab Management end ***********************************************************
 chrome.runtime.onConnect.addListener(function (port) {
-
+  console.log("Port Connected");
+  console.log(port);
   port.onMessage.addListener(function (msg) {
-    if (msg.action == "log") {
-      console.log("input Received");
-      data.cacheCallback();
-      /*if (head.cacheSite) {
-        head.currentLog.actions.push(head.cacheSite);
-        head.cacheSite = undefined;
-      }*/
-      if (msg.type == "click") {
-        if (msg.textContext != undefined) {
-          head.stageLog = {
-            action: "log",
-            type: "input",
-            text: msg.textContext,
-            specifier: msg.specifier,
-            location: msg.location,
-          };
+    switch (msg.action) {
+      case "log":
+        recorder.parseLog(msg);
+        break;
+      case "resolve":
+        data.current.actionPacket.resolve(msg);
+        break;
+      case "closedEditor":
+        //handles closed messages from the port and resolve the promise with their action list
+        let match = data.current.editor.editPromises.find((promise) => promise.tabId == port.tabId);
+        if (match) {
+          match.resolve(msg.actionList);
+          data.current.editor.editPromises.splice(data.current.editor.editPromises.indexOf(match), 1);
         }
-        head.currentLog.actions.push(msg);
-      } else if (msg.type == "input") {
-        if (msg.specifier != head.stageLog.specifier) {
-          head.resetHead();
-        }
-        if (msg.focusNode) {
-          head.stageLog.focusNode = msg.focusNode;
-        }
-        if (msg.key.length == 1) {
-          inputHandler(msg.key, msg.selection.split("-"));
-        } else if (msg.key == "undo") {
-          if (head.editHistory.length > 0) {
-            head.redoHistory.push(head.stageLog.text);
-            head.stageLog.text = head.editHistory.pop();
-          }
-        } else if (msg.key == "redo") {
-          if (head.redoHistory.length > 0) {
-            head.editHistory.push(head.stageLog.text);
-            head.stageLog.text = head.redoHistory.pop();
-          }
-        } else if (msg.key == "paste") {
-          inputHandler(msg.text, msg.selection.split("-"));
-        } else if (msg.key == "cut") {
-          let range = msg.selection.split("-");
-          head.editHistory.push(head.stageLog.text);
-          head.stageLog.text = head.stageLog.text.substring(0, range[0]) + head.stageLog.text.substring(range[1], head.stageLog.text.length);
-        } else {
-          head.resetHead();
-          head.currentLog.actions.push(msg);
-        }
-        head.lastTextLog = msg;
-      }
-      if (!head.currentLog.urls.includes(msg.location)) {
-        head.currentLog.urls.push(msg.location);
-      }
-      if (head.trackLoad.loading) {
-        head.trackLoad.loadAction = true;
-      }
-    } else if (msg.action == "resolve") {
-      head.currentAction.resolve(msg);
-    } else if (msg.action == "closedEditor") {
-      //port.editorActive = false;
-      let match = data.currentEditor.editPromises.find((promise) => promise.tabId == port.tabId);
-      if (match) {
-        match.resolve(msg.actionList);
-        data.currentEditor.editPromises.splice(data.currentEditor.editPromises.indexOf(match), 1);
-      }
+        break;
+      case "closeEditor":
+        //handles messages from the port Editor ui to close itself using the data.closeEditor function
+        console.log("messaged to close editor")
+        data.closeEditor()
+        break;
+      case "testLog":
+        port.postMessage({ action: "testCase" })
+        break;
     }
   });
+  port.onDisconnect.addListener(data.disconnectPort);
   port.tabId = port.sender.tab.id;
   //Checks if the port's tab is already in the portArray
-  let tabMatch = data.portArray.find((test) => { return test.tabId == port.sender.tab.id });
+  let tabIndex = 0;
+  let tabMatch = data.portArray.find((test, index) => {
+    tabIndex = index;
+    return test.tabId == port.sender.tab.id
+  });
   console.log(tabMatch)
   if (tabMatch) {
     console.log("Port replaced: " + tabMatch.name);
     //if the port it is replacing is the current port, replace it
-    if (head.currentPort == tabMatch) {
-      data.cacheSite("newUrl", tabMatch.name);
-      head.setCurrentPort(port);
-      if (data.recording) {
+    if (data.current.port == tabMatch) {
+      recorder.cacheSite("newUrl", tabMatch.name);
+      recorder.setCurrentPort(port);
+      if (recorder.recording) {
         port.postMessage({ action: "startRecord" });
-        head.resetHead();
+        recorder.resetRecorder();
       }
     }
     //remove the old port from the array
-    data.portArray.splice(data.portArray.indexOf(tabMatch), 1)
+    data.disconnectPort(tabMatch, tabIndex);
   }
-  if (port.tabId == head.currentTab) {
-    data.cacheSite("newTab", port.name);
-    head.currentPort = port;
+  if (port.tabId == data.current.tab) {
+    recorder.cacheSite("newTab", port.name);
+    data.current.port = port;
   }
-  //head.currentPort = port;
   data.portArray.push(port);
   console.log(data.portArray)
   console.log("Port Name: " + port.name)
   data.promisePorts.resolveTarget(port);
   console.log(data)
-  console.log(head)
 });
 chrome.runtime.onMessage.addListener((request, sender, reply) => {
   switch (request.action) {
     case "startRecord":
-      data.recording = true;
-      head.currentPort.postMessage({ action: "startRecord" });
+      recorder.startRecord();
       reply({ log: "started" });
       break;
     case "stopRecord":
-      head.currentPort.postMessage({ action: "stopRecord" });
-      head.currentLog.log = "finished";
-      head.resetHead();
-      data.recording = false;
-      reply(head.currentLog);
-      head.currentLog = {
-        actions: [],
-        urls: [],
-      };
+      recorder.stopRecord();
+      console.log("stopping record");
+      console.log(data.current.actionSet);
+      reply(data.current.actionSet);
+      console.log("template is now:")
+      console.log(recorder.templates.actionSet)
+      data.current.actionSet = structuredClone(recorder.templates.actionSet);
       break;
     case "runActionSet":
-      let actions = request.set.actions;
-      let runActions = async () => {
-        for (let action of actions) {
-          switch (action.action) {
-            case "log":
-              await new Promise((resolve, reject) => {
-                head.currentAction = { resolve: resolve, reject: reject };
-                action.action = "action";
-                console.log("reach here")
-                head.currentPort.postMessage(action);
-              })
-              break;
-            case "newUrl":
-              if (!action.autoLoad) {
-                if (head.currentPort) {
-                  await data.openURL(head.currentPort, action.location)
-                }
-              }
-              break;
-            case "newTab":
-              await data.openTab(action.location);
-              break;
-          }
-        }
-      };
-      runActions()
-      ///Here is where you stopped
+      runner.runActions(request.set.actions);
       break;
-    case "editAction":
-      if (!data.currentEditor) {
-        let editorEntry = {
-          id: request.actionSet.name,
-          portList: [],
-          editPromises: []
-        }
-        for (let url of request.urls) {
-          let portActions = request.actionSet.actions.filter((action) => action.location == url);
-          data.openTab(url).then((port) => {
-            editorEntry.portList.push(port);
-            if (!port.hasEditor) {
-              chrome.scripting.executeScript({ target: { tabId: port.tabId }, files: ["JS/editorUI.js"] }).then(() => {
-                reply({ log: "opened" });
-                port.postMessage({ action: "openEditor", actionSet: { name: request.actionSet.name, actions: portActions } });
-              });
-              port.editorActive = true;
-              port.hasEditor = true;
-            } else {
-              port.postMessage({ action: "openEditor", actionSet: { name: request.actionSet.name, actions: portActions } });
-              port.editorActive = true;
-            }
-          });
-        }
-        data.currentEditor = editorEntry;
-      } else if (data.currentEditor.id != request.actionSet.name) {
+    case "openEditor":
+      if (!data.current.editor) {
+        editor.openEditor(request);
+        reply({ log: "opened" });
+      } else if (data.current.editor.id != request.actionSet.name) {
         reply({ log: "alreadyOpen" });
       } else {
         reply({ log: "noAction" });
       }
       break;
     case "closeEditor":
-      if (data.currentEditor) {
+      console.log("close Editor Called")
+      if (data.current.editor) {
         console.log("running close editor")
         data.closeEditor().then((actionList) => {
           console.log("closed editor finished")
@@ -362,14 +523,3 @@ chrome.runtime.onMessage.addListener((request, sender, reply) => {
   }
   return true;
 });
-function inputHandler(key, range) {
-  let text = head.stageLog.text;
-  let pre = text;
-  console.log("input handler with key: " + key + " and range: " + range + "< add to " + text);
-  if (range[0] > -1 && range[1] > -1 && range[0] <= text.length && range[1] <= text.length) {
-    let textBefore = text.substring(0, range[0]);
-    let textAfter = text.substring(range[1], text.length);
-    head.stageLog.text = textBefore + key + textAfter;
-    head.editHistory.push(pre);
-  }
-}

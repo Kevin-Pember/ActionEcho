@@ -549,17 +549,27 @@ class ActionEditor extends basicElement {
         if(ui.editor != undefined){
             ui.editor.style.marginRight = "0px"; 
         }
-        this.ui.editBack.addEventListener("click", this.closeEditor);
+        this.ui.editBack.addEventListener("click", this.backEdit);
         this.ui.editSave.addEventListener("click", this.saveEdit);
         this.showEntry();
     }
-    async closeEditor() {
-        let list = [];
+    getEntryList() {
+        let actionList = [];
+        let entryChildren = this.ui.editEntryContainer.querySelectorAll("input-entry");
+        for (let child of entryChildren) {
+            actionList.push(child.action);
+        }
+        console.log(actionList);
+        return actionList;
+    }
+    hideEditor() {
         ui.editor.style.marginRight = "-500px";
-        this.ui.editBack.removeEventListener("click", this.closeEditor);
+        this.ui.editBack.removeEventListener("click", this.backEdit);
         this.ui.editSave.removeEventListener("click", this.saveEdit);
-        //plan to add a compile method to create the return list
-        return list;
+        return this.getEntryList();
+    }
+    backEdit(){
+        data.port.postMessage({action: "closeEditor"});
     }
     saveEdit(){
         data.port.postMessage({ action: "saveEditor" });

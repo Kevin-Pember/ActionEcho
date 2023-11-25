@@ -1,6 +1,6 @@
 console.log("AutoMade script loaded")
 console.log("inject.js loaded")
-window.addEventListener("load", () => {data.fullyLoaded = true});
+window.addEventListener("load", () => { data.fullyLoaded = true });
 //editor.style = `position: fixed; bottom: 10px; right: 10px; width: 300px; height: 300px; background-color: white; z-index: 10000000000;`
 let ui = {
     body: document.body,
@@ -9,157 +9,104 @@ let ui = {
     highlightElement: (element) => {
         //ui.highlight.style.visibility = "visible";
         //ui.highlight.style.zIndex = "2100000000";
-        let highElem = data.getElement(element);
+        let highElem = input.getElement(element);
         highElem.classList.add("highlightElem");
     },
     returnElement: (element) => {
         ui.body.style = ""
-        let highElem = data.getElement(element);
+        let highElem = input.getElement(element);
         highElem.addEventListener("animationiteration", () => {
             highElem.classList.remove("highlightElem");
         }, { once: true });
-        
+
     }
 }
 let data = {
     fullyLoaded: false,
+    browserOS: undefined,
     port: chrome.runtime.connect({ name: location.href }),
     targetElement: undefined,
-    actionQueue: [],
-    buttons: {
+    keyTable: [
+        {
+            mac: { key: "z", metaKey: true },
+            default: { key: "z", ctrlKey: true },
+            getKeyData: () => { return { key: "undo" } }
+        },
+        {
+            mac: { key: "z", metaKey: true, shiftKey: true },
+            default: { key: "y", ctrlKey: true },
+            getKeyData: () => { return { key: "redo" } }
+        },
+        {
+            mac: { key: "x", metaKey: true },
+            default: { key: "x", ctrlKey: true },
+            getKeyData: (event) => { return { key: "cut", selection: logger.getSelection(event.target) } }
+        },
+        {
+            mac: { key: "c", metaKey: true },
+            default: { key: "c", ctrlKey: true },
+            getKeyData: (event) => { return { key: "copy", selection: logger.getSelection(event.target) } }
+        },
+        {
+            mac: { key: "v", metaKey: true },
+            default: { key: "v", ctrlKey: true },
+            getKeyData: (event) => { return { key: "paste", selection: logger.getSelection(event.target) } }
+        },
+        {
+            mac: { key: "a", metaKey: true },
+            default: { key: "a", ctrlKey: true },
+            getKeyData: () => { return { key: "all" } }
+        },
+    ],
+    keyCodes: {
         Enter: 13,
-    },
-    eventHandler: async (event) => {
-        let target = event.target;
-        let log;
-        if (event.type == "click") {
-            log = {
-                location: location.href,
-                action: "log",
-                type: "click",
-                targetTag: target.tagName,
-                specifier: data.getSpecifier(target),
-            };
-            console.log("logging click")
-            if (target.tagName == "INPUT" || target.tagName == "TEXTAREA") {
-                log.textContext = target.value;
-                data.targetElement = log.specifier;
-            } else if (target.contentEditable == "true") {
-                log.textContext = target.innerText;
-                data.targetElement = log.specifier;
-            }
-        } else if (event.type == "keydown" || event.type == "keyup" || event.type == "keypress") {
-            log = {
-                location: location.href,
-                action: "log",
-                type: "input",
-                targetTag: target.tagName,
-                specifier: data.targetElement != undefined ? data.targetElement : data.getSpecifier(target),
-                focusNode: target.contentEditable == "true" ? data.getSpecifier(window.getSelection().focusNode) : undefined,
-                ...data.translateKey(event)
-            };
-            if (log.key == "paste") {
-                log.text = await navigator.clipboard.readText();
-            }
-        }
-        data.port.postMessage(log);
-    },
-    getSelection: (target) => {
-        if ((target.tagName == "INPUT" && target.type == "text") || target.tagName == "TEXTAREA") {
-            return target.selectionStart + "-" + target.selectionEnd
-        } else {
-            let sel = window.getSelection()
-            if (sel.baseOffset > sel.extentOffset) {
-                return sel.extentOffset + "-" + sel.baseOffset;
-            } else {
-                return sel.baseOffset + "-" + sel.extentOffset;
-            }
-        }
-    },
-    getElement: (specifier) => {
-        return document.querySelector(specifier);
-    },
-    getSpecifier: (element) => {
-        let specifier = element.tagName
-        if (element.id.length > 0) {
-            specifier += "#" + element.id;
-        }
-        if (element.classList.length > 0) {
-            specifier += "." + element.classList[0];
-        }
-        if (document.querySelectorAll(specifier.stringId).length > 1) {
-            specifier += ":nth-child(" + [...document.querySelectorAll(specifier.stringId)].indexOf(element) + ")";
-        }
-        return specifier;
-    },
-    translateKey: (event) => {
-        const platform = window.navigator.platform.toLowerCase();
-        const isMac = platform.includes('mac');
-        const actionList = [
-            {
-                eventParam: isMac ? { key: "z", metaKey: true } : { key: "z", ctrlKey: true },
-                returnValue: { key: "undo" }
-            },
-            {
-                eventParam: isMac ? { key: "z", metaKey: true, shiftKey: true } : { key: "y", ctrlKey: true },
-                returnValue: { key: "redo" }
-            },
-            {
-                eventParam: isMac ? { key: "x", metaKey: true } : { key: "x", ctrlKey: true },
-                returnValue: { key: "cut", selection: data.getSelection(event.target) }
-            },
-            {
-                eventParam: isMac ? { key: "c", metaKey: true } : { key: "c", ctrlKey: true },
-                returnValue: { key: "copy", selection: data.getSelection(event.target) }
-            },
-            {
-                eventParam: isMac ? { key: "v", metaKey: true } : { key: "v", ctrlKey: true },
-                returnValue: { key: "paste", selection: data.getSelection(event.target) }
-            },
-            {
-                eventParam: isMac ? { key: "a", metaKey: true } : { key: "a", ctrlKey: true },
-                returnValue: { key: "all" }
-            },
-            {
-                eventParam: { key: "ArrowDown" },
-                returnValue: { key: "End" }
-            }, {
-                eventParam: { key: "ArrowUp" },
-                returnValue: { key: "Home" }
-            }
-        ]
-        for (let action of actionList) {
-            if (Object.keys(action.eventParam).every(key => action.eventParam[key] == event[key])) {
-                return action.returnValue;
-            };
-        }
-        return { key: event.key, selection: data.getSelection(event.target) };
     }
 }
 let input = {
-    throwAction: (msg) => {
-        if (msg.type == "click") {
-            let element = data.getElement(msg.specifier);
-            console.log(element)
-            element.dispatchEvent(new MouseEvent('click', {
-                bubbles: true,
-                cancelable: true,
-                view: window
-            }));
-            element.focus();
-            console.log("click event dispatched");
-        } else if (msg.type == "input") {
-            console.log("Running input action")
-            console.log(msg)
-            let element = data.getElement(msg.specifier);
-            if (msg.text != undefined) {
-                input.typeText(element, msg);
-            } else if (msg.key != undefined) {
-                input.throwKeyEvents(element, msg.key);
+    actionQueue: [],
+    parsePacket: (packet) => {
+        console.log(packet)
+        if (packet.v === 1.0) {
+            for (let action of packet.actions) {
+                console.log(action)
+                input.throwAction(action);
             }
+        } else {
+            throw new Error("Packet version not supported");
         }
     },
-    typeText: (element, log) => {
+    throwAction: (msg) => {
+        console.log("throwing action")
+        console.log(`State is ${document.readyState}`)
+        if (document.readyState === "complete") {
+            switch (msg.type) {
+                case "click":
+                    console.log("Running click action");
+                    console.log(`Element Specifier is ${msg.specifier}`)
+                    let element = input.getElement(msg.specifier);
+                    console.log(element)
+                    element.dispatchEvent(new MouseEvent('click', {
+                        bubbles: true,
+                        cancelable: true,
+                        view: window
+                    }));
+                    element.focus();
+                    console.log("click event dispatched");
+                    break;
+                case "input":
+                    console.log("Running input action");
+                    input.enterText(input.getElement(msg.specifier), msg);
+                    break;
+                case "key":
+                    console.log("Running key action")
+                    input.enterKey(input.getElement(msg.specifier), msg.key);
+                    break;
+            }
+        } else {
+            input.actionQueue.push(msg);
+        }
+    },
+    enterText: (element, log) => {
         console.log("typing")
         console.log(log)
         let typeInput, charArray = log.text.split(""), range = [0, 0];
@@ -167,23 +114,16 @@ let input = {
         console.log("Typing the text: " + log.text)
         if (element.contentEditable == "true") {
             typeInput = (text, range) => {
-                let focusNode = data.getElement(log.focusNode),
-                    index = 0,
+                let index = 0,
                     targetChild = undefined,
                     higher = range[1],
                     lower = range[0],
                     sel = window.getSelection(),
                     rangeSel = document.createRange();
-                if (element.contains(focusNode) && focusNode != null) {
-                    let appendString = focusNode.nodeValue.substring(0, lower) + text;
-                    focusNode.nodeValue = appendString + focusNode.nodeValue.substring(higher);
-                    targetChild = focusNode;
-                    index = appendString.length;
-                } else {
-                    element.innerHTML = element.innerHTML + text;
-                    targetChild = element.childNodes[0];
-                    index = text.length + 1;
-                }
+                element.innerHTML = element.innerHTML + text;
+                targetChild = element.childNodes[0];
+                index = text.length;
+
                 rangeSel.setStart(targetChild, index);
                 rangeSel.collapse(true);
                 sel.removeAllRanges();
@@ -202,11 +142,11 @@ let input = {
             console.log(char)
             typeInput(char, range);
             range = [range[0] + 1, range[0] + 1];
-            input.throwKeyEvents(element, char);
+            input.enterKey(element, char);
         }
     },
-    throwKeyEvents: (elem, key) => {
-        let keyCode = key.length > 1 ? data.buttons[key] : key;
+    enterKey: (elem, key) => {
+        let keyCode = key.length > 1 ? data.keyCodes[key] : key;
         let eventObject = {
             key: key,
             code: key,
@@ -221,18 +161,155 @@ let input = {
         elem.dispatchEvent(new KeyboardEvent('keyup', eventObject));
         elem.dispatchEvent(new InputEvent('input', { data: key, inputType: "insertText", bubbles: true }));
     },
-    runQueue: () => {}
+    runQueue: () => {
+        for (let action of input.actionQueue) {
+            input.throwAction(action);
+        }
+        input.actionQueue = [];
+    },
+    getElement: (specifier) => {
+        let index = specifier.indexOf("--");
+        if (index == 0) {
+            let endIndex = specifier.indexOf("$");
+            let index = Number(specifier.substring(2, endIndex));
+            specifier = specifier.substring(endIndex + 1);
+            return document.querySelectorAll(specifier)[index];
+        } else {
+            let element = document.querySelectorAll(specifier);
+            if (element.length === 1) {
+                return element[0];
+            } else if (element.length > 1) {
+                throw new Error("Multiple Elements found");
+                return null;
+            } else {
+                throw new Error("Element not found");
+                return null;
+            }
+        }
+    },
+}
+let logger = {
+    templates: {
+        click: {
+            action: "log",
+            type: "click",
+            specifier: undefined,
+            //if text based element
+            textContext: undefined,
+        },
+        input: {
+            action: "log",
+            specifier: undefined,
+            key: undefined,
+        }
+    },
+    eventHandler: async (event) => {
+        let target = event.target;
+        let log;
+        if (event.type == "click") {
+            log = { ...logger.templates.click };
+            log.specifier = logger.getSpecifier(target);
+            /*log = {
+                location: location.href,
+                action: "log",
+                type: "click",
+                targetTag: target.tagName,
+                specifier: data.getSpecifier(target),
+            };*/
+            if (target.tagName == "INPUT" || target.tagName == "TEXTAREA") {
+                log.textContext = target.value;
+                data.targetElement = log.specifier;
+            } else if (target.contentEditable == "true") {
+                log.textContext = target.innerText;
+                data.targetElement = log.specifier;
+            }
+        } else if (event.type == "keydown" || event.type == "keyup" || event.type == "keypress") {
+            log = { ...logger.templates.input };
+            log.specifier = data.targetElement != undefined ? data.targetElement : logger.getSpecifier(target);
+            //log.focusNode = target.contentEditable == "true" ? logger.getSpecifier(window.getSelection().focusNode) : undefined;
+            //log.key = keyInfo.key;
+            //log.selection = keyInfo.selection;
+            /*if (log.key === "paste") {
+                log.text = await navigator.clipboard.readText();
+            }*/
+            if (event.key.length > 1) {
+                log.type = "key";
+                if (data.browserOS == undefined) {
+                    let platInfo = await chrome.runtime.getPlatformInfo();
+                    if (platInfo == "mac") {
+                        data.browserOS = "mac";
+                    } else {
+                        data.browserOS = "default";
+                    }
+                }
+                for (let action of data.keyTable) {
+                    if (Object.keys(action[data.browserOS]).every(key => action.eventParam[key] == event[key])) {
+                        Object.assign(log, action.getKeyData(event));
+                        break;
+                    };
+                }
+            } else {
+                log.type = "input";
+                log.key = event.key;
+                log.selection = logger.getSelection(event.target);
+            };
+        }
+        console.log(log);
+        data.port.postMessage(log);
+    },
+    getSelection: (target) => {
+        if ((target.tagName == "INPUT" && target.type == "text") || target.tagName == "TEXTAREA") {
+            return target.selectionStart + "-" + target.selectionEnd
+        } else {
+            let sel = window.getSelection()
+            if (sel.baseOffset > sel.extentOffset) {
+                return sel.extentOffset + "-" + sel.baseOffset;
+            } else {
+                return sel.baseOffset + "-" + sel.extentOffset;
+            }
+        }
+    },
+    getSpecifier: (element) => {
+        let specifier = element.tagName;
+        outer: {
+            let matchList;
+            if (element.id.length > 0) {
+                specifier += `#${element.id}`;
+                matchList = document.querySelectorAll(specifier)
+                if (matchList.length === 1) {
+                    break outer;
+                }
+            } else if (element.classList.length > 0) {
+                specifier += `.${element.classList[0]}`;
+                matchList = document.querySelectorAll(specifier)
+                if (matchList.length === 1) {
+                    break outer;
+                }
+
+            }
+            specifier = `--${[...matchList].indexOf(element)}$${specifier}`;
+        }
+        return specifier;
+    },
+}
+//For fulfilling events that were called before the page was done loading
+document.onreadystatechange = () => {
+    if (document.readyState === "complete") {
+        console.log("Document fully loaded");
+    }
+    if (document.readyState === "complete" && input.actionQueue.length > 0) {
+        input.runQueue();
+    }
 }
 data.port.onMessage.addListener(function (msg) {
-    console.log("message recieved")
     switch (msg.action) {
         case "startRecord":
-            document.addEventListener('click', data.eventHandler);
-            document.addEventListener('keydown', data.eventHandler);
+            document.addEventListener('click', logger.eventHandler);
+            document.addEventListener('keydown', logger.eventHandler);
             break;
         case "stopRecord":
-            document.removeEventListener('click', data.eventHandler);
-            document.removeEventListener('keydown', data.eventHandler);
+            document.removeEventListener('click', logger.eventHandler);
+            document.removeEventListener('keydown', logger.eventHandler);
             break;
         case "highlight":
             console.log(msg)
@@ -244,57 +321,33 @@ data.port.onMessage.addListener(function (msg) {
             break;
         case "action":
             console.log("completing Action")
-            throwAction(msg);
+            input.throwAction(msg);
             data.port.postMessage({ action: "resolve" });
             break;
+        case "actionPacket":
+            console.log("completing Action Packet")
+            console.log(msg)
+            input.parsePacket(msg);
+            break;
         case "openEditor":
-            if(ui.editor != undefined){
+            if (ui.editor) {
                 console.log("Editor Opened")
                 ui.editor.openEditor(msg.actionSet)
                 ui.editor.showEntry();
-            }else {
+            } else {
                 throw new Error("Editor not found");
             }
             break;
         case "closeEditor":
-            if(ui.editor != undefined){
+            if (ui.editor) {
                 console.log("Editor Closed")
-                ui.editor.closeEditor().then((list) => {
-                    data.port.postMessage({ action: "closedEditor", actionList: list });
-                });
-            }else {
+                data.port.postMessage({ action: "closedEditor", actionList: ui.editor.hideEditor() });
+            } else {
                 throw new Error("Editor not found");
             }
             break;
-        case "newURL":
+        case "setURL":
             location.href = msg.url;
             break;
     }
 });
-//console.log(Math.max(ui.body.scrollHeight, ui.body.offsetHeight, ui.html.clientHeight, ui.html.scrollHeight, ui.html.offsetHeight))
-ui.styles.innerHTML = `
-.highlightElem{
-        z-index: 2147483640 !important;
-        filter: none !important;
-        animation: highlight 4s infinite;
-    }
-    @keyframes highlight {
-        0% {
-            border: 5px solid transparent;
-            transform: scale(1);
-            border-radius: 5px;
-        }
-        50% {
-            border: 5px solid #c781bb;
-            transform: scale(.995);
-            border-radius: 20px;
-        }
-        100% {
-            border: 5px solid transparent;
-            transform: scale(1);
-            border-radius: 5px;
-        }
-    }
-    
-`;
-document.head.appendChild(ui.styles);

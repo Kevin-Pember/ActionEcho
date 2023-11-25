@@ -3,11 +3,11 @@
     "name": "AutoMade",
     "description": "Automate actions in chrome",
     "version": "1.0",
-    "permissions": ["scripting", "activeTab","storage","unlimitedStorage","favicon", "webNavigation","tabs"],
+    "permissions": ["scripting", "activeTab","storage","unlimitedStorage","favicon", "webNavigation","tabs","nativeMessaging"],
     "host_permissions": ["<all_urls>"],
     "content_scripts": [
       {
-        "matches": ["https://*/*"],
+        "matches": ["<all_urls>"],
         "js": ["libraries/webcomponents-bundle.js","JS/inject.js"]
       }
     ],
