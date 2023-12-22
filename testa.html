@@ -31,26 +31,30 @@
             width: 50px;
 
         }
-        #testCases{
+
+        #testCases {
             display: grid;
             grid-template-columns: 100%;
             row-gap: 10px;
             margin-bottom: 10px;
             width: 210px;
         }
-        .indicatorContainer{
+
+        .indicatorContainer {
             display: grid;
             grid-template-columns: calc(100% - 50px) 50px;
         }
-        .indicator{
+
+        .indicator {
             border-radius: 50%;
             width: 20px;
             height: 20px;
             background-color: red;
             margin: auto;
         }
-        .complete{
+        .complete {
             background-color: green;
+            color: darkGreen;
         }
     </style>
     <div id="testCases">
@@ -70,10 +74,22 @@
             <button id="clickableElem" class="Button" onclick="clickEvent()">click me!</button>
             <div id="clickableIndicator" class="indicator"></div>
         </div>
+        <div class="indicatorContainer">
+            <button id="clickableElem" class="Button" onclick="Timestamp()">Timestamp</button>
+            <div id="timestampContainer" style="width: 500px; border-radius: 10px; height: 20px; background-color: transparent;"></div>
+        </div>
     </div>
     <button id="testButton" class="Button" onclick="checkTest()">check</button>
     <button id="testButton" class="Button" onclick="resetTest()">reset</button>
-    <h1 id="resultHeader" style="visibility: hidden;">Pass</h1>
+    <h1 id="resultHeader" style="visibility: hidden; margin-bottom: 100px;">Pass</h1>
+    <div style="width: 225px;height: 125px;">
+        <scheduled-action></scheduled-action>
+    </div>
+    <div
+        style="background: rgba(160, 160, 160, 0.541); border-radius: 25px; width: 400px; height: 300px; padding: 10px; ">
+        <clock-input style="width: 185px; height: 60px; position: relative; display:block;"></clock-input>
+        <date-input style="width: 185px; height: 40px; position: relative; display:block;"></date-input>
+
 </body>
 <script>
     /*let queryElem = document.querySelector("uni-query");
@@ -205,6 +221,14 @@
         checks.clickCheck = true;
         document.getElementById("clickableIndicator").classList.add("complete");
     };
+    let Timestamp = () => {
+        let now = new Date();
+        let nowString = now.toString();
+        console.log(nowString);
+        checks.timeCheck = true;
+        document.getElementById("timestampContainer").classList.add("complete");
+        document.getElementById("timestampContainer").innerHTML = nowString;
+    };
     let resetTest = () => {
         checks = {};
         document.getElementById("inputElem").value = "";
@@ -219,11 +243,11 @@
     let checkInput = (e) => {
         let element = e.target;
         let test = false;
-        let indicator = element.id.substring(0,element.id.indexOf("Elem")) + "Indicator";
+        let indicator = element.id.substring(0, element.id.indexOf("Elem")) + "Indicator";
         console.log(indicator);
-        if (element.contentEditable === "true"){
+        if (element.contentEditable === "true") {
             test = element.textContent == "test";
-        }else{
+        } else {
             test = element.value == "test";
         }
         console.log(`the test is ${test}`);
@@ -245,7 +269,7 @@
         console.log(`Editable Elem: ${editableHasValue}`);
         console.log(`Area Elem: ${areaHasValue}`);
         console.log(`Click Elem: ${checks.clickCheck}`);
-        if (inputHasValue && editableHasValue && areaHasValue && checks.clickCheck) {
+        if (inputHasValue && editableHasValue && areaHasValue && checks.clickCheck && checks.timeCheck) {
             header.style = "color: green; visibility: visible";
             header.innerHTML = "Pass";
         } else {

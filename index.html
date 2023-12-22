@@ -15,34 +15,54 @@
         * {
             color: var(--text);
             background-color: transparent;
+            font-family: DM Sans;
+            padding: 0;
+            margin: 0;
         }
 
         #bodyID {
             background-color: var(--primary);
         }
+        .textBorder{
+            text-shadow: 1px 1px 0 var(--accentBorder), -1px -1px 0 var(--accentBorder), 1px -1px 0 var(--accentBorder),
+            -1px 1px 0 var(--accentBorder), 1px 1px 0 var(--accentBorder);
+        }
 
         #Title {
-            font-family: Arial, Helvetica, sans-serif;
-            background: linear-gradient(45deg, var(--accent), var(--accent2));
-            -webkit-text-fill-color: transparent;
-            -webkit-background-clip: text;
-            right: 0px;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 800;
             position: relative;
-            font-size: 35px;
+            font-size: 55px;
             height: 35px;
+            transform: rotate(90deg);
             width: 100%;
+            margin-left: 15px;
+            transform-origin: center;
+            margin-left: -60px;
+            margin-top: 90px;
+        }
+
+        #mainPage {
+            display: grid;
+            width: 500px;
+            height: 325px;
+            overflow: hidden;
+            grid-template-columns: calc(100% - 50px) 50px;
+            
         }
 
         .contentPage {
-            height: calc(100% - 35px);
+            height: 100%;
             width: 100%;
             position: relative;
             left: 0px;
+            top: 0px;
         }
 
         .hiddenPage {
             visibility: hidden;
-            position: absolute;
+            position: fixed;
+            z-index: -1;
         }
 
         #historyBar {
@@ -50,7 +70,7 @@
             overflow-x: auto;
             display: grid;
             grid-auto-flow: column;
-            grid-auto-columns: 50%;
+            grid-auto-columns: 40%;
             column-gap: 10px;
             height: 125px;
             width: 400px;
@@ -59,15 +79,19 @@
 
         button,
         input,
+        scheduled-action,
+        action-set,
         .inputArea {
-            border-radius: 20px;
-            border: 2px solid var(--accentBorder);
+            border: none;
             height: 50px;
-            background-image: linear-gradient(45deg, var(--accent), var(--accent2));
-            background-size: 400% 400%;
-            animation: gradient 15s ease infinite;
+            background-color: var(--secondary);
             outline: none;
+            border: 3px solid var(--accentBorder);
+            height: 100%;
+            position: relative;
+            box-sizing: border-box;
         }
+
         .entry {
             display: flex;
             justify-content: center;
@@ -76,69 +100,76 @@
             position: relative;
             transition: all 0.5s ease;
         }
-
-        .inputArea {
-            height: 100px;
-            position: relative;
+        .emptyHeader{
+            height: 100%;
+            font-size: 60px;
+            margin-top: -27px;
+            color: var(--darkText);
         }
 
         ::-webkit-scrollbar {
             width: 10px;
+            height: 10px;
+            
         }
 
         ::-webkit-scrollbar-track {
             background: transparent;
+            margin: 50px;
         }
 
         ::-webkit-scrollbar-thumb {
-            width: 5px;
+            width: 2.5px;
             background: #00000080;
             border-radius: 10px;
         }
 
         ::-webkit-scrollbar-button:end:increment {
-            height: 7px;
+            height: 0px;
+            width: 0px;
             display: block;
             background: transparent;
         }
 
         ::-webkit-scrollbar-button:start:increment {
-            height: 7px;
+            height: 0px;
+            width: 0px;
             display: block;
             background: transparent;
         }
     </style>
-    <background-div id="bgDiv" style="width: 100%;height: 100%; position: absolute; left:0; top: 0;"></background-div>
-    <h1 id="Title">AutoMade</h1>
+    <background-div id="bgDiv" style="position: fixed;top: 0px;left: 0px; height: 100%;width: 100%;">
+    </background-div>
+    <svg id="dial" style="position: absolute; height: 600px; left: 85%; top: -150px; animation: 360s linear 1s infinite running rotation;" fill="none" viewBox="0 0 8080 8080" xmlns="http://www.w3.org/2000/svg">
+        <path d="m8040 4040c0 2209.1-1790.9 4e3 -4e3 4e3s-4e3 -1790.9-4e3 -4e3 1790.9-4e3 4e3 -4e3 4e3 1790.9 4e3 4e3z" stroke="var(--darkText)" stroke-dasharray="360 360 360 360" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="1.7434" stroke-width="80"/>
+        <path d="m6440 4040c0 1325.5-1074.5 2400-2400 2400s-2400-1074.5-2400-2400 1074.5-2400 2400-2400 2400 1074.5 2400 2400z" stroke="var(--darkText)" stroke-dasharray="360 360 360 360" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="1.7434" stroke-width="80"/>
+        <path d="m7240 4040c0 1767.3-1432.7 3200-3200 3200s-3200-1432.7-3200-3200 1432.7-3200 3200-3200 3200 1432.7 3200 3200z" stroke="var(--darkText)" stroke-dasharray="360 360 360 360" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="1.7434" stroke-width="80"/>
+    </svg>
     <div id="mainPage" class="contentPage">
-        <button class="important" id="recordStart">Create Automation</button>
-        <div style="position: relative;">
-            <div style="display: flex; justify-content: center; align-items: center; height: 45px;">
-                <h3 style="margin: 0px; font-size: 20px;">History</h3>
-                <button-generic id="clearHistory" bcolor="accent"
-                    style="aspect-ratio: 1; height: 35px; position: absolute; right: 0px">
-                    <svg viewBox="0 0 617 740" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M617 89.9388C617 40.267 478.88 0 308.5 0C138.12 0 0 40.267 0 89.9388H617Z"
-                            fill="#FFF" fill-opacity=".3" />
-                        <path
-                            d="m0 111.43c0-11.869 11.335-21.49 25.318-21.49h566.36c13.983 0 25.318 9.6213 25.318 21.49v23.081c0 11.869-11.335 21.49-25.318 21.49h-566.36c-13.982 0-25.318-9.621-25.318-21.49v-23.081z"
-                            fill-opacity=".3" />
-                        <path d="M0 89.9388H617V122.571H0V89.9388Z" fill="#FFF" fill-opacity=".3" />
-                        <path
-                            d="m46 192c0-1.343 0.04-2.677 0.1191-4h524.76c0.079 1.323 0.119 2.657 0.119 4v482c0 36.451-29.549 66-66 66h-393c-36.451 0-66-29.549-66-66v-482zm270.04 87.844c0-8.75 7.093-15.844 15.843-15.844s15.844 7.094 15.844 15.844v88.863c0 8.75-7.094 15.843-15.844 15.843s-15.843-7.093-15.843-15.843v-88.863zm-15.005 177.19 194.04 74.018-42.686 42.687 55.617 55.617-34.647 34.647-55.617-55.617-42.687 42.686-74.018-194.04zm-193.03 30.848c0 8.751 7.093 15.844 15.844 15.844h88.863c8.75 0 15.843-7.093 15.843-15.844 0-8.75-7.093-15.844-15.843-15.844h-88.863c-8.751 0-15.844 7.094-15.844 15.844zm65.573-158.31c-6.188 6.187-6.188 16.219 0 22.406l62.835 62.836c6.187 6.187 16.219 6.187 22.406 0 6.188-6.188 6.188-16.219 0-22.407l-62.835-62.835c-6.187-6.188-16.219-6.188-22.406 0zm253.78 85.242c-6.187 6.187-16.219 6.187-22.406 0-6.188-6.188-6.188-16.219 0-22.407l62.835-62.835c6.187-6.188 16.219-6.188 22.407 0 6.187 6.187 6.187 16.219 0 22.406l-62.836 62.836zm-231.37 231.37c-6.187 6.187-16.219 6.187-22.406 0-6.188-6.188-6.188-16.219 0-22.407l62.835-62.835c6.187-6.188 16.219-6.188 22.406 0 6.188 6.187 6.188 16.219 0 22.406l-62.835 62.836z"
-                            clip-rule="evenodd" fill="#FFF" fill-opacity=".3" fill-rule="evenodd" />
-                    </svg>
-                </button-generic>
+        <div id="mainContent" style="margin: 10px;">
+            <div id="eventsStage" style="visibility: hidden;position: absolute;height:140px; width: 100%; display: inline-grid; grid-auto-columns: 225px; overflow: scroll hidden; gap: 5px; grid-auto-flow: column; ">
             </div>
-            <div id="historyBar">
+            <div style="position: relative; height: 160px;">
+                <h3 style="margin: 0px; font-size: 30px; font-weight: 600;" class="textBorder">Actions</h3>
+                <div id="historyBar">
+                    <h1 id="actionsNone" class="emptyHeader">none</h1>
+                </div>
             </div>
+        </div>
+        <div style="display: grid; grid-template-rows: calc(100% - 50px) 50px;">
+            <h1 id="Title" class="textBorder">AutoMade</h1>
+            <button-generic id="recordStart" style="background-color: var(--secondary); aspect-ratio: 1; height: 45px; padding: 0; display: grid; justify-items: center; align-items: center; position: relative;">
+                <svg style="height: 30px"; fill="none" viewBox="0 0 499 499" xmlns="http://www.w3.org/2000/svg">
+                    <path d="m190.95 486.2c0 7.031 5.7 12.732 12.732 12.732h91.673c7.031 0 12.732-5.701 12.732-12.733v-178.11h178.11c7.032 0 12.732-5.701 12.732-12.732v-91.673c0-7.031-5.701-12.732-12.732-12.732h-178.11v-178.11c0-7.0319-5.701-12.732-12.733-12.732l-91.672-2.18e-4c-7.031 7.3e-5 -12.732 5.7006-12.732 12.732v178.11h-178.11c-7.0318 0-12.732 5.7-12.732 12.732l-7.7e-5 91.673c0 7.031 5.7004 12.732 12.732 12.732h178.11v178.11z" fill="var(--darkText)"/>
+                </svg>
+            </button-generic>
         </div>
     </div>
     <div id="recordPage" class="contentPage hiddenPage" style="display: grid; grid-auto-flow: row;  justify-items: center;
-    align-items: center;">
+    align-items: center; height: 200px; width: 150px;">
         <button id="recordStop"
-            style="border-radius: 50%;width: 125px;height: 125px;aspect-ratio: 1/1;display: grid;justify-content: center;align-items: center;">
-            <div style="border-radius: 10px;height: 45px;width: 45px;background-color: var(--translucent);"></div>
+            style="height: 100px;aspect-ratio: 1/1;display: grid;justify-content: center;align-items: center;">
+            <div style="height: 45px;width: 45px;background-color: var(--translucent);"></div>
         </button>
         <h2 style="text-align: center;">Click to stop recording</h2>
     </div>
@@ -160,25 +191,11 @@
                 </svg>
             </button-generic>
         </div>
-        <div id="editEntry" style="width: 100%; height: 400px; padding-top: 10px;">
-
-        </div>
     </div>
     <uni-query id="uniPopup" style="top:100%; background-color: transparent;
     position: absolute;left: 0px;height: 100%;width: 100%;display: grid;
     justify-content: center;align-items: center;z-index: 100;
     transition: top 0.25s ease;"></uni-query>
-    <!--<div id="namePopup"
-        style="top:100%; background-color: transparent;position: absolute;left: 0px;height: 100%;width: 100%;display: grid;justify-content: center;align-items: center;z-index: 100;transition: top 0.25s ease;">
-        <div style="border-radius:20px; background-color:var(--primary);padding: 10px;">
-            <h2>Enter Name</h2>
-            <div style="height: 50px; display: flex; gap: 5px">
-                <input type="text" id="nameInput"
-                    style="width:150px;height: 46px;padding: 0 5px 0 5px;font-size: 25px;">
-                <button id="enterNameButton" style="aspect-ratio: 1; font-size: 30px;">↳</button>
-            </div>
-        </div>
-    </div>-->
 </body>
 <script src="JS/index.js"></script>
 </body>

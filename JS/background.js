@@ -387,6 +387,32 @@ let editor = {
     return compiledActions;
   },
 }
+let clock = {
+  schedule: {
+    times : [],
+    actions : [],
+  },
+  checkTime: () => {
+    let now = Date.now();
+    for (let i = 0; i < clock.schedule.times.length; i++) {
+      if(now >= clock.schedule.times[i]){
+        clock.completeIndex(i);
+        clock.schedule.actions.splice(i, 1);
+        clock.schedule.times.splice(i, 1);
+        i--;
+      }
+    }
+  },
+  completeIndex: async (index) => {
+    let actions = clock.schedule.actions[index];
+    await runner.runActions(actions);
+  },
+  addSchedule: (actions, time) => {
+    clock.schedule.actions.push(actions);
+    clock.schedule.times.push(time);
+  },
+}
+clock.interval = setInterval(clock.checkTime, 200);
 chrome.storage.local.get(["recording"]).then((result) => {
   recorder.recording = result.recording == undefined ? false : result.recording;
 });
@@ -492,6 +518,10 @@ chrome.runtime.onMessage.addListener((request, sender, reply) => {
       console.log(recorder.templates.actionSet)
       data.current.actionSet = structuredClone(recorder.templates.actionSet);
       break;
+    case "scheduleActionSet":
+      clock.addSchedule(request.set.actions, request.set.date);
+      reply({log:"added"})
+      break;
     case "runActionSet":
       runner.runActions(request.set.actions);
       break;
@@ -517,9 +547,20 @@ chrome.runtime.onMessage.addListener((request, sender, reply) => {
         reply({ log: "noEditor" });
       }
       break;
-    case "testLog":
+      case "testLog":
       console.log("test log");
       reply({ log: "test" });
+      break;
+    
   }
   return true;
 });
+/*chrome.storage.local.get(["scheduledEvents"]).then((result) => {
+  console.log(result)
+  //data.actionsData = result.scheduledEvents == undefined ? [] : result.scheduledEvents;
+  if (result.scheduledEvents != undefined) {
+    for(let event of result.scheduledEvents){
+      clock.addSchedule(event.actions, event.time);
+    }
+  }
+});*/

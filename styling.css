@@ -1,15 +1,19 @@
+
 :root {
-    --primary: #1b1b1f;
-    --secondary: #424658;
-    --accentBorder: #252f53;
-    --accent: #364478;
+    --primary: #DCB38E;
+    --secondary: #FFD7B3;
+    --accentBorder: #A78E77;
+    --accent: #DCBB9E;
     --accent2: #5b3d56;
     --highlight: #5b3d56;
-    --text: #bbc6ff;
+    --text: #FFD7B3;
+    --darkText: #C59870;
     --translucent: #00000033;
     --semi-transparent: #000000c5;
     --neutralColor: #80808080;
   }
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,800;9..40,900&display=swap');
+
   @keyframes gradient {
     0% {
       background-position: 0% 50%;
@@ -19,5 +23,13 @@
     }
     100% {
       background-position: 0% 50%;
+    }
+  }
+  @keyframes rotation{
+    0%{
+      transform: rotate(0deg);
+    }
+    100%{
+      transform: rotate(360deg);
     }
   }
