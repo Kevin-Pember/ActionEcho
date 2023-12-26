@@ -9,6 +9,7 @@ let data = {
   portArray: [],
   currentEditor: undefined,
   siteCache: undefined,
+  uiLink: undefined,
   promisePorts: {
     tabs: [],
     push: (promise) => {
@@ -390,31 +391,84 @@ let editor = {
 let clock = {
   schedule: {
     times : [],
-    actions : [],
+    actionLists : [],
   },
   checkTime: () => {
     let now = Date.now();
     for (let i = 0; i < clock.schedule.times.length; i++) {
+      /*console.log("now vs check")
+      console.log(now, clock.schedule.times[i])
+      console.log("Difference:"+(now - clock.schedule.times[i]))*/
       if(now >= clock.schedule.times[i]){
-        clock.completeIndex(i);
-        clock.schedule.actions.splice(i, 1);
-        clock.schedule.times.splice(i, 1);
+        if(now - clock.schedule.times[i] > 10000){
+          clock.updateSchedule(i, false);
+          clock.removeScheduledAction(i);
+        }else{
+          clock.completeIndex(i);
+          clock.updateSchedule(i, true);
+          clock.removeScheduledAction(i);
+        }
+        
         i--;
       }
     }
   },
   completeIndex: async (index) => {
-    let actions = clock.schedule.actions[index];
+    let actions = clock.schedule.actionLists[index].actions;
+    console.log(actions);
     await runner.runActions(actions);
   },
-  addSchedule: (actions, time) => {
-    clock.schedule.actions.push(actions);
-    clock.schedule.times.push(time);
+  addSchedule: (event) => {
+    clock.schedule.actionLists.push(event);
+    clock.schedule.times.push(event.date);
+  },
+  updateSchedule: async (index,pass) => {
+    let schedule = clock.schedule.actionLists[index];
+    if(pass){
+      chrome.runtime.sendMessage(data.uiLink.id, { action: "changeSchedule", id: schedule.id, state: "completed"});
+    }else{
+      chrome.runtime.sendMessage(data.uiLink.id, { action: "changeSchedule", id:  schedule.id, state: "failed"});
+    }
+  },
+  removeScheduledAction: (index) => {
+    if(index > -1){
+      clock.schedule.actionLists.splice(index, 1);
+      clock.schedule.times.splice(index, 1);
+      clock.saveSchedule();
+    }
+  },
+  saveSchedule: () => {
+    chrome.storage.local.set({ "scheduledEvents":clock.schedule.actionLists });
   },
 }
-clock.interval = setInterval(clock.checkTime, 200);
+
+let checkAlarmState = async () => {
+    const alarm = await chrome.alarms.get("clockAlarm");
+    if (!alarm) {
+      await chrome.alarms.create("clockAlarm", { 
+        periodInMinutes: 0.01 
+      });
+    }
+}
+let iterate = 0;
+chrome.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name === "clockAlarm") {
+    //console.log(iterate++);
+    clock.checkTime();
+  }
+});
+checkAlarmState();
 chrome.storage.local.get(["recording"]).then((result) => {
   recorder.recording = result.recording == undefined ? false : result.recording;
+});
+chrome.storage.local.get(["scheduledEvents"]).then((result) => {
+  console.log(result)
+  if (result.scheduledEvents != undefined) {
+    for(let event of result.scheduledEvents){
+      //ui.createTimeEntry(event)
+      clock.addSchedule(event);
+    }
+  }
 });
 //Tab Management ***************************************************************
 chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
@@ -519,8 +573,14 @@ chrome.runtime.onMessage.addListener((request, sender, reply) => {
       data.current.actionSet = structuredClone(recorder.templates.actionSet);
       break;
     case "scheduleActionSet":
-      clock.addSchedule(request.set.actions, request.set.date);
+      clock.addSchedule(request.set);
+      console.log(request.set)
       reply({log:"added"})
+      break;
+    case "removeScheduledAction":
+      let index = clock.schedule.actionLists.findIndex((test) => test.id == request.id);
+      clock.removeScheduledAction(index);
+      reply({log:"removed"})
       break;
     case "runActionSet":
       runner.runActions(request.set.actions);
@@ -547,11 +607,14 @@ chrome.runtime.onMessage.addListener((request, sender, reply) => {
         reply({ log: "noEditor" });
       }
       break;
-      case "testLog":
+    case "testLog":
       console.log("test log");
       reply({ log: "test" });
       break;
-    
+    case "init":
+      data.uiLink = sender;
+      reply({ log: "init", lists: clock.schedule.actionLists });
+      break;
   }
   return true;
 });

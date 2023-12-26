@@ -16,23 +16,23 @@ let tools = {
     limitInput: (elem, min, max) => {
         let input = elem.value;
         let numberInput = Number(input);
-        if(isNaN(numberInput)){
+        if (isNaN(numberInput)) {
             numberInput = Number(tools.makeNumber(input));
-            console.log("number input is "+numberInput)
+            console.log("number input is " + numberInput)
         }
-        if(input == ""){
+        if (input == "") {
             return "";
-        }else if(numberInput < min){
+        } else if (numberInput < min) {
             return min;
-        }else if(numberInput > max){
+        } else if (numberInput > max) {
             return max;
-        }else{
+        } else {
             return numberInput;
         }
     },
     getSelection: (target) => {
         if ((target.tagName == "INPUT" && target.type == "text") || target.tagName == "TEXTAREA") {
-            return [target.selectionStart,target.selectionEnd]
+            return [target.selectionStart, target.selectionEnd]
         } else {
             let sel = window.getSelection()
             if (sel.baseOffset > sel.extentOffset) {
@@ -45,6 +45,9 @@ let tools = {
     makeNumber: (input) => {
         return input.replace(/\D/g, '');
     },
+    generateID: () => {
+        return Math.floor(Math.random() * 1000000000);
+    }
 }
 class basicElement extends HTMLElement {
     constructor() {
@@ -436,7 +439,7 @@ class ActionSet extends basicElement {
         this.ui.editButton = this.shadowRoot.getElementById("editButton");
         this.ui.deleteAction = this.shadowRoot.getElementById("deleteAction");
     }
-    
+
     linkAction(action) {
         this.action = action
         this.ui.nameArea.innerText = action.name;
@@ -473,7 +476,7 @@ class ActionSet extends basicElement {
                     }
                 });
             }*/
-            if(this.ui.deleteAction.contains(e.target)){
+            if (this.ui.deleteAction.contains(e.target)) {
                 console.log("deleting Action Set")
                 this.removeAction();
 
@@ -482,15 +485,20 @@ class ActionSet extends basicElement {
                 /*chrome.runtime.sendMessage({ action: "runActionSet", set: action }, (response) => {
 
                 });*/
-                ui.getTime("When do you want to run this action set?").then((dateRet) => {
+                ui.getTime("When?").then((dateRet) => {
                     let event = {
-                        name : this.action.name,
-                        actions : this.action.actions,
+                        id: tools.generateID(),
+                        name: this.action.name,
+                        actions: this.action.actions,
                         date: dateRet.getTime(),
                         state: "scheduled",
                     }
                     data.scheduledEvents.push(event);
-                    data.saveScheduledActions();
+                    chrome.runtime.sendMessage({ action: "scheduleActionSet", set: event}, (response) => {
+                        if (response.log != "added") {
+                          throw new Error("Failed to add scheduled Action");
+                        }
+                      });
                     ui.createTimeEntry(event)
                 });
             }
@@ -538,42 +546,47 @@ class ScheduledAction extends basicElement {
         this.ui.dateArea = this.shadowRoot.getElementById("dateArea");
         this.ui.imgArea = this.shadowRoot.getElementById("imgArea");
     }
-    linkAction(event){
+    linkAction(event) {
         /*this.ui.timeArea.textContent = event.time;
         this.ui.dateArea.textContent = event.date;*/
-
+        this.event = event;
         let date = new Date(Number(event.date))
-        let time = date.toLocaleTimeString([], {hour: '2-digit', minute: "2-digit"});
-        this.ui.timeArea.textContent = time.substring(0,5);
+        let time = date.toLocaleTimeString([], { hour: '2-digit', minute: "2-digit" });
+        this.ui.timeArea.textContent = time.substring(0, 5);
         this.ui.meridiemArea.textContent = time.substring(6);
         let string = tools.months[date.getMonth()].shortName + ", " + date.getDate();
         this.ui.dateArea.textContent = string;
-        
+
         this.ui.imgArea.src = ui.faviconURL(event.actions[0].url);
-        if(event.state == "scheduled"){
-            this.shadowRoot.getElementById("statusIcon").innerHTML = `
-            <path d="m246.15 34.862-96.58 96.58-55.154-55.154-29.698 29.699 85.459 85.459 124.65-124.65c15.903 23.81 25.175 52.426 25.175 83.207 0 82.843-67.157 150-150 150-82.843 0-150-67.157-150-150 0-82.843 67.157-150 150-150 36.586 0 70.113 13.098 96.147 34.862z" fill="var(--darkText)"/>
-            `
-        }else {
-            this.shadowRoot.getElementById("statusIcon").innerHTML = `
-            <path d="m34.309 55.822c-48.121 58.933-44.6 146.02 10.487 201.11 3.4332 3.433 6.9907 6.666 10.658 9.698l27.704-27.704-11.089-11.089 51.519-51.519-65.321-65.32 15.607-15.608-39.564-39.564zm55.01 231.93c55.302 24.963 122.53 14.792 167.88-30.556 3.166-3.166 6.16-6.438 8.983-9.806l-41.212-41.211-20.152 20.153-40.408-40.408-35.76 35.76 13.368 13.368-52.7 52.7zm199.15-76.26c19.202-43.809 16.429-94.968-8.296-136.77l-50.753 50.753-16.254-16.254-35.306 35.305 33.724 33.724 21.82-21.82 55.065 55.066zm-32.453-167.61c-53.075-52.194-135.18-57.124-193.52-14.723l56.725 56.724-17.881 17.88 29.471 29.47 59.701-59.701 17.925 17.925 47.576-47.576z" clip-rule="evenodd" fill="#935744" fill-rule="evenodd"/>
-            `;
-        }
+        this.setIcon(event.state);
         this.ui.actionButton.addEventListener("click", (e) => {
-            if(this.ui.removeAction.contains(e.target) || this.ui.removeAction == e.target){
+            if (this.ui.removeAction.contains(e.target) || this.ui.removeAction == e.target) {
                 ui.scheduleButtons.splice(ui.scheduleButtons.indexOf(this), 1);
                 this.removeAction();
-            }else{
-                
             }
         })
     }
+    setIcon(state){
+        if (state == "scheduled") {
+            this.shadowRoot.getElementById("statusIcon").innerHTML = `
+            <path d="m53.853 265.14 96.58-96.58 55.154 55.154 29.699-29.699-85.459-85.459-124.65 124.65c-15.903-23.81-25.175-52.426-25.175-83.207 0-82.843 67.157-150 150-150 82.843 0 150 67.157 150 150 0 82.843-67.157 150-150 150-36.586 0-70.113-13.099-96.147-34.862z" fill="var(--darkText)"/>
+            `
+        } else if (state == "failed"){
+            this.shadowRoot.getElementById("statusIcon").innerHTML = `
+            <path d="m34.309 55.822c-48.121 58.933-44.6 146.02 10.487 201.11 3.4332 3.433 6.9907 6.666 10.658 9.698l27.704-27.704-11.089-11.089 51.519-51.519-65.321-65.32 15.607-15.608-39.564-39.564zm55.01 231.93c55.302 24.963 122.53 14.792 167.88-30.556 3.166-3.166 6.16-6.438 8.983-9.806l-41.212-41.211-20.152 20.153-40.408-40.408-35.76 35.76 13.368 13.368-52.7 52.7zm199.15-76.26c19.202-43.809 16.429-94.968-8.296-136.77l-50.753 50.753-16.254-16.254-35.306 35.305 33.724 33.724 21.82-21.82 55.065 55.066zm-32.453-167.61c-53.075-52.194-135.18-57.124-193.52-14.723l56.725 56.724-17.881 17.88 29.471 29.47 59.701-59.701 17.925 17.925 47.576-47.576z" clip-rule="evenodd" fill="#935744" fill-rule="evenodd"/>
+            `;
+        }else if (state == "completed"){
+            this.shadowRoot.getElementById("statusIcon").innerHTML = `
+            <path d="m246.15 34.862-96.58 96.58-55.154-55.154-29.698 29.699 85.459 85.459 124.65-124.65c15.903 23.81 25.175 52.426 25.175 83.207 0 82.843-67.157 150-150 150-82.843 0-150-67.157-150-150 0-82.843 67.157-150 150-150 36.586 0 70.113 13.098 96.147 34.862z" fill="#42870B"/>
+            `
+        }
+    }
     removeAction() {
-        data.removeScheduledAction(this.action);
+        data.removeScheduledAction(this.event);
         this.remove();
     }
 }
-customElements.define('scheduled-action', ScheduledAction);``
+customElements.define('scheduled-action', ScheduledAction); ``
 class uniQuery extends basicElement {
     constructor() {
         super();
@@ -605,7 +618,7 @@ class uniQuery extends basicElement {
         z-index: 100; padding: 10px; transition: 0.25s ease; box-sizing: border-box; 
         padding-bottom: 45px; border: 3px solid var(--accentBorder); background-color:var(--primary);">
                 <h2 id="title" style="margin: 0 0 5px 0;">Alert</h2>
-                <div id="inputContainer" style="display: flex;">
+                <div id="inputContainer" style="display:grid; justify-content: center; align-items: center;">
                 
                 </div>
                 <div style="height: 35px; display: flex; gap: 5px; position: absolute; right: 5px; bottom: 5px;">
@@ -659,7 +672,7 @@ class uniQuery extends basicElement {
                 let clock = new clockInput();
                 let date = new dateInput();
                 clock.style = `width: 185px; height: 60px; position: relative; display:block;`;
-                date.style  = `width: 185px; height: 40px; position: relative; display:block;`
+                date.style = `width: 185px; height: 40px; position: relative; display:block;`
                 this.ui.containedElements.push(clock);
                 this.ui.containedElements.push(date);
                 this.ui.inputContainer.appendChild(clock);
@@ -675,7 +688,7 @@ class uniQuery extends basicElement {
             closeMethod();
         }
         let save = () => {
-            switch(this.type) {
+            switch (this.type) {
                 case ("text"):
                     complete(true, this.ui.containedElements[0].value);
                     break;
@@ -731,7 +744,10 @@ class clockInput extends basicElement {
         super();
         this.shadowRoot.innerHTML = `
         <style>
-            
+            ::placeholder{
+                color: var(--darkText);
+                opacity: 0.4;
+            }
             .inputArea {
                 padding: 3.5px;
                 border: 3px solid var(--accentBorder);
@@ -777,44 +793,57 @@ class clockInput extends basicElement {
         this.ui.hourInput = this.shadowRoot.getElementById("hourInput");
         this.ui.minuteInput = this.shadowRoot.getElementById("minuteInput");
         this.ui.meridiem = this.shadowRoot.getElementById("meridiem");
-        this.ui.hourInput.addEventListener("input", (e) => {
-            this.ui.hourInput.value = tools.limitInput(e.target, 1, 12);
-        });
+        this.clock = {}
+        this.clock.minHour = 1;
+        this.clock.minMin = 1;
+        this.clock.current;
+        this.clock.interval = setInterval(this.updateTime.bind(this), 1000)
         this.ui.hourInput.addEventListener("focusout", (e) => {
-            if(e.target.value == ""){
-                e.target.value = "1";
+            if (e.target.value == "") {
+                e.target.value = minMin;
+            } else {
+                this.ui.hourInput.value = tools.limitInput(e.target, this.clock.minHour, 12);
             }
-        });
-        this.ui.hourInput.addEventListener("input", (e) => {
-            this.ui.hourInput.value = tools.limitInput(e.target, 0, 12);
-        });
-        this.ui.hourInput.addEventListener("focusout", (e) => {
-            if(e.target.value == ""){
-                e.target.value = "1";
-            }
-        });
-        this.ui.minuteInput.addEventListener("input", (e) => {
-            let value = tools.limitInput(e.target, 0, 59);
-            if(value.length > 2){
-                value = "0"+value;
-            }
-            e.target.value = value;
-            console.log(this.Data);
         });
         this.ui.minuteInput.addEventListener("focusout", (e) => {
-            if(e.target.value == ""){
-                e.target.value = "00";
-            }else if (e.target.value.length == 1){
-                e.target.value = "0"+e.target.value;
+            this.ui.minuteInput.value = tools.limitInput(this.ui.minuteInput, this.clock.minMin, 59);
+            if (this.ui.minuteInput.value.length == 1) {
+                
+                this.ui.minuteInput.value = "0" + this.ui.minuteInput.value;
             }
         });
+        this.updateTime();
     }
-    get Data(){
-        let hour = Number(this.ui.hourInput.value);
-        if(this.ui.meridiem.value == 'pm' ){
+    updateTime() {
+        this.clock.current = new Date();
+        if (this.clock.current.getHours() > 12) {
+            this.clock.minHour = this.clock.current.getHours() - 12;
+            this.ui.meridiem.options[0].disabled = true;
+            this.ui.meridiem.value = "pm";
+        } else {
+            this.clock.minHour = this.clock.current.getHours();
+        }
+        this.ui.hourInput.placeholder = this.clock.minHour;
+        this.clock.minMin = this.clock.current.getMinutes();
+        this.ui.minuteInput.placeholder = this.clock.minMin;
+    }
+    get Data() {
+        let hour;
+        let minute;
+        if(this.ui.hourInput.value != ""){
+            hour = Number(this.ui.hourInput.value);
+        }else{
+            hour = this.clock.minHour;
+        }
+        if(this.ui.minuteInput.value != ""){
+            minute = Number(this.ui.minuteInput.value);
+        }else{
+            minute = this.clock.minMin;
+        }
+        if (this.ui.meridiem.value == 'pm') {
             hour += 12;
         }
-        return [hour, Number(this.ui.minuteInput.value)];
+        return [hour, minute];
     }
 }
 customElements.define("clock-input", clockInput);
@@ -1066,14 +1095,14 @@ class dateInput extends basicElement {
         this.ui.months = this.shadowRoot.getElementById("months");
         this.ui.day = this.shadowRoot.getElementById("day");
         this.ui.calendarIcon.addEventListener("click", (e) => {
-            if(this.ui.calendarSelector.style.visibility != "inherit"){
+            if (this.ui.calendarSelector.style.visibility != "inherit") {
                 this.ui.calendarSelector.style.visibility = "inherit"
-            }else{
+            } else {
                 this.ui.calendarSelector.style.visibility = "hidden"
             }
-            
+
         });
-        for(let i = 1; i < 32; i++){
+        for (let i = 1; i < 32; i++) {
             let current = this.shadowRoot.getElementById(`date${i}`);
             current.addEventListener("click", (e) => {
                 this.setCurrent(current);
@@ -1082,35 +1111,35 @@ class dateInput extends basicElement {
 
         this.initialize();
     }
-    initialize(){
+    initialize() {
         let inserts = this.targetDate.getDay() - (this.targetDate.getDate() - 1) % 7;
         let numberOfDays = new Date(this.targetDate.getFullYear(), this.targetDate.getMonth() + 1, 0).getDate();
         console.log(numberOfDays)
         inserts = inserts < 0 ? 7 + inserts : inserts;
-        for(let i = 0; i < inserts; i++){
+        for (let i = 0; i < inserts; i++) {
             this.ui.calGrid.insertBefore(document.createElement("div"), this.ui.calGrid.children[7]);
         }
-        for(let i = 1; i < this.targetDate.getDate(); i++){
+        for (let i = 1; i < this.targetDate.getDate(); i++) {
             this.shadowRoot.getElementById(`date${i}`).children[0].classList.add("pastDate");
         }
-        for(let i = 0; i < this.targetDate.getMonth(); i++){
+        for (let i = 0; i < this.targetDate.getMonth(); i++) {
             this.ui.months.options[i].disabled = true;
         }
-        if(this.targetDate.getDate() + 14 < 32){
-            for(let i = this.targetDate.getDate() + 14; i < 32; i++){
+        if (this.targetDate.getDate() + 14 < 32) {
+            for (let i = this.targetDate.getDate() + 14; i < 32; i++) {
                 this.shadowRoot.getElementById(`date${i}`).children[0].classList.add("pastDate");
             }
         }
         this.shadowRoot.getElementById(`date${this.targetDate.getDate()}`).classList.add("targetDate");
         this.ui.monthHeader.textContent = tools.months[this.targetDate.getMonth()].fullName;
-        for(let i = 31; i > numberOfDays; i--){
+        for (let i = 31; i > numberOfDays; i--) {
             this.shadowRoot.getElementById(`date${i}`).remove();
         }
         this.ui.day.value = this.targetDate.getDate();
         this.ui.months.value = this.targetDate.getMonth();
     }
-    setCurrent(element){
-        if(element.children[0].classList.contains("pastDate") == false && element.classList.contains("targetDate") == false){
+    setCurrent(element) {
+        if (element.children[0].classList.contains("pastDate") == false && element.classList.contains("targetDate") == false) {
             this.shadowRoot.querySelectorAll(".targetDate").forEach(element => {
                 element.classList.remove("targetDate");
             });
@@ -1118,7 +1147,7 @@ class dateInput extends basicElement {
             this.targetDate.setDate(parseInt(element.children[0].textContent));
         }
     }
-    get Data(){
+    get Data() {
         return [this.targetDate.getMonth(), this.targetDate.getDate()];
     }
 }

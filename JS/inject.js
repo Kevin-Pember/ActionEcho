@@ -22,6 +22,7 @@ let ui = {
     }
 }
 let data = {
+    continue: undefined,
     fullyLoaded: false,
     browserOS: undefined,
     port: chrome.runtime.connect({ name: location.href }),
@@ -209,13 +210,6 @@ let logger = {
         if (event.type == "click") {
             log = { ...logger.templates.click };
             log.specifier = logger.getSpecifier(target);
-            /*log = {
-                location: location.href,
-                action: "log",
-                type: "click",
-                targetTag: target.tagName,
-                specifier: data.getSpecifier(target),
-            };*/
             if (target.tagName == "INPUT" || target.tagName == "TEXTAREA") {
                 log.textContext = target.value;
                 data.targetElement = log.specifier;
@@ -226,12 +220,6 @@ let logger = {
         } else if (event.type == "keydown" || event.type == "keyup" || event.type == "keypress") {
             log = { ...logger.templates.input };
             log.specifier = data.targetElement != undefined ? data.targetElement : logger.getSpecifier(target);
-            //log.focusNode = target.contentEditable == "true" ? logger.getSpecifier(window.getSelection().focusNode) : undefined;
-            //log.key = keyInfo.key;
-            //log.selection = keyInfo.selection;
-            /*if (log.key === "paste") {
-                log.text = await navigator.clipboard.readText();
-            }*/
             if (event.key.length > 1) {
                 log.type = "key";
                 if (data.browserOS == undefined) {

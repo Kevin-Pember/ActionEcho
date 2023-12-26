@@ -5,9 +5,6 @@ let data = {
   saveActionList() {
     chrome.storage.local.set({ "actionSets": this.actionsData });
   },
-  saveScheduledActions(){
-    chrome.storage.local.set({ "scheduledEvents": this.scheduledEvents });
-  },
   addAction(action) {
     if (this.actionsData.length >= 10) {
       this.actionsData.pop();
@@ -20,13 +17,15 @@ let data = {
     this.actionsData.splice(this.actionsData.indexOf(action), 1);
     this.saveActionList();
   },
-  removeScheduledAction(action){
-    this.scheduledEvents.splice(this.scheduledEvents.indexOf(action), 1);
-    this.saveScheduledActions();
+  removeScheduledAction(entry){
+    
     if(ui.scheduleButtons.length == 0){
       ui.eventsStage.style.visibility = "hidden";
       ui.eventsStage.style.position = "absolute";
     }
+
+    chrome.runtime.sendMessage({ action: "removeScheduledAction", id : entry.id }, (response) => {});
+    this.scheduledEvents.splice(this.scheduledEvents.indexOf(entry), 1);
   },
   clearActionList() {
     //Currently set for debugging purposes
@@ -143,11 +142,6 @@ let ui = {
     scheduledAction.linkAction(action);
     ui.eventsStage.appendChild(scheduledAction);
     ui.scheduleButtons.push(scheduledAction);
-    chrome.runtime.sendMessage({ action: "scheduleActionSet", set: action}, (response) => {
-      if (response.log != "added") {
-        throw new Error("Failed to add scheduled Action");
-      }
-    });
     console.log(ui.eventsStage.style.visibility)
     if(ui.eventsStage.style.visibility != "inherit"){
       ui.eventsStage.style.visibility = "inherit";
@@ -232,6 +226,11 @@ let stagerChildren = async (element) => {
     await delay(60);
   }
 }
+chrome.runtime.sendMessage({ action: "init" }, (response) => {
+  for(let scheduled of response.lists){
+    ui.createTimeEntry(scheduled);
+  }
+});
 //Deprecated
 /*function editActionSet(actionSet){
   ui.setPage("editPage");
@@ -245,3 +244,15 @@ let stagerChildren = async (element) => {
   });
   stagerChildren(ui.editEntryContainer);
 }*/
+chrome.runtime.onMessage.addListener((request, sender, reply) => {
+  console.log("messaged")
+  let target;
+  switch(request.action){
+    case "changeSchedule":
+      target = ui.scheduleButtons.find((element) => element.event.id == request.id);
+      target.setIcon(request.state);
+      reply({log:"added"})
+      break;
+    
+  }
+});

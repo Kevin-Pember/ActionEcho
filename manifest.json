@@ -3,7 +3,17 @@
     "name": "AutoMade",
     "description": "Automate actions in chrome",
     "version": "1.0",
-    "permissions": ["scripting", "activeTab","storage","unlimitedStorage","favicon", "webNavigation","tabs","nativeMessaging"],
+    "permissions": [
+      "scripting", 
+      "activeTab",
+      "storage",
+      "unlimitedStorage",
+      "favicon", 
+      "webNavigation",
+      "tabs",
+      "nativeMessaging",
+      "alarms"
+    ],
     "host_permissions": ["<all_urls>"],
     "content_scripts": [
       {
