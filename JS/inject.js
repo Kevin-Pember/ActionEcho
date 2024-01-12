@@ -134,8 +134,9 @@ let input = {
             }
         } else {
             typeInput = (text, range) => {
+                console.log("elemnt value is " + element.value);
                 element.focus();
-                element.value = element.value.slice(0, range[0]) + text + element.value.slice(range[1]);
+                element.value = element.value.substring(0, range[0]) + text + element.value.substring(range[1]);
                 element.setSelectionRange(range[0] + 1, range[0] + 1);
             }
         }

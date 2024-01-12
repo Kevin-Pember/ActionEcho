@@ -1,3 +1,5 @@
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,800;9..40,900&display=swap');
 :root {
   --primary: #DCB38E;
   --secondary: #FFD7B3;
@@ -12,7 +14,6 @@
   --neutralColor: #80808080;
 }
 
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,800;9..40,900&display=swap');
 
 @keyframes gradient {
   0% {

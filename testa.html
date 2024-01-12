@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <link rel="stylesheet" href="styling.css">
+    <script src="JS/components.js"></script>
 </head>
 
 <body style="background-color: var(--primary); height: 100%; width: 100%; top: 0px; left: 0px;">
@@ -80,9 +82,29 @@
     <button id="testButton" class="Button" onclick="checkTest()">check</button>
     <button id="testButton" class="Button" onclick="resetTest()">reset</button>
     <h1 id="resultHeader" style="visibility: hidden; margin-bottom: 100px;">Pass</h1>
-
+    <uni-query style="top:100%; background-color: transparent;
+    position: absolute;left: 0px;height: 100%;width: 100%;display: grid;
+    justify-content: center;align-items: center;z-index: 100;
+    transition: top 0.25s ease;"></uni-query>
 </body>
 <script>
+    let queryElem = document.querySelector("uni-query");
+    let getTime = (message) => {
+    return new Promise((resolve, reject) => {
+        queryElem.setQueryType("time", message);
+        queryElem.style.top = "0px";
+      let completeMethod = (complete, value) => {
+        queryElem.style.top = "100%";
+        if (complete) {
+          resolve(value);
+        } else {
+          reject();
+        }
+
+      }
+      queryElem.setMethods(completeMethod);
+    });}
+    getTime("Please select a time");
     /*let queryElem = document.querySelector("uni-query");
     let logList = JSON.parse(localStorage.getItem("logList")) || [];
     let lastLog = {};

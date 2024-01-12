@@ -609,6 +609,7 @@ class uniQuery extends basicElement {
                 outline: none;
                 padding: 0 5px 0 5px;
                 font-size: 25px;
+                box-sizing: border-box;
             }
             .handlerButtons{
                 height: 35px; 
@@ -673,17 +674,10 @@ class uniQuery extends basicElement {
                 break;
             case ("time"):
                 this.type = "time";
-                let clock = new clockInput();
                 let date = new dateInput();
-                clock.style = `width: 185px; height: 60px; position: relative; display:block;`;
                 date.style = `width: 185px; height: 40px; position: relative; display:block;`
-                this.ui.containedElements.push(clock);
                 this.ui.containedElements.push(date);
-                this.ui.inputContainer.appendChild(clock);
                 this.ui.inputContainer.appendChild(date);
-                clock.triggerEnter = () => {
-
-                };
                 break;
         }
         this.ui.containerDiv
@@ -936,7 +930,6 @@ class dateInput extends basicElement {
                     font: 20px Arial, sans-serif;
                     font-weight: normal;
                     background-color: transparent;
-                    height: auto;
                 }
 
                 .pastDate {
@@ -944,7 +937,7 @@ class dateInput extends basicElement {
                 }
 
                 .tile {
-                    background-color: rgba(196, 196, 196, 0.083);
+                    aspect-ratio: 1;
                     height: 100%;
                     display: flex;
                     justify-content: center;
@@ -953,7 +946,7 @@ class dateInput extends basicElement {
                 }
                 #calendarSelector{
                     border: 3px solid var(--accentBorder);
-                    width: 200px;
+                    width: 230px;
                     position: absolute;
                     z-index: 100;
                 }
@@ -961,7 +954,7 @@ class dateInput extends basicElement {
                     display: grid;
                     grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
                     grid-template-rows: 20px calc(16.666666% - 5px) calc(16.666666% - 5px) calc(16.666666% - 5px) calc(16.666666% - 5px) calc(16.666666% - 5px) calc(16.666666% - 5px);
-                    height: 200px;
+                    height: fit-content;
                     width: 100%;
                     border-radius: 0;
                     background-color: var(--secondary);
@@ -995,14 +988,14 @@ class dateInput extends basicElement {
                 .targetDate::after {
                     content: "";
                     position: absolute;
-                    width: calc(100% - 10px);
-                    height: calc(100% - 10px);
+                    width: 100%;
+                    height: 100%;
                     margin: 5px;
                     background-color: var(--accent);
                     z-index: 0;
                 }
             </style>
-            <div id="dateHeader" style="width: 100%; height: 100%;">
+            <!--<div id="dateHeader" style="width: 100%; height: 100%;">
                 <input class="inputArea" type="text" id="day" minlength="1" maxlength="2" value="15"
                     style="width: 40px; margin: 0;">
                 <select class="inputArea" id="months" style="margin: 0;">
@@ -1025,14 +1018,11 @@ class dateInput extends basicElement {
                         <path d="m315.5 232.5h134v134h-134v-134z" fill="var(--darkText)"/>
                     </svg>
                 </div>
-            </div>
-            <div id="calendarSelector" style="visibility: hidden;">
+            </div>-->
+            <div id="calendarSelector" >
                 <div style="background-color: var(--primary)">
-                    <div style="display: grid; grid-template-columns: 42px calc(100% - 84px) 42px; justify-items: center; align-items: center;">
-                        <svg style="height: 25px; visibility: hidden;" fill="none" viewBox="0 0 686 1010" xmlns="http://www.w3.org/2000/svg">
-                            <path d="m0.0042298 504.72c-0.13135 7.845 2.7964 15.731 8.7827 21.718l150.22 150.22c1.587 1.587 3.307 2.958 5.125 4.115l319.88 319.88c11.716 11.72 30.711 11.72 42.427 0l150.22-150.21c11.715-11.716 11.715-30.711 0-42.427l-303.29-303.29 303.29-303.29c11.716-11.715 11.716-30.71 0-42.426l-150.22-150.22c-11.716-11.716-30.71-11.716-42.426 0l-319.89 319.89c-1.817 1.156-3.537 2.528-5.123 4.114l-150.22 150.22c-5.9863 5.987-8.9141 13.873-8.7827 21.718z" clip-rule="evenodd" fill="var(--darkText)"/>
-                        </svg>
-                        <h1 id="monthHeader">September</h1>
+                    <div style="display: grid; grid-template-columns: calc(100% - 42px) 42px; justify-items: center; align-items: center; padding: 2.5px;">
+                        <clock-input id="monthHeader" style="width: 100%;"></clock-input>
                         <svg style="height: 25px; transform: rotate(180deg); visibility: hidden;" fill="none" viewBox="0 0 686 1010" xmlns="http://www.w3.org/2000/svg">
                             <path d="m0.0042298 504.72c-0.13135 7.845 2.7964 15.731 8.7827 21.718l150.22 150.22c1.587 1.587 3.307 2.958 5.125 4.115l319.88 319.88c11.716 11.72 30.711 11.72 42.427 0l150.22-150.21c11.715-11.716 11.715-30.711 0-42.427l-303.29-303.29 303.29-303.29c11.716-11.715 11.716-30.71 0-42.426l-150.22-150.22c-11.716-11.716-30.71-11.716-42.426 0l-319.89 319.89c-1.817 1.156-3.537 2.528-5.123 4.114l-150.22 150.22c-5.9863 5.987-8.9141 13.873-8.7827 21.718z" clip-rule="evenodd" fill="var(--darkText)"/>
                         </svg>
@@ -1145,20 +1135,20 @@ class dateInput extends basicElement {
         </div>
         `;
         this.targetDate = new Date();
-        this.ui.calendarIcon = this.shadowRoot.getElementById("calendarIcon");
+        //this.ui.calendarIcon = this.shadowRoot.getElementById("calendarIcon");
         this.ui.calGrid = this.shadowRoot.getElementById("calGrid");
         this.ui.calendarSelector = this.shadowRoot.getElementById("calendarSelector");
-        this.ui.monthHeader = this.shadowRoot.getElementById("monthHeader");
-        this.ui.months = this.shadowRoot.getElementById("months");
-        this.ui.day = this.shadowRoot.getElementById("day");
-        this.ui.calendarIcon.addEventListener("click", (e) => {
+        //this.ui.monthHeader = this.shadowRoot.getElementById("monthHeader");
+        //this.ui.months = this.shadowRoot.getElementById("months");
+        //this.ui.day = this.shadowRoot.getElementById("day");
+        /*this.ui.calendarIcon.addEventListener("click", (e) => {
             if (this.ui.calendarSelector.style.visibility != "inherit") {
                 this.ui.calendarSelector.style.visibility = "inherit"
             } else {
                 this.ui.calendarSelector.style.visibility = "hidden"
             }
 
-        });
+        });*/
         this.ui.calGrid.addEventListener("click", (e) => {
             if(e.target.id.substring(0,4) == "date"){
                 this.setCurrent(e.target);
@@ -1193,12 +1183,12 @@ class dateInput extends basicElement {
             }
         }
         this.shadowRoot.getElementById(`date${this.targetDate.getDate()}`).classList.add("targetDate");
-        this.ui.monthHeader.textContent = tools.months[this.targetDate.getMonth()].fullName;
+        //this.ui.monthHeader.textContent = tools.months[this.targetDate.getMonth()].fullName;
         for (let i = 31; i > numberOfDays; i--) {
             this.shadowRoot.getElementById(`date${i}`).remove();
         }
-        this.ui.day.value = this.targetDate.getDate();
-        this.ui.months.value = this.targetDate.getMonth();
+        //this.ui.day.value = this.targetDate.getDate();
+        //this.ui.months.value = this.targetDate.getMonth();
     }
     setCurrent(element) {
         if (element.children[0].classList.contains("pastDate") == false && element.classList.contains("targetDate") == false) {
