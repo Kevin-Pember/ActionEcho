@@ -320,6 +320,7 @@ data.port.onMessage.addListener(function (msg) {
         case "openEditor":
             if (ui.editor) {
                 console.log("Editor Opened")
+                console.log(msg.actionSet)
                 ui.editor.openEditor(msg.actionSet)
                 ui.editor.showEntry();
             } else {
