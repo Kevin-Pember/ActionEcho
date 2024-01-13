@@ -675,7 +675,7 @@ class uniQuery extends basicElement {
             case ("time"):
                 this.type = "time";
                 let date = new dateInput();
-                date.style = `width: 185px; height: 40px; position: relative; display:block;`
+                date.style = `width: 235px; height: fit-content; position: relative; display:block;`
                 this.ui.containedElements.push(date);
                 this.ui.inputContainer.appendChild(date);
                 break;
@@ -799,10 +799,10 @@ class clockInput extends basicElement {
         this.clock.current;
         this.clock.interval = setInterval(this.updateTime.bind(this), 1000)
         this.addEventListener("keyup", (e) => {
-            if(e.key == "Enter"){
-                if(this.ui.hourInput.contains(e.target)){
+            if (e.key == "Enter") {
+                if (this.ui.hourInput.contains(e.target)) {
                     this.ui.minuteInput.focus();
-                }else if (this.ui.minuteInput.contains(e.target)){
+                } else if (this.ui.minuteInput.contains(e.target)) {
                     this.triggerEnter();
                 }
             }
@@ -824,19 +824,19 @@ class clockInput extends basicElement {
             this.clock.minHour = this.clock.current.getHours() - 12;
             this.ui.meridiem.options[0].disabled = true;
             this.ui.meridiem.value = "pm";
-        } else if (this.clock.current.getHours() === 0){
+        } else if (this.clock.current.getHours() === 0) {
             this.clock.minHour = 12;
-        }else{
+        } else {
             this.clock.minHour = this.clock.current.getHours();
         }
         this.ui.hourInput.placeholder = this.clock.minHour;
         this.clock.minMin = this.clock.current.getMinutes();
-        if((""+this.clock.minMin).length == 1){
+        if (("" + this.clock.minMin).length == 1) {
             this.ui.minuteInput.placeholder = "0" + this.clock.minMin;
-        }else{
+        } else {
             this.ui.minuteInput.placeholder = "" + this.clock.minMin;
         }
-        
+
     }
     checkHour() {
         if (this.ui.hourInput.value == "") {
@@ -845,10 +845,10 @@ class clockInput extends basicElement {
             let hour = Number(this.ui.hourInput.value);
             this.ui.meridiem.value == "pm" ? hour += 12 : hour;
             hour = tools.limitInput(hour, this.clock.minHour, 23);
-            console.log("calculated",hour)
+            console.log("calculated", hour)
             if (hour > 12) {
                 hour -= 12;
-            }else if (hour == 0){
+            } else if (hour == 0) {
                 hour = 12;
             }
             this.ui.hourInput.value = hour;
@@ -861,18 +861,18 @@ class clockInput extends basicElement {
         }
         this.ui.minuteInput.value = minute;*/
         let minute;
-        if(this.clock.minHour === Number(this.ui.hourInput.value)){
+        if (this.clock.minHour === Number(this.ui.hourInput.value)) {
             minute = tools.limitInput(this.ui.minuteInput.value, this.clock.minMin, 59);
-        }else{
+        } else {
             minute = tools.limitInput(this.ui.minuteInput.value, 0, 59);
         }
-        if ((""+minute).length == 1) {
+        if (("" + minute).length == 1) {
             this.ui.minuteInput.value = "0" + minute;
-        }else{
+        } else {
             this.ui.minuteInput.value = minute;
         }
     }
-    triggerEnter(){
+    triggerEnter() {
 
     }
     get Data() {
@@ -899,7 +899,6 @@ class dateInput extends basicElement {
     constructor() {
         super();
         this.shadowRoot.innerHTML = `
-        <div id="calender" style="width: 100%; height: 100%;">
             <style>
                 *{
                     color: var(--darkText);
@@ -937,7 +936,7 @@ class dateInput extends basicElement {
                 }
 
                 .tile {
-                    aspect-ratio: 1;
+                    padding: 2px;
                     height: 100%;
                     display: flex;
                     justify-content: center;
@@ -946,14 +945,13 @@ class dateInput extends basicElement {
                 }
                 #calendarSelector{
                     border: 3px solid var(--accentBorder);
-                    width: 230px;
-                    position: absolute;
-                    z-index: 100;
+                    width: 100%;
+                    height: fit-content;
                 }
                 #calGrid {
                     display: grid;
                     grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
-                    grid-template-rows: 20px calc(16.666666% - 5px) calc(16.666666% - 5px) calc(16.666666% - 5px) calc(16.666666% - 5px) calc(16.666666% - 5px) calc(16.666666% - 5px);
+                    grid-template-rows: 20px calc(16.666666% - 3.3333px) calc(16.666666% - 3.3333px) calc(16.666666% - 3.3333px) calc(16.666666% - 3.3333px) calc(16.666666% - 3.3333px) calc(16.666666% - 3.3333px);
                     height: fit-content;
                     width: 100%;
                     border-radius: 0;
@@ -965,19 +963,7 @@ class dateInput extends basicElement {
                     margin: 0;
                 }
 
-                #dateHeader {
-                    display: grid;
-                    grid-template-columns: 40px calc(100% - 80px) 30px;
-                    background-color: var(--secondary);
-                    padding: 0;
-                    justify-content: center;
-                    justify-items: center;
-                    align-items: center;
-                    border: 3px solid var(--accentBorder);
-                    box-sizing: border-box;
-                }
-
-                #dateHeader select,
+                select,
                 input {
                     margin: 0;
                     width: auto;
@@ -995,30 +981,7 @@ class dateInput extends basicElement {
                     z-index: 0;
                 }
             </style>
-            <!--<div id="dateHeader" style="width: 100%; height: 100%;">
-                <input class="inputArea" type="text" id="day" minlength="1" maxlength="2" value="15"
-                    style="width: 40px; margin: 0;">
-                <select class="inputArea" id="months" style="margin: 0;">
-                    <option value="0" >January</option>
-                    <option value="1" >February</option>
-                    <option value="2" >March</option>
-                    <option value="3" >April</option>
-                    <option value="4" >May</option>
-                    <option value="5" >June</option>
-                    <option value="6" >July</option>
-                    <option value="7" >August</option>
-                    <option value="8" >September</option>
-                    <option value="9" >October</option>
-                    <option value="10" >November</option>
-                    <option value="11">December</option>
-                </select>
-                <div style="background-color: var(--accent); width: 25px; height: 22px;">
-                    <svg id="calendarIcon" style="width: 25px;" viewBox="0 0 557 472" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M527 141H30V442H527V141ZM0 0V472H557V0H0Z" clip-rule="evenodd" fill="var(--darkText)" fill-rule="evenodd"/>
-                        <path d="m315.5 232.5h134v134h-134v-134z" fill="var(--darkText)"/>
-                    </svg>
-                </div>
-            </div>-->
+            
             <div id="calendarSelector" >
                 <div style="background-color: var(--primary)">
                     <div style="display: grid; grid-template-columns: calc(100% - 42px) 42px; justify-items: center; align-items: center; padding: 2.5px;">
@@ -1132,7 +1095,6 @@ class dateInput extends basicElement {
                     </div>
                 </div>
             </div>
-        </div>
         `;
         this.targetDate = new Date();
         //this.ui.calendarIcon = this.shadowRoot.getElementById("calendarIcon");
@@ -1150,7 +1112,7 @@ class dateInput extends basicElement {
 
         });*/
         this.ui.calGrid.addEventListener("click", (e) => {
-            if(e.target.id.substring(0,4) == "date"){
+            if (e.target.id.substring(0, 4) == "date") {
                 this.setCurrent(e.target);
             }
         });
