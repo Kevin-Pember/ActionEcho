@@ -535,9 +535,9 @@ class ScheduledAction extends basicElement {
                     <svg id="statusIcon" style="height: 25px;" fill="none" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
                         
                     </svg>                        
-                    <h2 id="timeArea" style="font-family: 'DM Sans', sans-serif; font-size: 40px; margin: -10px 0; color: var(--darkText); height: 45px;">12:30</h2>
-                    <h3 id="meridiemArea" style="margin: 2px; color: var(--darkText); direction: rtl;"></h3>
-                    <h3 id="dateArea" style="font-family: 'DM Sans', sans-serif; font-weight: 300; margin: 0; margin-top: -20px; font-size: 30px; color: var(--darkText);height: 35px;">Apr, 1</h3>
+                    <h2 id="timeArea" style="font-family: 'DM Sans', sans-serif; font-size: 40px; margin: -10px 0; color: var(--darkText); height: 45px; ">12:30</h2>
+                    <h3 id="meridiemArea" style="margin: 3px; color: var(--darkText); font-size: 20px"></h3>
+                    <h3 id="dateArea" style="font-family: 'DM Sans', sans-serif; font-weight: 300; margin: 3px 0px 3px 3px; font-size: 20px; color: var(--darkText); direction: rtl; position: absolute; right: 0px; bottom: 0px;">Apr, 1</h3>
                 </div>
                 <img id="imgArea" style="width:35px;background-color: var(--accent);padding: 17.5px;border: 3px solid var(--accentBorder);" src="icon.png">
                 
