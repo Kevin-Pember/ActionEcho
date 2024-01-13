@@ -109,11 +109,16 @@ let ui = {
       ui.uniEntry.setQueryType("time", message);
       ui.uniEntry.style.top = "0px";
       ui.backgroundDiv.blurFocus();
-      let completeMethod = (complete, value) => {
+      let completeMethod = (complete, value, now) => {
         ui.uniEntry.style.top = "100%";
         ui.backgroundDiv.returnFocus();
         if (complete) {
-          resolve(value);
+          if(now){
+            resolve("now");
+          }else{
+            resolve(value);
+          }
+          
         } else {
           reject();
         }

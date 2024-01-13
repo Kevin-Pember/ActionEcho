@@ -490,20 +490,27 @@ class ActionSet extends basicElement {
 
                 });*/
                 ui.getTime("When?").then((dateRet) => {
-                    let event = {
-                        id: tools.generateID(),
-                        name: this.action.name,
-                        actions: this.action.actions,
-                        date: dateRet.getTime(),
-                        state: "scheduled",
-                    }
-                    data.scheduledEvents.push(event);
-                    chrome.runtime.sendMessage({ action: "scheduleActionSet", set: event }, (response) => {
-                        if (response.log != "added") {
-                            throw new Error("Failed to add scheduled Action");
+                    if(typeof dateRet != "Date" && dateRet === "now"){
+                        chrome.runtime.sendMessage({ action: "runActionSet", set: action }, (response) => {
+
+                        });
+                    }else{
+                        let event = {
+                            id: tools.generateID(),
+                            name: this.action.name,
+                            actions: this.action.actions,
+                            date: dateRet.getTime(),
+                            state: "scheduled",
                         }
-                    });
-                    ui.createTimeEntry(event)
+                        data.scheduledEvents.push(event);
+                        chrome.runtime.sendMessage({ action: "scheduleActionSet", set: event }, (response) => {
+                            if (response.log != "added") {
+                                throw new Error("Failed to add scheduled Action");
+                            }
+                        });
+                        ui.createTimeEntry(event)
+                    }
+                    
                 });
             }
         });
@@ -617,6 +624,16 @@ class uniQuery extends basicElement {
                 position: relative; 
                 display: block; 
             }
+            button{
+                border: 2px solid var(--accentBorder);
+                background-color: var(--secondary);
+                color: var(--darkText);
+                font-family: 'DM Sans', sans-serif;
+                font-weight: 800;
+            }
+            button:hover{
+                background-color: var(--darkText);
+            }
         </style>
         <div
         style="position: relative; height: fit-content; width: fit-content;
@@ -678,6 +695,11 @@ class uniQuery extends basicElement {
                 date.style = `width: 235px; height: fit-content; position: relative; display:block;`
                 this.ui.containedElements.push(date);
                 this.ui.inputContainer.appendChild(date);
+                let nowButton = document.createElement("button");
+                nowButton.textContent = "Now";
+                nowButton.style = `width: 70px; height: 35px; position: absolute; bottom: 5px; left: 5px;`
+                this.ui.containedElements.push(nowButton);
+                this.ui.inputContainer.appendChild(nowButton);
                 break;
         }
         this.ui.containerDiv
@@ -697,14 +719,19 @@ class uniQuery extends basicElement {
                     break;
                 case ("time"):
                     let date = new Date();
-                    let time = this.ui.containedElements[0].Data;
+                    let data = this.ui.containedElements[0].Data;
+                    date.setHours(data.hour);
+                    date.setMinutes(data.minute);
+                    date.setDate(data.day);
+                    date.setMonth(data.month);
+                    /*let time = this.ui.containedElements[0].Data;
                     let dateValues = this.ui.containedElements[1].Data;
                     date.setHours(time[0]);
                     date.setMinutes(time[1]);
                     date.setDate(dateValues[1]);
                     date.setMonth(dateValues[0]);
-                    date.setSeconds(0);
-                    complete(true, date);
+                    date.setSeconds(0);*/
+                    complete(true, date,false);
                     break;
             }
             closeMethod();
@@ -728,6 +755,9 @@ class uniQuery extends basicElement {
         this.ui.acceptButton.addEventListener("click", save);
         if (this.type == "text") {
             this.ui.containedElements[0].addEventListener("keypress", keySave);
+        }else if (this.type == "time"){
+            this.ui.containedElements[1].addEventListener("click", () => {complete(true, new Date(),true)});
+
         }
     }
     clearContext() {
@@ -855,11 +885,6 @@ class clockInput extends basicElement {
         }
     }
     checkMin() {
-        /*let minute = tools.limitInput(this.ui.minuteInput.value, this.clock.minMin, 59);
-        if ((""+minute).length == 1) {
-            this.ui.minuteInput.value = "0" + minute;
-        }
-        this.ui.minuteInput.value = minute;*/
         let minute;
         if (this.clock.minHour === Number(this.ui.hourInput.value)) {
             minute = tools.limitInput(this.ui.minuteInput.value, this.clock.minMin, 59);
@@ -947,6 +972,7 @@ class dateInput extends basicElement {
                     border: 3px solid var(--accentBorder);
                     width: 100%;
                     height: fit-content;
+                    box-sizing: border-box;
                 }
                 #calGrid {
                     display: grid;
@@ -985,7 +1011,7 @@ class dateInput extends basicElement {
             <div id="calendarSelector" >
                 <div style="background-color: var(--primary)">
                     <div style="display: grid; grid-template-columns: calc(100% - 42px) 42px; justify-items: center; align-items: center; padding: 2.5px;">
-                        <clock-input id="monthHeader" style="width: 100%;"></clock-input>
+                        <clock-input id="clockElement" style="width: 100%;"></clock-input>
                         <svg style="height: 25px; transform: rotate(180deg); visibility: hidden;" fill="none" viewBox="0 0 686 1010" xmlns="http://www.w3.org/2000/svg">
                             <path d="m0.0042298 504.72c-0.13135 7.845 2.7964 15.731 8.7827 21.718l150.22 150.22c1.587 1.587 3.307 2.958 5.125 4.115l319.88 319.88c11.716 11.72 30.711 11.72 42.427 0l150.22-150.21c11.715-11.716 11.715-30.711 0-42.427l-303.29-303.29 303.29-303.29c11.716-11.715 11.716-30.71 0-42.426l-150.22-150.22c-11.716-11.716-30.71-11.716-42.426 0l-319.89 319.89c-1.817 1.156-3.537 2.528-5.123 4.114l-150.22 150.22c-5.9863 5.987-8.9141 13.873-8.7827 21.718z" clip-rule="evenodd" fill="var(--darkText)"/>
                         </svg>
@@ -1097,20 +1123,9 @@ class dateInput extends basicElement {
             </div>
         `;
         this.targetDate = new Date();
-        //this.ui.calendarIcon = this.shadowRoot.getElementById("calendarIcon");
+        this.ui.clockElement = this.shadowRoot.getElementById("clockElement");
         this.ui.calGrid = this.shadowRoot.getElementById("calGrid");
         this.ui.calendarSelector = this.shadowRoot.getElementById("calendarSelector");
-        //this.ui.monthHeader = this.shadowRoot.getElementById("monthHeader");
-        //this.ui.months = this.shadowRoot.getElementById("months");
-        //this.ui.day = this.shadowRoot.getElementById("day");
-        /*this.ui.calendarIcon.addEventListener("click", (e) => {
-            if (this.ui.calendarSelector.style.visibility != "inherit") {
-                this.ui.calendarSelector.style.visibility = "inherit"
-            } else {
-                this.ui.calendarSelector.style.visibility = "hidden"
-            }
-
-        });*/
         this.ui.calGrid.addEventListener("click", (e) => {
             if (e.target.id.substring(0, 4) == "date") {
                 this.setCurrent(e.target);
@@ -1145,7 +1160,6 @@ class dateInput extends basicElement {
             }
         }
         this.shadowRoot.getElementById(`date${this.targetDate.getDate()}`).classList.add("targetDate");
-        //this.ui.monthHeader.textContent = tools.months[this.targetDate.getMonth()].fullName;
         for (let i = 31; i > numberOfDays; i--) {
             this.shadowRoot.getElementById(`date${i}`).remove();
         }
@@ -1162,7 +1176,14 @@ class dateInput extends basicElement {
         }
     }
     get Data() {
-        return [this.targetDate.getMonth(), this.targetDate.getDate()];
+        let clockData = this.ui.clockElement.Data;
+        return {
+            minute: clockData[1],
+            hour: clockData[0],
+            day: this.targetDate.getDate(),
+            month: this.targetDate.getMonth()
+        
+        };
     }
 }
 customElements.define("date-input", dateInput);
