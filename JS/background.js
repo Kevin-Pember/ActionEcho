@@ -51,8 +51,6 @@ let data = {
       data.promisePorts.push({ url: url, resolve: resolve, reject: reject });
     });
   },
-
-
   disconnectPort: (port) => {
     port.disconnected = true;
     let index = data.portArray.findIndex((test) => test.tabId == port.tabId);
@@ -342,9 +340,11 @@ let editor = {
       portList: [],
       editPromises: []
     }
-    let urls = recorder.getUrls(request.actionSet);
+    console.log(request)
+    let urls = runner.getUrls(request.actionSet.actions);
     for (let url of urls) {
-      let portActions = request.actionSet.actions.filter((action) => action.location == url);
+      let portActions = request.actionSet.actions.splice(request.actionSet.actions.indexOf(url) + 1, urls.indexOf(url) < urls.length - 1 ? request.actionSet.actions.indexOf(urls[urls.indexOf(url) + 1]) : request.actionSet.actions.length);
+      console.log("portActions",portActions)
       data.openTab(url).then((port) => {
         editorEntry.portList.push(port);
         if (!port.hasEditor) {

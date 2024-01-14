@@ -13,8 +13,8 @@ let tools = {
         { fullName: "November", shortName: "Nov" },
         { fullName: "December", shortName: "Dec" }
     ],
-    limitInput: (elem, min, max) => {
-        let input = elem.value;
+    limitInput: (input, min, max) => {
+        console.log(input)
         let numberInput = Number(input);
         if (isNaN(numberInput)) {
             numberInput = Number(tools.makeNumber(input));
@@ -416,7 +416,7 @@ class ActionSet extends basicElement {
         super();
         this.shadowRoot.innerHTML = `
       <div id="actionButton" style="background-color: transparent; height: 100%; width: 100%; position: relative; z-index: 1;">
-        <svg id="deleteAction" style="position: absolute; left: 5px; top: 5px; height: 20px;" fill="none" viewBox="0 0 211 212" xmlns="http://www.w3.org/2000/svg">
+        <svg id="deleteAction" style="position: absolute; left: 5px; top: 5px; height: 20px; z-index: 1;" fill="none" viewBox="0 0 211 212" xmlns="http://www.w3.org/2000/svg">
             <path d="m2.3865 168.46c-2.4619 2.462-2.4619 6.453 0 8.915l32.095 32.095c2.462 2.462 6.4535 2.462 8.9155 0l62.358-62.357 62.358 62.357c2.462 2.462 6.454 2.462 8.915 0l32.096-32.095c2.462-2.462 2.462-6.453 0-8.915l-62.358-62.358 62.358-62.358c2.462-2.4619 2.462-6.4534 0-8.9154l-32.096-32.095c-2.462-2.4619-6.453-2.4619-8.915 0l-62.358 62.358-62.358-62.358c-2.462-2.4619-6.4533-2.4619-8.9153 0l-32.095 32.095c-2.4619 2.462-2.4619 6.4535 0 8.9154l62.358 62.358-62.358 62.358z" fill="var(--accent)"/>
         </svg>
       
@@ -475,10 +475,14 @@ class ActionSet extends basicElement {
                         throw new Error(`Failed to open action editor: ${action.name}`);
                     }
                 });
-            }*/
-            if (this.ui.deleteAction.contains(e.target)) {
+            }else */if (this.ui.deleteAction.contains(e.target)) {
+                ui.getBool("Delete Action?", `Do you want to delete the ${this.action.name} action` + action.name).then((bool) => {
+                    console.log("boolean got: " + bool)
+                    if (bool) {
+                        this.removeAction();
+                    }
+                });
                 console.log("deleting Action Set")
-                this.removeAction();
 
             } else {
                 console.log("run action set")
@@ -486,20 +490,27 @@ class ActionSet extends basicElement {
 
                 });*/
                 ui.getTime("When?").then((dateRet) => {
-                    let event = {
-                        id: tools.generateID(),
-                        name: this.action.name,
-                        actions: this.action.actions,
-                        date: dateRet.getTime(),
-                        state: "scheduled",
-                    }
-                    data.scheduledEvents.push(event);
-                    chrome.runtime.sendMessage({ action: "scheduleActionSet", set: event}, (response) => {
-                        if (response.log != "added") {
-                          throw new Error("Failed to add scheduled Action");
+                    if(typeof dateRet != "Date" && dateRet === "now"){
+                        chrome.runtime.sendMessage({ action: "runActionSet", set: action }, (response) => {
+
+                        });
+                    }else{
+                        let event = {
+                            id: tools.generateID(),
+                            name: this.action.name,
+                            actions: this.action.actions,
+                            date: dateRet.getTime(),
+                            state: "scheduled",
                         }
-                      });
-                    ui.createTimeEntry(event)
+                        data.scheduledEvents.push(event);
+                        chrome.runtime.sendMessage({ action: "scheduleActionSet", set: event }, (response) => {
+                            if (response.log != "added") {
+                                throw new Error("Failed to add scheduled Action");
+                            }
+                        });
+                        ui.createTimeEntry(event)
+                    }
+                    
                 });
             }
         });
@@ -521,18 +532,18 @@ class ScheduledAction extends basicElement {
         
             <div style="position: absolute; height: calc(100% - 40px); width: calc(100% - 20px); display:grid; justify-items: center; align-items: center; grid-template-columns: calc(100% - 90px) 90px; padding: 30px 10px 10px 10px">
                 <div style="margin: 0 0 -10px -15px; position: relative;">
-                    <svg id="statusIcon" style="height: 25px;right: -20px; position: absolute" fill="none" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+                    <svg id="statusIcon" style="height: 25px;" fill="none" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
                         
                     </svg>                        
-                    <h2 id="timeArea" style="font-family: 'DM Sans', sans-serif; margin: 0; font-size: 40px; margin-bottom: -10px; color: var(--darkText); height: 45px;">12:30</h2>
-                    <h3 id="meridiemArea" style="margin: 2px; color: var(--darkText); direction: rtl;"></h3>
-                    <h3 id="dateArea" style="font-family: 'DM Sans', sans-serif; font-weight: 300; margin: 0; margin-top: -10px; font-size: 30px; color: var(--darkText);height: 35px;">Apr, 1</h3>
+                    <h2 id="timeArea" style="font-family: 'DM Sans', sans-serif; font-size: 40px; margin: -10px 0; color: var(--darkText); height: 45px; ">12:30</h2>
+                    <h3 id="meridiemArea" style="margin: 3px; color: var(--darkText); font-size: 20px"></h3>
+                    <h3 id="dateArea" style="font-family: 'DM Sans', sans-serif; font-weight: 300; margin: 3px 0px 3px 3px; font-size: 20px; color: var(--darkText); direction: rtl; position: absolute; right: 0px; bottom: 0px;">Apr, 1</h3>
                 </div>
                 <img id="imgArea" style="width:35px;background-color: var(--accent);padding: 17.5px;border: 3px solid var(--accentBorder);" src="icon.png">
                 
             </div>
             
-            <svg id="editButton" style="position: absolute; right: 5px; top: 5px; height: 20px;" viewBox="0 0 1079 1078" xmlns="http://www.w3.org/2000/svg">
+            <svg id="editButton" style="position: absolute; right: 5px; top: 5px; height: 20px; visibility: hidden;" viewBox="0 0 1079 1078" xmlns="http://www.w3.org/2000/svg">
                 <path d="m644.42 231.79c11.715-11.716 30.71-11.716 42.426 0l159.81 159.81c11.716 11.716 11.716 30.711 0 42.426l-453.96 453.96c-11.716 11.716-30.711 11.716-42.427 0l-159.81-159.81c-11.716-11.716-11.716-30.711 0-42.427l453.96-453.96z" fill="var(--accent)"/>
                 <path d="m1063.7 216.94c30.86-30.852 10.59-101.13-45.25-156.98-55.846-55.845-126.13-76.106-156.98-45.255l-111.02 111.02c-11.716 11.715-11.716 30.711 0 42.426l159.81 159.81c11.715 11.716 30.71 11.716 42.426 0l111.01-111.02z" fill="var(--accent)"/>
                 <path d="m39.79 1076.3c-23.172 7.33-44.992-14.49-37.656-37.66l73.756-232.96c6.7914-21.451 33.904-28.069 49.814-12.158l159.2 159.2c15.91 15.91 9.293 43.022-12.158 49.813l-232.96 73.76z" fill="var(--accent)"/>
@@ -566,16 +577,16 @@ class ScheduledAction extends basicElement {
             }
         })
     }
-    setIcon(state){
+    setIcon(state) {
         if (state == "scheduled") {
             this.shadowRoot.getElementById("statusIcon").innerHTML = `
             <path d="m53.853 265.14 96.58-96.58 55.154 55.154 29.699-29.699-85.459-85.459-124.65 124.65c-15.903-23.81-25.175-52.426-25.175-83.207 0-82.843 67.157-150 150-150 82.843 0 150 67.157 150 150 0 82.843-67.157 150-150 150-36.586 0-70.113-13.099-96.147-34.862z" fill="var(--darkText)"/>
             `
-        } else if (state == "failed"){
+        } else if (state == "failed") {
             this.shadowRoot.getElementById("statusIcon").innerHTML = `
             <path d="m34.309 55.822c-48.121 58.933-44.6 146.02 10.487 201.11 3.4332 3.433 6.9907 6.666 10.658 9.698l27.704-27.704-11.089-11.089 51.519-51.519-65.321-65.32 15.607-15.608-39.564-39.564zm55.01 231.93c55.302 24.963 122.53 14.792 167.88-30.556 3.166-3.166 6.16-6.438 8.983-9.806l-41.212-41.211-20.152 20.153-40.408-40.408-35.76 35.76 13.368 13.368-52.7 52.7zm199.15-76.26c19.202-43.809 16.429-94.968-8.296-136.77l-50.753 50.753-16.254-16.254-35.306 35.305 33.724 33.724 21.82-21.82 55.065 55.066zm-32.453-167.61c-53.075-52.194-135.18-57.124-193.52-14.723l56.725 56.724-17.881 17.88 29.471 29.47 59.701-59.701 17.925 17.925 47.576-47.576z" clip-rule="evenodd" fill="#935744" fill-rule="evenodd"/>
             `;
-        }else if (state == "completed"){
+        } else if (state == "completed") {
             this.shadowRoot.getElementById("statusIcon").innerHTML = `
             <path d="m246.15 34.862-96.58 96.58-55.154-55.154-29.698 29.699 85.459 85.459 124.65-124.65c15.903 23.81 25.175 52.426 25.175 83.207 0 82.843-67.157 150-150 150-82.843 0-150-67.157-150-150 0-82.843 67.157-150 150-150 36.586 0 70.113 13.098 96.147 34.862z" fill="#42870B"/>
             `
@@ -605,12 +616,23 @@ class uniQuery extends basicElement {
                 outline: none;
                 padding: 0 5px 0 5px;
                 font-size: 25px;
+                box-sizing: border-box;
             }
             .handlerButtons{
                 height: 35px; 
                 aspect-ratio:1; 
                 position: relative; 
                 display: block; 
+            }
+            button{
+                border: 2px solid var(--accentBorder);
+                background-color: var(--secondary);
+                color: var(--darkText);
+                font-family: 'DM Sans', sans-serif;
+                font-weight: 800;
+            }
+            button:hover{
+                background-color: var(--darkText);
             }
         </style>
         <div
@@ -669,15 +691,15 @@ class uniQuery extends basicElement {
                 break;
             case ("time"):
                 this.type = "time";
-                let clock = new clockInput();
                 let date = new dateInput();
-                clock.style = `width: 185px; height: 60px; position: relative; display:block;`;
-                date.style = `width: 185px; height: 40px; position: relative; display:block;`
-                this.ui.containedElements.push(clock);
+                date.style = `width: 235px; height: fit-content; position: relative; display:block;`
                 this.ui.containedElements.push(date);
-                this.ui.inputContainer.appendChild(clock);
                 this.ui.inputContainer.appendChild(date);
-
+                let nowButton = document.createElement("button");
+                nowButton.textContent = "Now";
+                nowButton.style = `width: 70px; height: 35px; position: absolute; bottom: 5px; left: 5px;`
+                this.ui.containedElements.push(nowButton);
+                this.ui.inputContainer.appendChild(nowButton);
                 break;
         }
         this.ui.containerDiv
@@ -697,14 +719,19 @@ class uniQuery extends basicElement {
                     break;
                 case ("time"):
                     let date = new Date();
-                    let time = this.ui.containedElements[0].Data;
+                    let data = this.ui.containedElements[0].Data;
+                    date.setHours(data.hour);
+                    date.setMinutes(data.minute);
+                    date.setDate(data.day);
+                    date.setMonth(data.month);
+                    /*let time = this.ui.containedElements[0].Data;
                     let dateValues = this.ui.containedElements[1].Data;
                     date.setHours(time[0]);
                     date.setMinutes(time[1]);
                     date.setDate(dateValues[1]);
                     date.setMonth(dateValues[0]);
-                    date.setSeconds(0);
-                    complete(true, date);
+                    date.setSeconds(0);*/
+                    complete(true, date,false);
                     break;
             }
             closeMethod();
@@ -728,6 +755,9 @@ class uniQuery extends basicElement {
         this.ui.acceptButton.addEventListener("click", save);
         if (this.type == "text") {
             this.ui.containedElements[0].addEventListener("keypress", keySave);
+        }else if (this.type == "time"){
+            this.ui.containedElements[1].addEventListener("click", () => {complete(true, new Date(),true)});
+
         }
     }
     clearContext() {
@@ -798,19 +828,23 @@ class clockInput extends basicElement {
         this.clock.minMin = 1;
         this.clock.current;
         this.clock.interval = setInterval(this.updateTime.bind(this), 1000)
-        this.ui.hourInput.addEventListener("focusout", (e) => {
-            if (e.target.value == "") {
-                e.target.value = minMin;
-            } else {
-                this.ui.hourInput.value = tools.limitInput(e.target, this.clock.minHour, 12);
+        this.addEventListener("keyup", (e) => {
+            if (e.key == "Enter") {
+                if (this.ui.hourInput.contains(e.target)) {
+                    this.ui.minuteInput.focus();
+                } else if (this.ui.minuteInput.contains(e.target)) {
+                    this.triggerEnter();
+                }
             }
         });
+        this.ui.hourInput.addEventListener("focusout", (e) => {
+            this.checkHour();
+        });
         this.ui.minuteInput.addEventListener("focusout", (e) => {
-            this.ui.minuteInput.value = tools.limitInput(this.ui.minuteInput, this.clock.minMin, 59);
-            if (this.ui.minuteInput.value.length == 1) {
-                
-                this.ui.minuteInput.value = "0" + this.ui.minuteInput.value;
-            }
+            this.checkMin();
+        });
+        this.ui.meridiem.addEventListener("change", (e) => {
+            this.checkHour();
         });
         this.updateTime();
     }
@@ -820,24 +854,63 @@ class clockInput extends basicElement {
             this.clock.minHour = this.clock.current.getHours() - 12;
             this.ui.meridiem.options[0].disabled = true;
             this.ui.meridiem.value = "pm";
+        } else if (this.clock.current.getHours() === 0) {
+            this.clock.minHour = 12;
         } else {
             this.clock.minHour = this.clock.current.getHours();
         }
         this.ui.hourInput.placeholder = this.clock.minHour;
         this.clock.minMin = this.clock.current.getMinutes();
-        this.ui.minuteInput.placeholder = this.clock.minMin;
+        if (("" + this.clock.minMin).length == 1) {
+            this.ui.minuteInput.placeholder = "0" + this.clock.minMin;
+        } else {
+            this.ui.minuteInput.placeholder = "" + this.clock.minMin;
+        }
+
+    }
+    checkHour() {
+        if (this.ui.hourInput.value == "") {
+            this.ui.hourInput.value = this.clock.minHour;
+        } else {
+            let hour = Number(this.ui.hourInput.value);
+            this.ui.meridiem.value == "pm" ? hour += 12 : hour;
+            hour = tools.limitInput(hour, this.clock.minHour, 23);
+            console.log("calculated", hour)
+            if (hour > 12) {
+                hour -= 12;
+            } else if (hour == 0) {
+                hour = 12;
+            }
+            this.ui.hourInput.value = hour;
+        }
+    }
+    checkMin() {
+        let minute;
+        if (this.clock.minHour === Number(this.ui.hourInput.value)) {
+            minute = tools.limitInput(this.ui.minuteInput.value, this.clock.minMin, 59);
+        } else {
+            minute = tools.limitInput(this.ui.minuteInput.value, 0, 59);
+        }
+        if (("" + minute).length == 1) {
+            this.ui.minuteInput.value = "0" + minute;
+        } else {
+            this.ui.minuteInput.value = minute;
+        }
+    }
+    triggerEnter() {
+
     }
     get Data() {
         let hour;
         let minute;
-        if(this.ui.hourInput.value != ""){
+        if (this.ui.hourInput.value != "") {
             hour = Number(this.ui.hourInput.value);
-        }else{
+        } else {
             hour = this.clock.minHour;
         }
-        if(this.ui.minuteInput.value != ""){
+        if (this.ui.minuteInput.value != "") {
             minute = Number(this.ui.minuteInput.value);
-        }else{
+        } else {
             minute = this.clock.minMin;
         }
         if (this.ui.meridiem.value == 'pm') {
@@ -851,7 +924,6 @@ class dateInput extends basicElement {
     constructor() {
         super();
         this.shadowRoot.innerHTML = `
-        <div id="calender" style="width: 100%; height: 100%;">
             <style>
                 *{
                     color: var(--darkText);
@@ -875,13 +947,13 @@ class dateInput extends basicElement {
                     text-align: center;
                     height: 100%;
                     background-color: var(--accent);
+                    pointer-events: none;
                 }
 
                 .calDate {
                     font: 20px Arial, sans-serif;
                     font-weight: normal;
                     background-color: transparent;
-                    height: auto;
                 }
 
                 .pastDate {
@@ -889,7 +961,7 @@ class dateInput extends basicElement {
                 }
 
                 .tile {
-                    background-color: rgba(196, 196, 196, 0.083);
+                    padding: 2px;
                     height: 100%;
                     display: flex;
                     justify-content: center;
@@ -898,13 +970,15 @@ class dateInput extends basicElement {
                 }
                 #calendarSelector{
                     border: 3px solid var(--accentBorder);
-                    width: 300px;
+                    width: 100%;
+                    height: fit-content;
+                    box-sizing: border-box;
                 }
                 #calGrid {
                     display: grid;
                     grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
-                    grid-template-rows: 20px calc(16.666666% - 5px) calc(16.666666% - 5px) calc(16.666666% - 5px) calc(16.666666% - 5px) calc(16.666666% - 5px) calc(16.666666% - 5px);
-                    height: 200px;
+                    grid-template-rows: 20px calc(16.666666% - 3.3333px) calc(16.666666% - 3.3333px) calc(16.666666% - 3.3333px) calc(16.666666% - 3.3333px) calc(16.666666% - 3.3333px) calc(16.666666% - 3.3333px);
+                    height: fit-content;
                     width: 100%;
                     border-radius: 0;
                     background-color: var(--secondary);
@@ -915,19 +989,7 @@ class dateInput extends basicElement {
                     margin: 0;
                 }
 
-                #dateHeader {
-                    display: grid;
-                    grid-template-columns: 40px calc(100% - 80px) 30px;
-                    background-color: var(--secondary);
-                    padding: 0;
-                    justify-content: center;
-                    justify-items: center;
-                    align-items: center;
-                    border: 3px solid var(--accentBorder);
-                    box-sizing: border-box;
-                }
-
-                #dateHeader select,
+                select,
                 input {
                     margin: 0;
                     width: auto;
@@ -938,44 +1000,18 @@ class dateInput extends basicElement {
                 .targetDate::after {
                     content: "";
                     position: absolute;
-                    width: calc(100% - 10px);
-                    height: calc(100% - 10px);
+                    width: 100%;
+                    height: 100%;
                     margin: 5px;
                     background-color: var(--accent);
                     z-index: 0;
                 }
             </style>
-            <div id="dateHeader" style="width: 100%; height: 100%;">
-                <input class="inputArea" type="text" id="day" minlength="1" maxlength="2" value="15"
-                    style="width: 40px; margin: 0;">
-                <select class="inputArea" id="months" style="margin: 0;">
-                    <option value="0" >January</option>
-                    <option value="1" >February</option>
-                    <option value="2" >March</option>
-                    <option value="3" >April</option>
-                    <option value="4" >May</option>
-                    <option value="5" >June</option>
-                    <option value="6" >July</option>
-                    <option value="7" >August</option>
-                    <option value="8" >September</option>
-                    <option value="9" >October</option>
-                    <option value="10" >November</option>
-                    <option value="11">December</option>
-                </select>
-                <div style="background-color: var(--accent); width: 25px; height: 22px;">
-                    <svg id="calendarIcon" style="width: 25px;" viewBox="0 0 557 472" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M527 141H30V442H527V141ZM0 0V472H557V0H0Z" clip-rule="evenodd" fill="var(--darkText)" fill-rule="evenodd"/>
-                        <path d="m315.5 232.5h134v134h-134v-134z" fill="var(--darkText)"/>
-                    </svg>
-                </div>
-            </div>
-            <div id="calendarSelector" style="visibility: hidden;">
+            
+            <div id="calendarSelector" >
                 <div style="background-color: var(--primary)">
-                    <div style="display: grid; grid-template-columns: 42px calc(100% - 84px) 42px; justify-items: center; align-items: center;">
-                        <svg style="height: 25px; visibility: hidden;" fill="none" viewBox="0 0 686 1010" xmlns="http://www.w3.org/2000/svg">
-                            <path d="m0.0042298 504.72c-0.13135 7.845 2.7964 15.731 8.7827 21.718l150.22 150.22c1.587 1.587 3.307 2.958 5.125 4.115l319.88 319.88c11.716 11.72 30.711 11.72 42.427 0l150.22-150.21c11.715-11.716 11.715-30.711 0-42.427l-303.29-303.29 303.29-303.29c11.716-11.715 11.716-30.71 0-42.426l-150.22-150.22c-11.716-11.716-30.71-11.716-42.426 0l-319.89 319.89c-1.817 1.156-3.537 2.528-5.123 4.114l-150.22 150.22c-5.9863 5.987-8.9141 13.873-8.7827 21.718z" clip-rule="evenodd" fill="var(--darkText)"/>
-                        </svg>
-                        <h1 id="monthHeader">September</h1>
+                    <div style="display: grid; grid-template-columns: calc(100% - 42px) 42px; justify-items: center; align-items: center; padding: 2.5px;">
+                        <clock-input id="clockElement" style="width: 100%;"></clock-input>
                         <svg style="height: 25px; transform: rotate(180deg); visibility: hidden;" fill="none" viewBox="0 0 686 1010" xmlns="http://www.w3.org/2000/svg">
                             <path d="m0.0042298 504.72c-0.13135 7.845 2.7964 15.731 8.7827 21.718l150.22 150.22c1.587 1.587 3.307 2.958 5.125 4.115l319.88 319.88c11.716 11.72 30.711 11.72 42.427 0l150.22-150.21c11.715-11.716 11.715-30.711 0-42.427l-303.29-303.29 303.29-303.29c11.716-11.715 11.716-30.71 0-42.426l-150.22-150.22c-11.716-11.716-30.71-11.716-42.426 0l-319.89 319.89c-1.817 1.156-3.537 2.528-5.123 4.114l-150.22 150.22c-5.9863 5.987-8.9141 13.873-8.7827 21.718z" clip-rule="evenodd" fill="var(--darkText)"/>
                         </svg>
@@ -1085,29 +1121,22 @@ class dateInput extends basicElement {
                     </div>
                 </div>
             </div>
-        </div>
         `;
         this.targetDate = new Date();
-        this.ui.calendarIcon = this.shadowRoot.getElementById("calendarIcon");
+        this.ui.clockElement = this.shadowRoot.getElementById("clockElement");
         this.ui.calGrid = this.shadowRoot.getElementById("calGrid");
         this.ui.calendarSelector = this.shadowRoot.getElementById("calendarSelector");
-        this.ui.monthHeader = this.shadowRoot.getElementById("monthHeader");
-        this.ui.months = this.shadowRoot.getElementById("months");
-        this.ui.day = this.shadowRoot.getElementById("day");
-        this.ui.calendarIcon.addEventListener("click", (e) => {
-            if (this.ui.calendarSelector.style.visibility != "inherit") {
-                this.ui.calendarSelector.style.visibility = "inherit"
-            } else {
-                this.ui.calendarSelector.style.visibility = "hidden"
+        this.ui.calGrid.addEventListener("click", (e) => {
+            if (e.target.id.substring(0, 4) == "date") {
+                this.setCurrent(e.target);
             }
-
         });
-        for (let i = 1; i < 32; i++) {
+        /*for (let i = 1; i < 32; i++) {
             let current = this.shadowRoot.getElementById(`date${i}`);
             current.addEventListener("click", (e) => {
                 this.setCurrent(current);
             });
-        }
+        }*/
 
         this.initialize();
     }
@@ -1131,12 +1160,11 @@ class dateInput extends basicElement {
             }
         }
         this.shadowRoot.getElementById(`date${this.targetDate.getDate()}`).classList.add("targetDate");
-        this.ui.monthHeader.textContent = tools.months[this.targetDate.getMonth()].fullName;
         for (let i = 31; i > numberOfDays; i--) {
             this.shadowRoot.getElementById(`date${i}`).remove();
         }
-        this.ui.day.value = this.targetDate.getDate();
-        this.ui.months.value = this.targetDate.getMonth();
+        //this.ui.day.value = this.targetDate.getDate();
+        //this.ui.months.value = this.targetDate.getMonth();
     }
     setCurrent(element) {
         if (element.children[0].classList.contains("pastDate") == false && element.classList.contains("targetDate") == false) {
@@ -1148,7 +1176,14 @@ class dateInput extends basicElement {
         }
     }
     get Data() {
-        return [this.targetDate.getMonth(), this.targetDate.getDate()];
+        let clockData = this.ui.clockElement.Data;
+        return {
+            minute: clockData[1],
+            hour: clockData[0],
+            day: this.targetDate.getDate(),
+            month: this.targetDate.getMonth()
+        
+        };
     }
 }
 customElements.define("date-input", dateInput);

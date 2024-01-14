@@ -22,6 +22,7 @@
 
         #bodyID {
             background-color: var(--primary);
+            overflow: visible;
         }
         .textBorder{
             text-shadow: 1px 1px 0 var(--accentBorder), -1px -1px 0 var(--accentBorder), 1px -1px 0 var(--accentBorder),
@@ -107,36 +108,7 @@
             color: var(--darkText);
         }
 
-        ::-webkit-scrollbar {
-            width: 10px;
-            height: 10px;
-            
-        }
-
-        ::-webkit-scrollbar-track {
-            background: transparent;
-            margin: 50px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            width: 2.5px;
-            background: #00000080;
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-button:end:increment {
-            height: 0px;
-            width: 0px;
-            display: block;
-            background: transparent;
-        }
-
-        ::-webkit-scrollbar-button:start:increment {
-            height: 0px;
-            width: 0px;
-            display: block;
-            background: transparent;
-        }
+        
     </style>
     <background-div id="bgDiv" style="position: fixed;top: 0px;left: 0px; height: 100%;width: 100%;">
     </background-div>
