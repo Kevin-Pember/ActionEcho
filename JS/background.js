@@ -618,12 +618,3 @@ chrome.runtime.onMessage.addListener((request, sender, reply) => {
   }
   return true;
 });
-/*chrome.storage.local.get(["scheduledEvents"]).then((result) => {
-  console.log(result)
-  //data.actionsData = result.scheduledEvents == undefined ? [] : result.scheduledEvents;
-  if (result.scheduledEvents != undefined) {
-    for(let event of result.scheduledEvents){
-      clock.addSchedule(event.actions, event.time);
-    }
-  }
-});*/

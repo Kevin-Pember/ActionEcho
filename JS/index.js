@@ -236,19 +236,6 @@ chrome.runtime.sendMessage({ action: "init" }, (response) => {
     ui.createTimeEntry(scheduled);
   }
 });
-//Deprecated
-/*function editActionSet(actionSet){
-  ui.setPage("editPage");
-  
-  chrome.runtime.sendMessage({ action: "openTab", url: actionSet.originURL[0]}, (response) => {
-    if (response.log == "opened") {
-      console.log("Opened tab");
-    } else {
-      throw new Error("Failed to stop recording");
-    }
-  });
-  stagerChildren(ui.editEntryContainer);
-}*/
 chrome.runtime.onMessage.addListener((request, sender, reply) => {
   console.log("messaged")
   let target;

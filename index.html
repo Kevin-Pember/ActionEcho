@@ -24,22 +24,18 @@
             background-color: var(--primary);
             overflow: visible;
         }
-        .textBorder{
-            text-shadow: 1px 1px 0 var(--accentBorder), -1px -1px 0 var(--accentBorder), 1px -1px 0 var(--accentBorder),
-            -1px 1px 0 var(--accentBorder), 1px 1px 0 var(--accentBorder);
-        }
 
         #Title {
             font-family: 'DM Sans', sans-serif;
-            font-weight: 800;
+            font-weight: 500;
             position: relative;
-            font-size: 55px;
+            font-size: 60px;
             height: 35px;
             transform: rotate(90deg);
             width: 100%;
             margin-left: 15px;
             transform-origin: center;
-            margin-left: -60px;
+            margin-left: -55px;
             margin-top: 90px;
         }
 
@@ -87,7 +83,7 @@
             height: 50px;
             background-color: var(--secondary);
             outline: none;
-            border: 3px solid var(--accentBorder);
+            border: 1px solid var(--accentBorder);
             height: 100%;
             position: relative;
             box-sizing: border-box;
@@ -110,19 +106,19 @@
 
         
     </style>
-    <background-div id="bgDiv" style="position: fixed;top: 0px;left: 0px; height: 100%;width: 100%;">
+    <background-div id="bgDiv" style="position: fixed;top: 0px;left: 0px; height: 100%;width: 100%; z-index: 5; pointer-events: none;">
     </background-div>
     <svg id="dial" style="position: absolute; height: 600px; left: 85%; top: -150px; animation: 360s linear 1s infinite running rotation;" fill="none" viewBox="0 0 8080 8080" xmlns="http://www.w3.org/2000/svg">
-        <path d="m8040 4040c0 2209.1-1790.9 4e3 -4e3 4e3s-4e3 -1790.9-4e3 -4e3 1790.9-4e3 4e3 -4e3 4e3 1790.9 4e3 4e3z" stroke="var(--darkText)" stroke-dasharray="360 360 360 360" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="1.7434" stroke-width="80"/>
-        <path d="m6440 4040c0 1325.5-1074.5 2400-2400 2400s-2400-1074.5-2400-2400 1074.5-2400 2400-2400 2400 1074.5 2400 2400z" stroke="var(--darkText)" stroke-dasharray="360 360 360 360" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="1.7434" stroke-width="80"/>
-        <path d="m7240 4040c0 1767.3-1432.7 3200-3200 3200s-3200-1432.7-3200-3200 1432.7-3200 3200-3200 3200 1432.7 3200 3200z" stroke="var(--darkText)" stroke-dasharray="360 360 360 360" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="1.7434" stroke-width="80"/>
+        <path d="m8040 4040c0 2209.1-1790.9 4e3 -4e3 4e3s-4e3 -1790.9-4e3 -4e3 1790.9-4e3 4e3 -4e3 4e3 1790.9 4e3 4e3z" stroke="var(--accentBorder)" stroke-dasharray="360 360 360 360" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="1.7434" stroke-width="20"/>
+        <path d="m6440 4040c0 1325.5-1074.5 2400-2400 2400s-2400-1074.5-2400-2400 1074.5-2400 2400-2400 2400 1074.5 2400 2400z" stroke="var(--accentBorder)" stroke-dasharray="360 360 360 360" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="1.7434" stroke-width="20"/>
+        <path d="m7240 4040c0 1767.3-1432.7 3200-3200 3200s-3200-1432.7-3200-3200 1432.7-3200 3200-3200 3200 1432.7 3200 3200z" stroke="var(--accentBorder)" stroke-dasharray="360 360 360 360" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="1.7434" stroke-width="20"/>
     </svg>
     <div id="mainPage" class="contentPage">
         <div id="mainContent" style="margin: 10px;">
             <div id="eventsStage" style="visibility: hidden;position: absolute;height:140px; width: 100%; display: inline-grid; grid-auto-columns: 225px; overflow: scroll hidden; gap: 5px; grid-auto-flow: column; ">
             </div>
             <div style="position: relative; height: 160px;">
-                <h3 style="margin: 0px; font-size: 30px; font-weight: 600;" class="textBorder">Actions</h3>
+                <h3 style="margin: 0px; font-size: 30px; font-weight: 200;" class="textBorder">Actions</h3>
                 <div id="historyBar">
                     <h1 id="actionsNone" class="emptyHeader">none</h1>
                 </div>
