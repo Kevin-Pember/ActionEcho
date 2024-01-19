@@ -17,14 +17,14 @@ let data = {
     this.actionsData.splice(this.actionsData.indexOf(action), 1);
     this.saveActionList();
   },
-  removeScheduledAction(entry){
-    
-    if(ui.scheduleButtons.length == 0){
+  removeScheduledAction(entry) {
+
+    if (ui.scheduleButtons.length == 0) {
       ui.eventsStage.style.visibility = "hidden";
       ui.eventsStage.style.position = "absolute";
     }
 
-    chrome.runtime.sendMessage({ action: "removeScheduledAction", id : entry.id }, (response) => {});
+    chrome.runtime.sendMessage({ action: "removeScheduledAction", id: entry.id }, (response) => { });
     this.scheduledEvents.splice(this.scheduledEvents.indexOf(entry), 1);
   },
   clearActionList() {
@@ -113,12 +113,12 @@ let ui = {
         ui.uniEntry.style.top = "100%";
         ui.backgroundDiv.returnFocus();
         if (complete) {
-          if(now){
+          if (now) {
             resolve("now");
-          }else{
+          } else {
             resolve(value);
           }
-          
+
         } else {
           reject();
         }
@@ -133,7 +133,7 @@ let ui = {
     actionElem.linkAction(action);
     ui.actionButtons.push(actionElem);
     let actionsContainer = document.getElementById("historyBar");
-    if(ui.actionsNone.style.visibility != "hidden"){
+    if (ui.actionsNone.style.visibility != "hidden") {
       ui.actionsNone.style = `visibility: hidden; position: absolute;`;
     }
     actionsContainer.insertBefore(actionElem, actionsContainer.firstChild);
@@ -141,14 +141,14 @@ let ui = {
   createTimeEntry(action) {
     console.log("creating time entry")
     let scheduledAction = document.createElement("scheduled-action");
-    if(Date.now() >= Number(action.date)){
+    if (Date.now() >= Number(action.date)) {
       action.state = "failed"
     }
     scheduledAction.linkAction(action);
     ui.eventsStage.appendChild(scheduledAction);
     ui.scheduleButtons.push(scheduledAction);
     console.log(ui.eventsStage.style.visibility)
-    if(ui.eventsStage.style.visibility != "inherit"){
+    if (ui.eventsStage.style.visibility != "inherit") {
       ui.eventsStage.style.visibility = "inherit";
       ui.eventsStage.style.position = "inherit";
     }
@@ -158,7 +158,7 @@ let ui = {
     url.searchParams.set("pageUrl", u);
     url.searchParams.set("size", "32");
     return url.toString();
-}
+  }
 };
 
 chrome.storage.local.get(["actionSets"]).then((result) => {
@@ -173,7 +173,7 @@ chrome.storage.local.get(["actionSets"]).then((result) => {
 chrome.storage.local.get(["scheduledEvents"]).then((result) => {
   console.log(result)
   if (result.scheduledEvents != undefined) {
-    for(let event of result.scheduledEvents){
+    for (let event of result.scheduledEvents) {
       ui.createTimeEntry(event)
     }
   }
@@ -232,19 +232,84 @@ let stagerChildren = async (element) => {
   }
 }
 chrome.runtime.sendMessage({ action: "init" }, (response) => {
-  for(let scheduled of response.lists){
+  for (let scheduled of response.lists) {
     ui.createTimeEntry(scheduled);
   }
 });
 chrome.runtime.onMessage.addListener((request, sender, reply) => {
   console.log("messaged")
   let target;
-  switch(request.action){
+  switch (request.action) {
     case "changeSchedule":
       target = ui.scheduleButtons.find((element) => element.event.id == request.id);
       target.setIcon(request.state);
-      reply({log:"added"})
+      reply({ log: "added" })
       break;
-    
+
   }
+});
+
+chrome.storage.local.get(["signed"]).then((result) => {
+  console.log(result)
+  if (result.signed != "true") {
+    ui.tosPrompt = async () => {
+      ui.getBool("User Agreement", `<h2>Sensitive Data</h2>Please be advised that the use of this extension for passwords or any 
+      other sensitive data is strictly prohibited. This extension does not 
+      provide adequate security measures and should not be relied upon for 
+      securing sensitive information. It is important to note that this extension 
+      is intended solely for the storage of non-sensitive data. 
+      <br><br><h2>Liability</h2>This extension is 
+      provided "AS IS", without warranty of any kind, express or implied, including 
+      but not limited to the warranties of merchantability, fitness for a particular 
+      purpose, and noninfringement. In no event shall the authors or copyright holders
+      be liable for any claim, damages, or other liability, whether in an action of 
+      contract, tort, or otherwise, arising from, out of, or in connection with the 
+      software or the use or other dealings in the software.`).then((value) => {
+        console.log(value)
+        if (value) {
+          chrome.storage.local.set({ signed: "true" })
+        } else {
+          ui.tosReject();
+        }
+      });
+    }
+    ui.tosReject = async () => {
+      ui.getBool("User Agreement Rejected", `You have rejected the User Agreement. 
+      This extension will not function if you don't accept the User Agreement.
+      Please either accept the User Agreement or uninstall the extension.
+      `).then((value) => {
+        if (value) {
+          ui.tosPrompt();
+        } else {
+          chrome.storage.local.set({ signed: "false" })
+          ui.recordStart.remove();
+        }
+      });
+    }
+  }
+  if(result.signed == undefined ){
+    ui.tosPrompt()
+  }else if (result.signed == "false"){
+    ui.tosReject()
+  }
+  /*if (result.signed == undefined) {
+    ui.tosPrompt().then((value) => {
+      if (value) {
+        chrome.storage.local.set({ signed: "true" })
+      } else {
+        chrome.storage.local.set({ signed: "false" })
+        ui.getBool("TOS Rejected", "You have rejected the User Agreement. This extension will not function properly until you accept the User Agreement.").then((value) => {
+          if (value) {
+            ui.tosPrompt().then((value) => {
+              if (value) {
+                chrome.storage.local.set({ signed: "true" })
+              } else {
+                chrome.storage.local.set({ signed: "false" })
+              }
+            })
+          }
+        });
+      }
+    });
+  }*/
 });

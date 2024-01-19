@@ -421,8 +421,9 @@ class uniQuery extends basicElement {
             case ("bool"):
                 this.type = "bool";
                 if (arguments[2]) {
-                    let contextHeader = document.createElement("h5");
-                    contextHeader.textContent = arguments[2];
+                    let contextHeader = document.createElement("p");
+                    contextHeader.innerHTML = arguments[2];
+                    contextHeader.style = `margin: 5px; font-size: 20px; color: var(--darkText); max-width: 300px; max-height: 200px; overflow: auto;`
                     this.ui.containedElements.push(contextHeader);
                     this.ui.inputContainer.appendChild(contextHeader);
                 }
@@ -444,7 +445,12 @@ class uniQuery extends basicElement {
     }
     setMethods(complete) {
         let close = () => {
-            complete(false);
+            if(this.type == "bool"){
+                complete(true, false);
+            }else{
+                complete(false);
+            }
+            
             closeMethod();
         }
         let save = () => {

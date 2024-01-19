@@ -59,13 +59,11 @@ Light Theme
 
 ::-webkit-scrollbar-track {
   background: transparent;
-  margin: 50px;
 }
 
 ::-webkit-scrollbar-thumb {
   width: 2.5px;
   background: #00000080;
-  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-button:end:increment {
