@@ -22,7 +22,7 @@
       }
     ],
     "background": {
-      "service_worker": "js/background.js"
+      "service_worker": "JS/background.js"
     },
     "action": {
       "default_popup": "index.html",
@@ -34,5 +34,11 @@
         "matches": ["<all_urls>"],
         "extension_ids": ["*"]
       }
-    ]
+    ],
+    "icons": {
+      "16": "icon.png",
+      "32": "icon.png",
+      "48": "icon.png",
+      "128": "icon.png"
+    }
   }

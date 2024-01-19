@@ -1,3 +1,4 @@
+import { ui, data } from "./index.js";
 let tools = {
     months: [
         { fullName: "January", shortName: "Jan" },
@@ -47,7 +48,7 @@ let tools = {
     },
     generateID: () => {
         return Math.floor(Math.random() * 1000000000);
-    }
+    },
 }
 class basicElement extends HTMLElement {
     constructor() {
@@ -64,6 +65,7 @@ class basicElement extends HTMLElement {
         this.ui = {};
     }
 }
+
 class backgroundDiv extends basicElement {
     constructor() {
         super();
@@ -83,7 +85,7 @@ class backgroundDiv extends basicElement {
         setTimeout(() => { this.ui.mainDiv.style.zIndex = "-1"; }, 250);
     }
 }
-customElements.define('background-div', backgroundDiv);
+
 class ButtonGeneric extends basicElement {
     constructor() {
         super();
@@ -146,7 +148,7 @@ class ButtonGeneric extends basicElement {
         }
     }
 }
-customElements.define('button-generic', ButtonGeneric)
+
 class ActionSet extends basicElement {
     constructor() {
         super();
@@ -258,7 +260,7 @@ class ActionSet extends basicElement {
         this.remove();
     }
 }
-customElements.define('action-set', ActionSet);
+
 class ScheduledAction extends basicElement {
     constructor() {
         super();
@@ -335,7 +337,7 @@ class ScheduledAction extends basicElement {
         this.remove();
     }
 }
-customElements.define('scheduled-action', ScheduledAction); ``
+
 class uniQuery extends basicElement {
     constructor() {
         super();
@@ -512,7 +514,7 @@ class uniQuery extends basicElement {
         this.ui.containedElements = [];
     }
 }
-customElements.define("uni-query", uniQuery);
+
 class clockInput extends basicElement {
     constructor() {
         super();
@@ -676,7 +678,7 @@ class clockInput extends basicElement {
         return [hour, minute];
     }
 }
-customElements.define("clock-input", clockInput);
+
 class dateInput extends basicElement {
     constructor() {
         super();
@@ -961,4 +963,4 @@ class dateInput extends basicElement {
         };
     }
 }
-customElements.define("date-input", dateInput);
+export {backgroundDiv, ButtonGeneric, ActionSet, ScheduledAction, uniQuery, clockInput, dateInput}

@@ -1,3 +1,12 @@
+import { backgroundDiv, ButtonGeneric, ActionSet, ScheduledAction, uniQuery, clockInput, dateInput } from './components.js';
+customElements.define('background-div', backgroundDiv);
+customElements.define('button-generic', ButtonGeneric);
+customElements.define('action-set', ActionSet);
+customElements.define('scheduled-action', ScheduledAction);
+customElements.define("uni-query", uniQuery);
+customElements.define("clock-input", clockInput);
+customElements.define("date-input", dateInput);
+
 let data = {
   actionsData: [],
   scheduledEvents: [],
@@ -44,17 +53,7 @@ let data = {
   }
 }
 let ui = {
-  backgroundDiv: document.getElementById('bgDiv'),
-  recordStart: document.getElementById('recordStart'),
-  recordStop: document.getElementById('recordStop'),
-  editBack: document.getElementById('editBack'),
-  editSave: document.getElementById('editSave'),
-  editNameEntry: document.getElementById('editName'),
-  editEntryContainer: document.getElementById('editEntry'),
-  uniEntry: document.getElementById('uniPopup'),
-  actionsNone: document.getElementById('actionsNone'),
-  eventsStage: document.getElementById('eventsStage'),
-  dial: document.getElementById('dial'),
+
   actionButtons: [],
   scheduleButtons: [],
   setPage: (name) => {
@@ -160,100 +159,103 @@ let ui = {
     return url.toString();
   }
 };
+window.addEventListener('load', () => {
+  ui = {
+    backgroundDiv: document.getElementById('bgDiv'),
+    recordStart: document.getElementById('recordStart'),
+    recordStop: document.getElementById('recordStop'),
+    editBack: document.getElementById('editBack'),
+    editSave: document.getElementById('editSave'),
+    editNameEntry: document.getElementById('editName'),
+    editEntryContainer: document.getElementById('editEntry'),
+    uniEntry: document.getElementById('uniPopup'),
+    actionsNone: document.getElementById('actionsNone'),
+    eventsStage: document.getElementById('eventsStage'),
+    dial: document.getElementById('dial'),
+    ...ui
+  }
 
-chrome.storage.local.get(["actionSets"]).then((result) => {
-  console.log(result)
-  data.actionsData = result.actionSets == undefined ? [] : result.actionSets;
-  if (result.actionSets != undefined && Array.isArray(result.actionSets) && result.actionSets.length > 0) {
-    for (let action of data.actionsData.reverse()) {
-      ui.createActionEntry(action);
-    }
-  }
-});
-chrome.storage.local.get(["scheduledEvents"]).then((result) => {
-  console.log(result)
-  if (result.scheduledEvents != undefined) {
-    for (let event of result.scheduledEvents) {
-      ui.createTimeEntry(event)
-    }
-  }
-});
-chrome.storage.local.get(["recording"]).then((result) => {
-  console.log(result)
-  if (result.recording == true) {
-    ui.setPage("recordPage");
-  }
-});
-ui.recordStart.addEventListener('click', () => {
-  console.log("Starting recording");
-  chrome.runtime.sendMessage({ action: "startRecord" }, (response) => {
-    if (response.log == "started") {
-      console.log("Started recording");
-      chrome.storage.local.set({ recording: true }).then(() => {
-        ui.setPage("recordPage");
-      });
-    } else {
-      throw new Error("Failed to start recording");
-    }
-  });
-});
-ui.recordStop.addEventListener('click', () => {
-  chrome.storage.local.set({ recording: false }).then(() => {
-    ui.setPage("mainPage");
-  });
-  chrome.runtime.sendMessage({ action: "stopRecord" }, (response) => {
-    if (response.log == "finished") {
-      console.log("Stopped recording");
-      if (response.actions.length > 0) {
-        ui.getName("Enter Name").then((name) => {
-          data.addAction({
-            name: name,
-            actions: response.actions,
-            urls: response.urls,
-          });
-        }, () => { });
+
+  chrome.storage.local.get(["actionSets"]).then((result) => {
+    console.log(result)
+    data.actionsData = result.actionSets == undefined ? [] : result.actionSets;
+    if (result.actionSets != undefined && Array.isArray(result.actionSets) && result.actionSets.length > 0) {
+      for (let action of data.actionsData.reverse()) {
+        ui.createActionEntry(action);
       }
-    } else {
-      throw new Error("Failed to stop recording");
     }
   });
-});
-
-let delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-let stagerChildren = async (element) => {
-  let entryChildren = [...element.childNodes];
-  for (let child of entryChildren) {
-    console.log(child)
-    if (child.open) {
-      child.open();
+  chrome.storage.local.get(["scheduledEvents"]).then((result) => {
+    console.log(result)
+    if (result.scheduledEvents != undefined) {
+      for (let event of result.scheduledEvents) {
+        ui.createTimeEntry(event)
+      }
     }
+  });
+  chrome.storage.local.get(["recording"]).then((result) => {
+    console.log(result)
+    if (result.recording == true) {
+      ui.setPage("recordPage");
+    }
+  });
+  ui.recordStart.addEventListener('click', () => {
+    console.log("Starting recording");
+    chrome.runtime.sendMessage({ action: "startRecord" }, (response) => {
+      if (response.log == "started") {
+        console.log("Started recording");
+        chrome.storage.local.set({ recording: true }).then(() => {
+          ui.setPage("recordPage");
+        });
+      } else {
+        throw new Error("Failed to start recording");
+      }
+    });
+  });
+  ui.recordStop.addEventListener('click', () => {
+    chrome.storage.local.set({ recording: false }).then(() => {
+      ui.setPage("mainPage");
+    });
+    chrome.runtime.sendMessage({ action: "stopRecord" }, (response) => {
+      if (response.log == "finished") {
+        console.log("Stopped recording");
+        if (response.actions.length > 0) {
+          ui.getName("Enter Name").then((name) => {
+            data.addAction({
+              name: name,
+              actions: response.actions,
+              urls: response.urls,
+            });
+          }, () => { });
+        }
+      } else {
+        throw new Error("Failed to stop recording");
+      }
+    });
+  });
+  chrome.runtime.sendMessage({ action: "init" }, (response) => {
+    for (let scheduled of response.lists) {
+      ui.createTimeEntry(scheduled);
+    }
+  });
+  chrome.runtime.onMessage.addListener((request, sender, reply) => {
+    console.log("messaged")
+    let target;
+    switch (request.action) {
+      case "changeSchedule":
+        target = ui.scheduleButtons.find((element) => element.event.id == request.id);
+        target.setIcon(request.state);
+        reply({ log: "added" })
+        break;
 
-    await delay(60);
-  }
-}
-chrome.runtime.sendMessage({ action: "init" }, (response) => {
-  for (let scheduled of response.lists) {
-    ui.createTimeEntry(scheduled);
-  }
-});
-chrome.runtime.onMessage.addListener((request, sender, reply) => {
-  console.log("messaged")
-  let target;
-  switch (request.action) {
-    case "changeSchedule":
-      target = ui.scheduleButtons.find((element) => element.event.id == request.id);
-      target.setIcon(request.state);
-      reply({ log: "added" })
-      break;
+    }
+  });
 
-  }
-});
-
-chrome.storage.local.get(["signed"]).then((result) => {
-  console.log(result)
-  if (result.signed != "true") {
-    ui.tosPrompt = async () => {
-      ui.getBool("User Agreement", `<h2>Sensitive Data</h2>Please be advised that the use of this extension for passwords or any 
+  chrome.storage.local.get(["signed"]).then((result) => {
+    console.log(result)
+    if (result.signed != "true") {
+      ui.tosPrompt = async () => {
+        ui.getBool("User Agreement", `<h2>Sensitive Data</h2>Please be advised that the use of this extension for passwords or any 
       other sensitive data is strictly prohibited. This extension does not 
       provide adequate security measures and should not be relied upon for 
       securing sensitive information. It is important to note that this extension 
@@ -265,51 +267,53 @@ chrome.storage.local.get(["signed"]).then((result) => {
       be liable for any claim, damages, or other liability, whether in an action of 
       contract, tort, or otherwise, arising from, out of, or in connection with the 
       software or the use or other dealings in the software.`).then((value) => {
-        console.log(value)
-        if (value) {
-          chrome.storage.local.set({ signed: "true" })
-        } else {
-          ui.tosReject();
-        }
-      });
-    }
-    ui.tosReject = async () => {
-      ui.getBool("User Agreement Rejected", `You have rejected the User Agreement. 
-      This extension will not function if you don't accept the User Agreement.
-      Please either accept the User Agreement or uninstall the extension.
-      `).then((value) => {
-        if (value) {
-          ui.tosPrompt();
-        } else {
-          chrome.storage.local.set({ signed: "false" })
-          ui.recordStart.remove();
-        }
-      });
-    }
-  }
-  if(result.signed == undefined ){
-    ui.tosPrompt()
-  }else if (result.signed == "false"){
-    ui.tosReject()
-  }
-  /*if (result.signed == undefined) {
-    ui.tosPrompt().then((value) => {
-      if (value) {
-        chrome.storage.local.set({ signed: "true" })
-      } else {
-        chrome.storage.local.set({ signed: "false" })
-        ui.getBool("TOS Rejected", "You have rejected the User Agreement. This extension will not function properly until you accept the User Agreement.").then((value) => {
+          console.log(value)
           if (value) {
-            ui.tosPrompt().then((value) => {
-              if (value) {
-                chrome.storage.local.set({ signed: "true" })
-              } else {
-                chrome.storage.local.set({ signed: "false" })
-              }
-            })
+            chrome.storage.local.set({ signed: "true" })
+          } else {
+            ui.tosReject();
           }
         });
       }
-    });
-  }*/
+      ui.tosReject = async () => {
+        ui.getBool("User Agreement Rejected", `You have rejected the User Agreement. 
+      This extension will not function if you don't accept the User Agreement.
+      Please either accept the User Agreement or uninstall the extension.
+      `).then((value) => {
+          if (value) {
+            ui.tosPrompt();
+          } else {
+            chrome.storage.local.set({ signed: "false" })
+            ui.recordStart.remove();
+          }
+        });
+      }
+    }
+    if (result.signed == undefined) {
+      ui.tosPrompt()
+    } else if (result.signed == "false") {
+      ui.tosReject()
+    }
+    /*if (result.signed == undefined) {
+      ui.tosPrompt().then((value) => {
+        if (value) {
+          chrome.storage.local.set({ signed: "true" })
+        } else {
+          chrome.storage.local.set({ signed: "false" })
+          ui.getBool("TOS Rejected", "You have rejected the User Agreement. This extension will not function properly until you accept the User Agreement.").then((value) => {
+            if (value) {
+              ui.tosPrompt().then((value) => {
+                if (value) {
+                  chrome.storage.local.set({ signed: "true" })
+                } else {
+                  chrome.storage.local.set({ signed: "false" })
+                }
+              })
+            }
+          });
+        }
+      });
+    }*/
+  });
 });
+export { data, ui };
