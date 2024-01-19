@@ -1,0 +1,81 @@
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,800;9..40,900&display=swap');
+:root {
+  --primary: #131313;
+  --secondary: #3d3d3d;
+  --accentBorder: #4e4e4e;
+  --accent: #585858;
+  --text: #ffffff;
+  --darkText: #e6e6e6;
+  --translucent: #00000033;
+  --semi-transparent: #000000c5;
+  --neutralColor: #c4c4c480;
+}
+/*
+Light Theme
+  :root {
+  --primary: #ffffff;
+  --secondary: #e0e0e0;
+  --accentBorder: #cacaca;
+  --accent: #ffffff;
+  --text: #000000;
+  --darkText: #000000;
+  --translucent: #00000033;
+  --semi-transparent: #000000c5;
+  --neutralColor: #80808080;
+}
+*/
+
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes rotation {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(720deg);
+  }
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  width: 2.5px;
+  background: #00000080;
+}
+
+::-webkit-scrollbar-button:end:increment {
+  height: 0px;
+  width: 0px;
+  display: block;
+  background: transparent;
+}
+
+::-webkit-scrollbar-button:start:increment {
+  height: 0px;
+  width: 0px;
+  display: block;
+  background: transparent;
+}
