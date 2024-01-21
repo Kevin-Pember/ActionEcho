@@ -1,6 +1,8 @@
 console.log("AutoMade script loaded")
 console.log("inject.js loaded")
 window.addEventListener("load", () => { data.fullyLoaded = true });
+
+
 //editor.style = `position: fixed; bottom: 10px; right: 10px; width: 300px; height: 300px; background-color: white; z-index: 10000000000;`
 let ui = {
     body: document.body,
@@ -27,38 +29,7 @@ let data = {
     browserOS: undefined,
     port: chrome.runtime.connect({ name: location.href }),
     targetElement: undefined,
-    keyTable: [
-        {
-            mac: { key: "z", metaKey: true },
-            default: { key: "z", ctrlKey: true },
-            getKeyData: () => { return { key: "undo" } }
-        },
-        {
-            mac: { key: "z", metaKey: true, shiftKey: true },
-            default: { key: "y", ctrlKey: true },
-            getKeyData: () => { return { key: "redo" } }
-        },
-        {
-            mac: { key: "x", metaKey: true },
-            default: { key: "x", ctrlKey: true },
-            getKeyData: (event) => { return { key: "cut", selection: logger.getSelection(event.target) } }
-        },
-        {
-            mac: { key: "c", metaKey: true },
-            default: { key: "c", ctrlKey: true },
-            getKeyData: (event) => { return { key: "copy", selection: logger.getSelection(event.target) } }
-        },
-        {
-            mac: { key: "v", metaKey: true },
-            default: { key: "v", ctrlKey: true },
-            getKeyData: (event) => { return { key: "paste", selection: logger.getSelection(event.target) } }
-        },
-        {
-            mac: { key: "a", metaKey: true },
-            default: { key: "a", ctrlKey: true },
-            getKeyData: () => { return { key: "all" } }
-        },
-    ],
+
     keyCodes: {
         Enter: 13,
     }
@@ -66,7 +37,6 @@ let data = {
 let input = {
     actionQueue: [],
     parsePacket: (packet) => {
-        console.log(packet)
         if (packet.v === 1.0) {
             for (let action of packet.actions) {
                 console.log(action)
@@ -158,6 +128,7 @@ let input = {
             bubbles: true,
             cancelable: true
         }
+        console.log(eventObject)
         elem.dispatchEvent(new KeyboardEvent('keydown', eventObject));
         elem.dispatchEvent(new KeyboardEvent('keypress', eventObject));
         elem.dispatchEvent(new KeyboardEvent('keyup', eventObject));
@@ -191,6 +162,36 @@ let input = {
     },
 }
 let logger = {
+    keyTable: [
+        {
+            mac: { key: "v", metaKey: true },
+            default: { key: "v", ctrlKey: true },
+            getKeyData: () => {
+                return {};
+
+            }
+        },
+        {
+            mac: { key: "z", metaKey: true },
+            default: { key: "z", ctrlKey: true },
+            getKeyData: () => { return { key: "undo" } }
+        },
+        {
+            mac: { key: "z", metaKey: true, shiftKey: true },
+            default: { key: "y", ctrlKey: true },
+            getKeyData: () => { return { key: "redo" } }
+        },
+        {
+            mac: { key: "x", metaKey: true },
+            default: { key: "x", ctrlKey: true },
+            getKeyData: (event) => { return { key: "cut", selection: logger.getSelection(event.target) } }
+        },
+        {
+            mac: { key: "a", metaKey: true },
+            default: { key: "a", ctrlKey: true },
+            getKeyData: () => { return { key: "all" } }
+        },
+    ],
     templates: {
         click: {
             action: "log",
@@ -203,6 +204,15 @@ let logger = {
             specifier: undefined,
             key: undefined,
         }
+    },
+    matchKeys: (event, key) => {
+        let keys = Object.keys(key);
+        for (let keyName of keys) {
+            if (event[keyName] != key[keyName]) {
+                return false;
+            }
+        }
+        return true;
     },
     eventHandler: async (event) => {
         let target = event.target;
@@ -220,30 +230,37 @@ let logger = {
         } else if (event.type == "keydown" || event.type == "keyup" || event.type == "keypress") {
             log = { ...logger.templates.input };
             log.specifier = data.targetElement != undefined ? data.targetElement : logger.getSpecifier(target);
-            if (event.key.length > 1) {
-                log.type = "key";
-                if (data.browserOS == undefined) {
-                    let platInfo = await chrome.runtime.getPlatformInfo();
-                    if (platInfo == "mac") {
-                        data.browserOS = "mac";
-                    } else {
-                        data.browserOS = "default";
+            log.type = "key";
+            if ((event.metaKey || event.ctrlKey) && event.key.length == 1) {
+                console.log(data.browserOS)
+                console.log(event)
+                for (let action of logger.keyTable) {
+                    console.log(action[data.browserOS])
+                    if (logger.matchKeys(event, action[data.browserOS])) {
+                        console.log(action[data.browserOS])
+                        Object.assign(log, await action.getKeyData(event));
+                        break;
                     }
                 }
-                for (let action of data.keyTable) {
-                    if (Object.keys(action[data.browserOS]).every(key => action.eventParam[key] == event[key])) {
-                        Object.assign(log, action.getKeyData(event));
-                        break;
-                    };
+                console.log("Prepost", event)
+                console.log("Post parse", log)
+            } else if (event.key.length > 1) {
+                if (event.key == "Enter") {
+                    log.key = "Enter";
                 }
-            } else {
+
+            } else if (event.key.length == 1) {
+                console.log("key is " + event.key)
                 log.type = "input";
                 log.key = event.key;
                 log.selection = logger.getSelection(event.target);
             };
         }
         console.log(log);
-        data.port.postMessage(log);
+        if ((log.type == "key" && log.key != undefined) || log.type != "key") {
+            data.port.postMessage(log);
+        }
+
     },
     getSelection: (target) => {
         if ((target.tagName == "INPUT" && target.type == "text") || target.tagName == "TEXTAREA") {
@@ -294,6 +311,12 @@ data.port.onMessage.addListener(function (msg) {
         case "startRecord":
             document.addEventListener('click', logger.eventHandler);
             document.addEventListener('keydown', logger.eventHandler);
+            document.addEventListener("paste", (e) => {
+                let log = {type: "key", selection: logger.getSelection(e.target), key: "paste", text: e.clipboardData.getData('text/plain')};
+                if(text != "" && text != undefined){
+                    data.port.postMessage(log);
+                }
+            });
             break;
         case "stopRecord":
             document.removeEventListener('click', logger.eventHandler);
@@ -340,3 +363,9 @@ data.port.onMessage.addListener(function (msg) {
             break;
     }
 });
+let platInfo = navigator.userAgent;
+if (platInfo.indexOf("Macintosh") != -1) {
+    data.browserOS = "mac";
+} else {
+    data.browserOS = "default";
+}

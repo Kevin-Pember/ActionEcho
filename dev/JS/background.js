@@ -284,6 +284,7 @@ let recorder = {
       case "key":
         console.log("key log")
         if (msg.key == "undo") {
+          console.log("undo")
           if (recorder.history.edit.length > 0) {
             recorder.history.redo.push(recorder.parseData.textAction.text);
             recorder.parseData.textAction.text = recorder.history.edit.pop();
@@ -299,8 +300,11 @@ let recorder = {
           let range = msg.selection.split("-");
           recorder.history.edit.push(recorder.parseData.textAction.text);
           recorder.parseData.textAction.text = recorder.parseData.textAction.text.substring(0, range[0]) + recorder.parseData.textAction.text.substring(range[1], recorder.parseData.textAction.text.length);
-        } else {
-          //recorder.resetRecorder();
+        }else if (msg.key == "all"){
+          
+        }else {
+          console.log("Default key log")
+          recorder.resetRecorder();
           data.current.actionSet.actions.push(msg);
         }
         break;
