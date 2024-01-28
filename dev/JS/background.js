@@ -177,62 +177,48 @@ let recorder = {
       specifier: "",
     }
   },
-  history: {
-    edit: [],
-    redo: [],
-  },
   urlLoad: {
     loading: true,
     loadAction: false,
   },
-  parseData: {
+  data: {
+    actionSet: undefined,
     site: {},
-    textAction: {}
+    textAction: {},
+    caret: [],
+    isSelection: false,
+    edit: [],
+    redo: [],
+    inputs : [],
+    
   },
   startRecord: () => {
     recorder.recording = true;
-    data.current.actionSet = structuredClone(recorder.templates.actionSet);
+    recorder.data.actionSet = structuredClone(recorder.templates.actionSet);
     data.current.port.postMessage({ action: "startRecord" });
   },
   stopRecord: () => {
     data.current.port.postMessage({ action: "stopRecord" });
-    data.current.actionSet.log = "finished";
-    recorder.resetRecorder();
+    recorder.data.actionSet.log = "finished";
     recorder.recording = false;
   },
   cacheSite: (type, location) => {
-    recorder.parseData.site = structuredClone(recorder.templates.site);
-    recorder.parseData.site.url = location;
+    recorder.data.site = structuredClone(recorder.templates.site);
+    recorder.data.site.url = location;
     if (type == "newUrl" && recorder.recording) {
-      recorder.parseData.site.autoLoad = recorder.urlLoad.loadAction;
-      recorder.parseData.site.format = "url";
+      recorder.data.site.autoLoad = recorder.urlLoad.loadAction;
+      recorder.data.site.format = "url";
     } else {
-      recorder.parseData.site.format = "tab";
+      recorder.data.site.format = "tab";
     }
-    /*switch (type) {
-      case "newTab":
-        //recorder.cacheSite("newTab", location);
-        //head.siteCache = { action: "newTab", location: location };
-        //actionSet.currentSite.action = "newTab";
-        
-        break;
-      case "newUrl":
-        if (recorder.recording) {
-          actionSet.currentSite.action = "newUrl";
-          actionSet.currentSite.autoLoad = head.trackLoad.loadAction;
-        } else {
-          actionSet.currentSite.action = "newTab";
-        }
-        break;
-    }*/
   },
   postCacheSite: () => {
-    if (recorder.parseData.site) {
-      let urls = runner.getUrls(data.current.actionSet.actions);
-      if (urls[-1] != recorder.parseData.site.url) {
-        data.current.actionSet.actions.push(recorder.parseData.site);
+    if (recorder.data.site) {
+      let urls = runner.getUrls(recorder.data.actionSet.actions);
+      if (urls[-1] != recorder.data.site.url) {
+        recorder.data.actionSet.actions.push(recorder.data.site);
       }
-      recorder.parseData.site = undefined;
+      recorder.data.site = undefined;
     }
   },
   setCurrentPort: (port) => {
@@ -241,7 +227,11 @@ let recorder = {
         data.current.port.postMessage({ action: "stopRecord" });
       }
       port.postMessage({ action: "startRecord" });
-      recorder.resetRecorder();
+      recorder.data.inputs = []
+      recorder.data.caret = []
+      recorder.data.isSelection = false;
+      recorder.data.edit = []
+      recorder.data.redo = []
     }
     data.current.port = port;
   },
@@ -253,59 +243,82 @@ let recorder = {
         console.log("click log")
         console.log(msg.textContext)
         if (msg.textContext != undefined) {
-          if(!recorder.parseData.textAction.type){
-            recorder.parseData.textAction = structuredClone(recorder.templates.textAction)
-          }else{
-            recorder.resetRecorder();
-          };
-          recorder.parseData.textAction.text = msg.textContext;
-          recorder.parseData.textAction.specifier = msg.specifier;
+          let exists = recorder.data.inputs.find((input) => input.specifier == msg.specifier);
+          if(!exists){
+            recorder.data.actionSet.actions.push(msg);
+            let input = {
+              entry: structuredClone(recorder.templates.textAction),
+              specifier: msg.specifier,
+              edit: [],
+              redo: [],
+            }
+            recorder.data.inputs.push(input);
+            recorder.data.actionSet.actions.push(input.entry);
+            recorder.data.caret = msg.caret.split("-").map((num) => {
+              return Number(num);
+            })
+            recorder.data.isSelection = !(recorder.data.caret[0] === recorder.data.caret[1]);
+            exists = input;
+          }
+          recorder.data.currentTextAction = exists.entry;
+          recorder.data.redo = exists.redo;
+          recorder.data.edit = exists.edit;
         }
-        if(msg.specifier !== recorder.parseData.textAction.specifier){
-          recorder.resetRecorder();
-          recorder.parseData.textAction.specifier = msg.specifier;
-        }
-        data.current.actionSet.actions.push(msg);
+        
         break;
       case "input":
         console.log("input log")
-        console.log(recorder.parseData.textAction)
-        /*if(!recorder.parseData.textAction.specifier){
-          recorder.parseData.textAction.specifier = msg.specifier;
-        }
-        console.log(`${msg.specifier} vs. ${recorder.parseData.textAction.specifier}`)
-        if (msg.specifier !== recorder.parseData.textAction.specifier) {
-          console.log("resetting recorder")
-          recorder.resetRecorder();
-        }*/
+        console.log(recorder.data.currentTextAction)
         recorder.inputHandler(msg.key, msg.selection.split("-"));
         recorder.lastTextLog = msg;
         break;
       case "key":
         console.log("key log")
-        if (msg.key == "undo") {
-          console.log("undo")
-          if (recorder.history.edit.length > 0) {
-            recorder.history.redo.push(recorder.parseData.textAction.text);
-            recorder.parseData.textAction.text = recorder.history.edit.pop();
-          }
-        } else if (msg.key == "redo") {
-          if (recorder.history.redo.length > 0) {
-            recorder.history.edit.push(recorder.parseData.textAction.text);
-            recorder.parseData.textAction.text = recorder.history.redo.pop();
-          }
-        } else if (msg.key == "paste") {
-          recorder.inputHandler(msg.text, msg.selection.split("-"));
-        } else if (msg.key == "cut") {
-          let range = msg.selection.split("-");
-          recorder.history.edit.push(recorder.parseData.textAction.text);
-          recorder.parseData.textAction.text = recorder.parseData.textAction.text.substring(0, range[0]) + recorder.parseData.textAction.text.substring(range[1], recorder.parseData.textAction.text.length);
-        }else if (msg.key == "all"){
-          
-        }else {
-          console.log("Default key log")
-          recorder.resetRecorder();
-          data.current.actionSet.actions.push(msg);
+        switch (msg.key) {
+          case "undo":
+            console.log("undo");
+            if (recorder.data.edit.length > 0) {
+              recorder.data.redo.push(recorder.data.currentTextAction.text);
+              recorder.data.currentTextAction.text = recorder.data.edit.pop();
+            }
+            break;
+          case "redo":
+            if (recorder.data.redo.length > 0) {
+              recorder.data.edit.push(recorder.data.currentTextAction.text);
+              recorder.data.currentTextAction.text = recorder.data.redo.pop();
+            }
+            break;
+          case "paste":
+            recorder.inputHandler(msg.text, msg.selection.split("-"));
+            break;
+          case "cut":
+            let range = msg.selection.split("-");
+            recorder.data.edit.push(recorder.data.currentTextAction.text);
+            recorder.data.currentTextAction.text = recorder.data.currentTextAction.text.substring(0, range[0]) + recorder.data.currentTextAction.text.substring(range[1], recorder.data.currentTextAction.text.length);
+            break;
+          case "all":
+            break;
+          case "Enter":
+            recorder.data.actionSet.actions.push(msg);
+            break;
+          case "Backspace":
+            
+            break;
+          case "ArrowLeft":
+
+            break;
+          case "ArrowRight":
+
+            break;
+          case "ArrowUp":
+
+            break;
+          case "ArrowDown":
+
+            break;
+          default:
+            console.log("Default key log");
+            recorder.data.actionSet.actions.push(msg);
         }
         break;
     }
@@ -314,26 +327,12 @@ let recorder = {
     }
 
   },
-  inputHandler: (key, range) => {
-    let text = recorder.parseData.textAction.text;
-    let pre = text;
-    console.log("input handler with key: " + key + " and range: " + range + "< add to " + text);
-    if (range[0] > -1 && range[1] > -1 && range[0] <= text.length && range[1] <= text.length) {
-      let textBefore = text.substring(0, range[0]);
-      let textAfter = text.substring(range[1], text.length);
-      recorder.parseData.textAction.text = textBefore + key + textAfter;
-      recorder.history.edit.push(pre);
-    }
-  },
-  resetRecorder: () => {
-    console.log("reset head");
-    console.log(recorder.parseData.textAction);
-    if (recorder.parseData.textAction.text && recorder.parseData.textAction.text.length > 0) {
-      data.current.actionSet.actions.push(recorder.parseData.textAction);
-      recorder.parseData.textAction = structuredClone(recorder.templates.textAction);
-    }
-    recorder.history.edit = [];
-    recorder.history.redo = [];
+  inputHandler: (key) => {
+    let text = recorder.data.currentTextAction.text;
+    let keyLength = key.length
+    recorder.data.edit.push(recorder.data.currentTextAction.text);
+    recorder.data.currentTextAction.text = text.substring(0, recorder.data.caret[0]) + key + text.substring(recorder.data.caret[1]);
+    recorder.data.caret = [recorder.data.caret[0] + keyLength, recorder.data.caret[0] + keyLength]
   },
 
 }
@@ -348,7 +347,7 @@ let editor = {
     let urls = runner.getUrls(request.actionSet.actions);
     for (let url of urls) {
       let portActions = request.actionSet.actions.splice(request.actionSet.actions.indexOf(url) + 1, urls.indexOf(url) < urls.length - 1 ? request.actionSet.actions.indexOf(urls[urls.indexOf(url) + 1]) : request.actionSet.actions.length);
-      console.log("portActions",portActions)
+      console.log("portActions", portActions)
       data.openTab(url).then((port) => {
         editorEntry.portList.push(port);
         if (!port.hasEditor) {
@@ -447,12 +446,12 @@ let clock = {
 }
 
 let checkAlarmState = async () => {
-    const alarm = await chrome.alarms.get("clockAlarm");
-    if (!alarm) {
-      await chrome.alarms.create("clockAlarm", { 
-        periodInMinutes: 0.01 
-      });
-    }
+  const alarm = await chrome.alarms.get("clockAlarm");
+  if (!alarm) {
+    await chrome.alarms.create("clockAlarm", {
+      periodInMinutes: 0.01
+    });
+  }
 }
 let iterate = 0;
 chrome.alarms.onAlarm.addListener(async (alarm) => {
@@ -468,7 +467,7 @@ chrome.storage.local.get(["recording"]).then((result) => {
 chrome.storage.local.get(["scheduledEvents"]).then((result) => {
   console.log(result)
   if (result.scheduledEvents != undefined) {
-    for(let event of result.scheduledEvents){
+    for (let event of result.scheduledEvents) {
       //ui.createTimeEntry(event)
       clock.addSchedule(event);
     }
@@ -545,7 +544,6 @@ chrome.runtime.onConnect.addListener(function (port) {
       recorder.setCurrentPort(port);
       if (recorder.recording) {
         port.postMessage({ action: "startRecord" });
-        recorder.resetRecorder();
       }
     }
     //remove the old port from the array
@@ -570,21 +568,21 @@ chrome.runtime.onMessage.addListener((request, sender, reply) => {
     case "stopRecord":
       recorder.stopRecord();
       console.log("stopping record");
-      console.log(data.current.actionSet);
-      reply(data.current.actionSet);
+      console.log(recorder.data.actionSet);
+      reply(recorder.data.actionSet);
       console.log("template is now:")
       console.log(recorder.templates.actionSet)
-      data.current.actionSet = structuredClone(recorder.templates.actionSet);
+      recorder.data.actionSet = structuredClone(recorder.templates.actionSet);
       break;
     case "scheduleActionSet":
       clock.addSchedule(request.set);
       console.log(request.set)
-      reply({log:"added"})
+      reply({ log: "added" })
       break;
     case "removeScheduledAction":
       let index = clock.schedule.actionLists.findIndex((test) => test.id == request.id);
       clock.removeScheduledAction(index);
-      reply({log:"removed"})
+      reply({ log: "removed" })
       break;
     case "runActionSet":
       runner.runActions(request.set.actions);

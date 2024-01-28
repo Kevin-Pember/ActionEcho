@@ -56,6 +56,11 @@ let input = {
                     console.log(`Element Specifier is ${msg.specifier}`)
                     let element = input.getElement(msg.specifier);
                     console.log(element)
+                    if(element.tagName == "INPUT" || element.tagName == "TEXTAREA"){
+                        element.value = msg.textContext;
+                    }else if(element.contentEditable == "true"){
+                        element.innerText = msg.textContext;
+                    }
                     element.dispatchEvent(new MouseEvent('click', {
                         bubbles: true,
                         cancelable: true,
@@ -217,14 +222,13 @@ let logger = {
     eventHandler: async (event) => {
         let target = event.target;
         let log;
+        console.log(event)
         if (event.type == "click") {
             log = { ...logger.templates.click };
             log.specifier = logger.getSpecifier(target);
-            if (target.tagName == "INPUT" || target.tagName == "TEXTAREA") {
-                log.textContext = target.value;
-                data.targetElement = log.specifier;
-            } else if (target.contentEditable == "true") {
-                log.textContext = target.innerText;
+            if(target.tagName == "INPUT" || target.tagName == "TEXTAREA" || target.contentEditable == "true"){
+                log.textContext = target.contentEditable == "true" ? target.innerText : target.value;
+                log.caret = logger.getSelection(target);
                 data.targetElement = log.specifier;
             }
         } else if (event.type == "keydown" || event.type == "keyup" || event.type == "keypress") {
@@ -247,6 +251,14 @@ let logger = {
             } else if (event.key.length > 1) {
                 if (event.key == "Enter") {
                     log.key = "Enter";
+                }else if(event.key == "Backspace"){
+                    log.key = "Backspace";
+                }else if(event.key == "Delete"){
+                    log.key = "Delete";
+                }else if(event.key == "ArrowLeft"){
+                    log.key = "ArrowLeft";
+                }else if(event.key == "ArrowRight"){
+                    log.key = "ArrowRight";
                 }
 
             } else if (event.key.length == 1) {
