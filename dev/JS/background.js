@@ -174,7 +174,6 @@ let recorder = {
     textAction: {
       type: "input",
       text: "",
-      specifier: "",
     }
   },
   urlLoad: {
@@ -243,14 +242,17 @@ let recorder = {
         console.log("click log")
         console.log(msg.textContext)
         if (msg.textContext != undefined) {
+          recorder.data.actionSet.actions.push(msg);
           let exists = recorder.data.inputs.find((input) => input.specifier == msg.specifier);
           if(!exists){
-            recorder.data.actionSet.actions.push(msg);
             let input = {
               entry: structuredClone(recorder.templates.textAction),
               specifier: msg.specifier,
               edit: [],
               redo: [],
+            }
+            if(msg.textContext != ""){
+              input.entry.text = msg.textContext
             }
             recorder.data.inputs.push(input);
             recorder.data.actionSet.actions.push(input.entry);
@@ -263,6 +265,9 @@ let recorder = {
           recorder.data.currentTextAction = exists.entry;
           recorder.data.redo = exists.redo;
           recorder.data.edit = exists.edit;
+          msg.caret = undefined;
+          msg.textContext = undefined;
+          
         }
         
         break;
@@ -297,24 +302,28 @@ let recorder = {
             recorder.data.currentTextAction.text = recorder.data.currentTextAction.text.substring(0, range[0]) + recorder.data.currentTextAction.text.substring(range[1], recorder.data.currentTextAction.text.length);
             break;
           case "all":
+            recorder.data.caret[0] = 0
+            recorder.data.caret[1] = recorder.data.currentTextAction.text.length
             break;
           case "Enter":
             recorder.data.actionSet.actions.push(msg);
             break;
           case "Backspace":
-            
+            let text = recorder.data.currentTextAction.text
+            recorder.data.currentTextAction.text = text.substring(0, recorder.data.caret[0] - 1) + text.substring(recorder.data.caret[1])
+            recorder.data.caret = [recorder.data.caret[0] - 1, recorder.data.caret[0] - 1]
             break;
           case "ArrowLeft":
-
+            if(!recorder.data.isSelection){
+              recorder.data.caret[0] -= 1
+            }
+            recorder.data.caret[1] = recorder.data.caret[0]
             break;
           case "ArrowRight":
-
-            break;
-          case "ArrowUp":
-
-            break;
-          case "ArrowDown":
-
+            if(!recorder.data.isSelection){
+              recorder.data.caret[1] += 1
+            }
+            recorder.data.caret[0] = recorder.data.caret[1]
             break;
           default:
             console.log("Default key log");

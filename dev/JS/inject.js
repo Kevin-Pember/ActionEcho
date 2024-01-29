@@ -36,6 +36,9 @@ let data = {
 }
 let input = {
     actionQueue: [],
+    data:{
+        focusedElement: undefined,
+    },
     parsePacket: (packet) => {
         if (packet.v === 1.0) {
             for (let action of packet.actions) {
@@ -56,10 +59,11 @@ let input = {
                     console.log(`Element Specifier is ${msg.specifier}`)
                     let element = input.getElement(msg.specifier);
                     console.log(element)
+                    input.data.focusedElement = element;
                     if(element.tagName == "INPUT" || element.tagName == "TEXTAREA"){
-                        element.value = msg.textContext;
+                        element.value = "";
                     }else if(element.contentEditable == "true"){
-                        element.innerText = msg.textContext;
+                        element.innerText = "";
                     }
                     element.dispatchEvent(new MouseEvent('click', {
                         bubbles: true,
@@ -71,7 +75,7 @@ let input = {
                     break;
                 case "input":
                     console.log("Running input action");
-                    input.enterText(input.getElement(msg.specifier), msg);
+                    input.enterText(input.data.focusedElement, msg);
                     break;
                 case "key":
                     console.log("Running key action")
