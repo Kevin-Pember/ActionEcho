@@ -143,8 +143,8 @@ let recorder = {
     isSelection: false,
     edit: [],
     redo: [],
-    inputs : [],
-    
+    inputs: [],
+
   },
   startRecord: () => {
     recorder.recording = true;
@@ -168,8 +168,9 @@ let recorder = {
   },
   postCacheSite: () => {
     if (recorder.data.site) {
+      console.log(`%c Adding Site: ${recorder.data.site}`, "font-size: 20px; background-color: green;")
       let urls = runner.getUrls(recorder.data.actionSet.actions);
-      if (urls[-1] != recorder.data.site.url) {
+      if (urls[urls.length - 1] != recorder.data.site.url) {
         recorder.data.actionSet.actions.push(recorder.data.site);
       }
       recorder.data.site = undefined;
@@ -197,7 +198,7 @@ let recorder = {
         console.log(msg.textContext)
         if (msg.textContext != undefined) {
           let exists = recorder.data.inputs.find((input) => input.specifier == msg.specifier);
-          if(!exists){
+          if (!exists) {
             recorder.data.actionSet.actions.push(msg);
             let input = {
               entry: structuredClone(recorder.templates.textAction),
@@ -205,7 +206,7 @@ let recorder = {
               edit: [],
               redo: [],
             }
-            if(msg.textContext != ""){
+            if (msg.textContext != "") {
               input.entry.text = msg.textContext
             }
             recorder.data.inputs.push(input);
@@ -221,9 +222,9 @@ let recorder = {
           recorder.data.edit = exists.edit;
           msg.caret = undefined;
           msg.textContext = undefined;
-          
+
         }
-        
+
         break;
       case "input":
         console.log("input log")
@@ -268,13 +269,13 @@ let recorder = {
             recorder.data.caret = [recorder.data.caret[0] - 1, recorder.data.caret[0] - 1]
             break;
           case "ArrowLeft":
-            if(!recorder.data.isSelection){
+            if (!recorder.data.isSelection) {
               recorder.data.caret[0] -= 1
             }
             recorder.data.caret[1] = recorder.data.caret[0]
             break;
           case "ArrowRight":
-            if(!recorder.data.isSelection){
+            if (!recorder.data.isSelection) {
               recorder.data.caret[1] += 1
             }
             recorder.data.caret[0] = recorder.data.caret[1]
@@ -356,8 +357,8 @@ let editor = {
 }
 let clock = {
   schedule: {
-    times : [],
-    actionLists : [],
+    times: [],
+    actionLists: [],
   },
   checkTime: () => {
     let now = Date.now();
@@ -365,16 +366,16 @@ let clock = {
       /*console.log("now vs check")
       console.log(now, clock.schedule.times[i])
       console.log("Difference:"+(now - clock.schedule.times[i]))*/
-      if(now >= clock.schedule.times[i]){
-        if(now - clock.schedule.times[i] > 10000){
+      if (now >= clock.schedule.times[i]) {
+        if (now - clock.schedule.times[i] > 10000) {
           clock.updateSchedule(i, false);
           clock.removeScheduledAction(i);
-        }else{
+        } else {
           clock.completeIndex(i);
           clock.updateSchedule(i, true);
           clock.removeScheduledAction(i);
         }
-        
+
         i--;
       }
     }
@@ -388,23 +389,23 @@ let clock = {
     clock.schedule.actionLists.push(event);
     clock.schedule.times.push(event.date);
   },
-  updateSchedule: async (index,pass) => {
+  updateSchedule: async (index, pass) => {
     let schedule = clock.schedule.actionLists[index];
-    if(pass){
-      chrome.runtime.sendMessage(data.uiLink.id, { action: "changeSchedule", id: schedule.id, state: "completed"});
-    }else{
-      chrome.runtime.sendMessage(data.uiLink.id, { action: "changeSchedule", id:  schedule.id, state: "failed"});
+    if (pass) {
+      chrome.runtime.sendMessage(data.uiLink.id, { action: "changeSchedule", id: schedule.id, state: "completed" });
+    } else {
+      chrome.runtime.sendMessage(data.uiLink.id, { action: "changeSchedule", id: schedule.id, state: "failed" });
     }
   },
   removeScheduledAction: (index) => {
-    if(index > -1){
+    if (index > -1) {
       clock.schedule.actionLists.splice(index, 1);
       clock.schedule.times.splice(index, 1);
       clock.saveSchedule();
     }
   },
   saveSchedule: () => {
-    chrome.storage.local.set({ "scheduledEvents":clock.schedule.actionLists });
+    chrome.storage.local.set({ "scheduledEvents": clock.schedule.actionLists });
   },
 }
 
@@ -439,11 +440,19 @@ chrome.storage.local.get(["scheduledEvents"]).then((result) => {
 //Tab Management ***************************************************************
 chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
   console.log("Tab Updated")
-  if (changeInfo.title) {
-    recorder.urlLoad.loading = false;
-    recorder.urlLoad.loadAction = false;
-  } else if (changeInfo.status == "loading" && changeInfo.url) {
-    recorder.urlLoad.loading = true;
+  if (recorder.recording) {
+    if (changeInfo.title) {
+      console.log(`%c Title: ${changeInfo.title}`, "background-color: green; font-size: 20px;")
+      console.log(data.portArray.find(elem => elem.tabId == tabId))
+      console.log(tab)
+      data.portArray.find(elem => elem.tabId == tabId).name = tab.url;
+      recorder.urlLoad.loading = false;
+      recorder.urlLoad.loadAction = false;
+      recorder.postCacheSite();
+
+    } else if (changeInfo.status == "loading" && changeInfo.url) {
+      recorder.urlLoad.loading = true;
+    }
   }
 });
 chrome.tabs.onActivated.addListener((activeInfo) => {
