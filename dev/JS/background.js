@@ -30,7 +30,6 @@ let data = {
     }
   },
   openTab: (url) => {
-    console.log("open tab");
     return new Promise((resolve, reject) => {
       let match = data.portArray.find((port) => {
         return port.name == url;
@@ -58,8 +57,6 @@ let data = {
     if (data.portArray.length == 0) {
       data.current.port = undefined;
     } else if (data.current.port == port) {
-      console.log("this is a test")
-      console.log(data.portArray[index]);
       recorder.setCurrentPort(data.portArray[index]);
     }
     if (port.editorActive) {
@@ -68,8 +65,6 @@ let data = {
     if (!port.disconnected) {
       port.disconnect();
     }
-
-    console.log(data.current.editor)
   },
 }
 let runner = {
@@ -82,7 +77,6 @@ let runner = {
     },
   },
   runActions: async (actions) => {
-    console.log("running actions (background)");
     let packets = runner.getPackets(actions);
     packets.forEach(async (packet) => {
       let url = packet.site;
@@ -95,44 +89,6 @@ let runner = {
       }
       data.current.port.postMessage(packet);
     });
-    /*let urls = runner.getUrls(actions);
-    console.log("the urls are:")
-    console.log(urls)
-    urls.forEach(async (url, index) => {
-      console.log(url)
-      if(!url.autoLoad && url.format == "url"){
-        if (head.currentPort) {
-          await data.openURL(head.currentPort, url.location)
-        }
-      }else{
-        await data.openTab(url.location);
-      }
-      
-      
-      data.current.port.postMessage(actionPacket);
-    });*/
-    /*for (let action of actions) {
-      switch (action.action) {
-        case "newUrl":
-          if (!action.autoLoad) {
-            if (head.currentPort) {
-              await data.openURL(head.currentPort, action.location)
-            }
-          }
-          break;
-        case "newTab":
-          await data.openTab(action.location);
-          break;
-        default:
-          await new Promise((resolve, reject) => {
-            head.currentAction = { resolve: resolve, reject: reject };
-            action.action = "action";
-            console.log("reach here")
-            head.currentPort.postMessage(action);
-          })
-          break;
-      }
-    }*/
   },
   getUrls: (set) => {
     let urls = [];
@@ -145,7 +101,6 @@ let runner = {
   },
   getPackets: (actions) => {
     let urls = actions.filter((action) => action.type == "site");
-    console.log(urls);
     let packets = [];
     urls.forEach((url, index) => {
       let actionPacket = structuredClone(runner.templates.actionPacket);
@@ -239,12 +194,11 @@ let recorder = {
     console.log(msg);
     switch (msg.type) {
       case "click":
-        console.log("click log")
         console.log(msg.textContext)
         if (msg.textContext != undefined) {
-          recorder.data.actionSet.actions.push(msg);
           let exists = recorder.data.inputs.find((input) => input.specifier == msg.specifier);
           if(!exists){
+            recorder.data.actionSet.actions.push(msg);
             let input = {
               entry: structuredClone(recorder.templates.textAction),
               specifier: msg.specifier,

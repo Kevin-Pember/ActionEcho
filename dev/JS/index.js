@@ -15,12 +15,14 @@ let data = {
     chrome.storage.local.set({ "actionSets": this.actionsData });
   },
   addAction(action) {
-    if (this.actionsData.length >= 10) {
-      this.actionsData.pop();
+    if(!this.actionsData.find((element) => element.name == action.name)){
+      if (this.actionsData.length >= 10) {
+        this.actionsData.pop();
+      }
+      this.actionsData.unshift(action);
+      ui.createActionEntry(action);
+      this.saveActionList();
     }
-    this.actionsData.unshift(action);
-    ui.createActionEntry(action);
-    this.saveActionList();
   },
   removeAction(action) {
     this.actionsData.splice(this.actionsData.indexOf(action), 1);

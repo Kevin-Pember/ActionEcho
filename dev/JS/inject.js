@@ -230,7 +230,7 @@ let logger = {
         if (event.type == "click") {
             log = { ...logger.templates.click };
             log.specifier = logger.getSpecifier(target);
-            if(target.tagName == "INPUT" || target.tagName == "TEXTAREA" || target.contentEditable == "true"){
+            if((target.tagName == "INPUT" && target.type == "text") || target.tagName == "TEXTAREA" || target.contentEditable == "true"){
                 log.textContext = target.contentEditable == "true" ? target.innerText : target.value;
                 log.caret = logger.getSelection(target);
                 data.targetElement = log.specifier;
