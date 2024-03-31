@@ -132,8 +132,7 @@ let recorder = {
     }
   },
   urlLoad: {
-    loading: true,
-    loadAction: false,
+    loading: false,
   },
   data: {
     actionSet: undefined,
@@ -157,25 +156,25 @@ let recorder = {
     recorder.recording = false;
   },
   cacheSite: (type, location) => {
-    recorder.data.site = structuredClone(recorder.templates.site);
-    recorder.data.site.url = location;
+    let site = structuredClone(recorder.templates.site);
+    site.url = location;
     if (type == "newUrl" && recorder.recording) {
-      recorder.data.site.autoLoad = recorder.urlLoad.loadAction;
-      recorder.data.site.format = "url";
+      site.format = "url";
     } else {
-      recorder.data.site.format = "tab";
+      site.format = "tab";
     }
+    recorder.data.site = site 
   },
-  postCacheSite: () => {
+  /*postCacheSite: () => {
     if (recorder.data.site) {
-      console.log(`%c Adding Site: ${recorder.data.site}`, "font-size: 20px; background-color: green;")
+      //console.log(`%c Adding Site: ${recorder.data.site}`, "font-size: 20px; background-color: green;")
       let urls = runner.getUrls(recorder.data.actionSet.actions);
       if (urls[urls.length - 1] != recorder.data.site.url) {
         recorder.data.actionSet.actions.push(recorder.data.site);
       }
       recorder.data.site = undefined;
     }
-  },
+  },*/
   setCurrentPort: (port) => {
     if (recorder.recording) {
       if (data.current.port && data.current.port.disconnected == false) {
@@ -191,7 +190,11 @@ let recorder = {
     data.current.port = port;
   },
   parseLog: (msg) => {
-    recorder.postCacheSite();
+    //recorder.postCacheSite();
+    if(recorder.data.site && !recorder.urlLoad.loading){
+      recorder.data.actionSet.actions.push(recorder.data.site);
+      recorder.data.site = undefined;
+    }
     console.log(msg);
     switch (msg.type) {
       case "click":
@@ -286,8 +289,10 @@ let recorder = {
         }
         break;
     }
-    if (recorder.urlLoad.loading) {
-      recorder.urlLoad.loadAction = true;
+    if (recorder.urlLoad.loading && recorder.data.site) {
+      recorder.data.site.autoLoad = true;
+      recorder.data.actionSet.actions.push(recorder.data.site);
+      recorder.data.site = undefined;
     }
 
   },
@@ -441,16 +446,16 @@ chrome.storage.local.get(["scheduledEvents"]).then((result) => {
 chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
   console.log("Tab Updated")
   if (recorder.recording) {
+    let tabMatch = data.portArray.find(elem => elem.tabId == tabId);
+    if(tabMatch){
+      tabMatch.name = tab.url
+    }
+    recorder.cacheSite("newUrl", tab.url)
     if (changeInfo.title) {
       console.log(`%c Title: ${changeInfo.title}`, "background-color: green; font-size: 20px;")
-      console.log(data.portArray.find(elem => elem.tabId == tabId))
-      console.log(tab)
-      data.portArray.find(elem => elem.tabId == tabId).name = tab.url;
       recorder.urlLoad.loading = false;
-      recorder.urlLoad.loadAction = false;
-      recorder.postCacheSite();
-
     } else if (changeInfo.status == "loading" && changeInfo.url) {
+      console.log(`%c Loading`, "background-color: green; font-size: 20px;")
       recorder.urlLoad.loading = true;
     }
   }
