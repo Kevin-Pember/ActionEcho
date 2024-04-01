@@ -154,6 +154,7 @@ let recorder = {
     data.current.port.postMessage({ action: "stopRecord" });
     recorder.data.actionSet.log = "finished";
     recorder.recording = false;
+    recorder.urlLoad.loading = false;
   },
   cacheSite: (type, location) => {
     let site = structuredClone(recorder.templates.site);
@@ -199,10 +200,10 @@ let recorder = {
     switch (msg.type) {
       case "click":
         console.log(msg.textContext)
+        recorder.data.actionSet.actions.push(msg);
         if (msg.textContext != undefined) {
           let exists = recorder.data.inputs.find((input) => input.specifier == msg.specifier);
           if (!exists) {
-            recorder.data.actionSet.actions.push(msg);
             let input = {
               entry: structuredClone(recorder.templates.textAction),
               specifier: msg.specifier,
