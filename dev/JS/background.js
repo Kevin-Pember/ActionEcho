@@ -25,6 +25,8 @@ let data = {
       })
       if (target) {
         target.resolve(port);
+        console.log(`%c Setting Current Port`, "background-color: green; font-size: 20px;")
+        data.current.port = port;
         data.promisePorts.tabs.splice(idx, 1);
       }
     }
@@ -78,17 +80,20 @@ let runner = {
   },
   runActions: async (actions) => {
     let packets = runner.getPackets(actions);
-    packets.forEach(async (packet) => {
-      let url = packet.site;
-      if (!url.autoLoad && url.format == "url") {
-        if (data.current.port) {
+    let url;
+    for(let packet of packets){
+      url = packet.site;
+      if (url.format == "url") {
+        console.log()
+        if (data.current.port.name != url.url) {
+          console.log(`%c Forcing URL`, "background-color: green; font-size: 20px;")
           await data.openURL(data.current.port, url.url)
         }
       } else {
         await data.openTab(url.url);
       }
       data.current.port.postMessage(packet);
-    });
+    }
   },
   getUrls: (set) => {
     let urls = [];
@@ -159,7 +164,7 @@ let recorder = {
   cacheSite: (type, location) => {
     let site = structuredClone(recorder.templates.site);
     site.url = location;
-    if (type == "newUrl" && recorder.recording) {
+    if (type == "newUrl" && recorder.recording && recorder.data.actionSet.actions.length > 0) {
       site.format = "url";
     } else {
       site.format = "tab";

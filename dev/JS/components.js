@@ -963,4 +963,23 @@ class dateInput extends basicElement {
         };
     }
 }
-export {backgroundDiv, ButtonGeneric, ActionSet, ScheduledAction, uniQuery, clockInput, dateInput}
+class errorMessage extends basicElement{
+    constructor(){
+        super();
+        this.shadowRoot.innerHTML += `
+        <div style="display:grid; justify-content: center;">
+            <div style="background-color: Tomato; width: fit-content; height: 40px; display:grid; align-content:center; padding: 0 10px 0 10px; border: 1px solid #c94e38; ">
+                <h3 id="message" >Choose an Original Name</h3>
+            </div>
+        </div>
+        `
+        this.ui.message = this.shadowRoot.getElementById("message")
+    }
+    /**
+     * @param {string} text
+     */
+    set message(text){
+        this.ui.message.innerText = text;
+    }
+}
+export {backgroundDiv, ButtonGeneric, ActionSet, ScheduledAction, uniQuery, clockInput, dateInput,errorMessage}

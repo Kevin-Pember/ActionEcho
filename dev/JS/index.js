@@ -1,4 +1,4 @@
-import { backgroundDiv, ButtonGeneric, ActionSet, ScheduledAction, uniQuery, clockInput, dateInput } from './components.js';
+import { backgroundDiv, ButtonGeneric, ActionSet, ScheduledAction, uniQuery, clockInput, dateInput, errorMessage } from './components.js';
 customElements.define('background-div', backgroundDiv);
 customElements.define('button-generic', ButtonGeneric);
 customElements.define('action-set', ActionSet);
@@ -6,6 +6,7 @@ customElements.define('scheduled-action', ScheduledAction);
 customElements.define("uni-query", uniQuery);
 customElements.define("clock-input", clockInput);
 customElements.define("date-input", dateInput);
+customElements.define("error-message",errorMessage);
 
 let data = {
   actionsData: [],
@@ -22,6 +23,8 @@ let data = {
       this.actionsData.unshift(action);
       ui.createActionEntry(action);
       this.saveActionList();
+    }else{
+      ui.handleError("Choose an Original Name")
     }
   },
   removeAction(action) {
@@ -129,6 +132,11 @@ let ui = {
     });
 
   },
+  handleError: (message) => {
+    ui.errorHandler.message = message;
+    ui.errorHandler.style.bottom = "0px";
+    setTimeout(() => { ui.errorHandler.style.bottom = "-50px"; }, 3000)
+  },
   createActionEntry(action) {
     let actionElem = document.createElement("action-set");
     actionElem.linkAction(action);
@@ -174,6 +182,7 @@ window.addEventListener('load', () => {
     actionsNone: document.getElementById('actionsNone'),
     eventsStage: document.getElementById('eventsStage'),
     dial: document.getElementById('dial'),
+    errorHandler: document.getElementById("errorHandler"),
     ...ui
   }
 
