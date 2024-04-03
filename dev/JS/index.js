@@ -6,7 +6,7 @@ customElements.define('scheduled-action', ScheduledAction);
 customElements.define("uni-query", uniQuery);
 customElements.define("clock-input", clockInput);
 customElements.define("date-input", dateInput);
-customElements.define("error-message",errorMessage);
+customElements.define("error-message", errorMessage);
 
 let data = {
   actionsData: [],
@@ -16,14 +16,14 @@ let data = {
     chrome.storage.local.set({ "actionSets": this.actionsData });
   },
   addAction(action) {
-    if(!this.actionsData.find((element) => element.name == action.name)){
+    if (!this.actionsData.find((element) => element.name == action.name)) {
       if (this.actionsData.length >= 10) {
         this.actionsData.pop();
       }
       this.actionsData.unshift(action);
       ui.createActionEntry(action);
       this.saveActionList();
-    }else{
+    } else {
       ui.handleError("Choose an Original Name")
     }
   },
@@ -76,16 +76,21 @@ let ui = {
       ui.uniEntry.setQueryType("text", message);
       ui.uniEntry.style.top = "0px";
       ui.backgroundDiv.blurFocus();
-      let completeMethod = (complete, value) => {
-        console.log("Complete called as: " + complete)
-        ui.uniEntry.style.top = "100%";
-        ui.backgroundDiv.returnFocus();
-        if (complete) {
-          resolve(value);
-        } else {
-          reject();
+      let completeMethod = (complete, value, elem) => {
+        if (!data.actionsData.find((element) => element.name == value)) {
+          console.log("Complete called as: " + complete)
+          ui.uniEntry.style.top = "100%";
+          ui.backgroundDiv.returnFocus();
+          if (complete) {
+            resolve(value);
+          } else {
+            reject();
+          }
+          elem.closeMethod();
+        }else{
+          elem.reset();
+          ui.handleError("Choose an Original Name")
         }
-
       }
       ui.uniEntry.setMethods(completeMethod);
     })
@@ -95,7 +100,7 @@ let ui = {
       ui.uniEntry.setQueryType("bool", message, description);
       ui.uniEntry.style.top = "0px";
       ui.backgroundDiv.blurFocus();
-      let completeMethod = (complete, value) => {
+      let completeMethod = (complete, value,elem) => {
         ui.uniEntry.style.top = "100%";
         ui.backgroundDiv.returnFocus();
         if (complete) {
@@ -103,7 +108,7 @@ let ui = {
         } else {
           reject();
         }
-
+        elem.closeMethod();
       }
       ui.uniEntry.setMethods(completeMethod);
     })
@@ -113,7 +118,7 @@ let ui = {
       ui.uniEntry.setQueryType("time", message);
       ui.uniEntry.style.top = "0px";
       ui.backgroundDiv.blurFocus();
-      let completeMethod = (complete, value, now) => {
+      let completeMethod = (complete, value, now,elem) => {
         ui.uniEntry.style.top = "100%";
         ui.backgroundDiv.returnFocus();
         if (complete) {
@@ -122,11 +127,11 @@ let ui = {
           } else {
             resolve(value);
           }
-
+          
         } else {
           reject();
         }
-
+        elem.closeMethod();
       }
       ui.uniEntry.setMethods(completeMethod);
     });
@@ -218,7 +223,8 @@ window.addEventListener('load', () => {
         chrome.storage.local.set({ recording: true }).then(() => {
           ui.setPage("recordPage");
         });
-      } else {
+      } else if (response.log == "noPort") {
+        ui.handleError("Load or Reload Site");
         throw new Error("Failed to start recording");
       }
     });
@@ -239,7 +245,8 @@ window.addEventListener('load', () => {
             });
           }, () => { });
         }
-      } else {
+      } else if ("emptyActions") {
+        ui.handleError("No actions were recorded")
         throw new Error("Failed to stop recording");
       }
     });

@@ -445,6 +445,12 @@ class uniQuery extends basicElement {
         }
         this.ui.containerDiv
     }
+    reset(){
+        if(this.type == "text"){
+            this.ui.containedElements[0].value = ""; 
+            this.ui.containedElements[0].focus();
+        }
+    }
     setMethods(complete) {
         let close = () => {
             if(this.type == "bool"){
@@ -458,10 +464,10 @@ class uniQuery extends basicElement {
         let save = () => {
             switch (this.type) {
                 case ("text"):
-                    complete(true, this.ui.containedElements[0].value);
+                    complete(true, this.ui.containedElements[0].value,this);
                     break;
                 case ("bool"):
-                    complete(true, true);
+                    complete(true, true,this);
                     break;
                 case ("time"):
                     let date = new Date();
@@ -477,10 +483,10 @@ class uniQuery extends basicElement {
                     date.setDate(dateValues[1]);
                     date.setMonth(dateValues[0]);
                     date.setSeconds(0);*/
-                    complete(true, date, false);
+                    complete(true, date, false,this);
                     break;
             }
-            closeMethod();
+            //closeMethod();
         }
         let keySave;
         if (this.type == "text") {

@@ -81,7 +81,7 @@ let runner = {
   runActions: async (actions) => {
     let packets = runner.getPackets(actions);
     let url;
-    for(let packet of packets){
+    for (let packet of packets) {
       url = packet.site;
       if (url.format == "url") {
         console.log()
@@ -129,15 +129,11 @@ let recorder = {
       type: "site",
       url: "",
       format: "",
-      autoLoad: false,
     },
     textAction: {
       type: "input",
       text: "",
     }
-  },
-  urlLoad: {
-    loading: false,
   },
   data: {
     actionSet: undefined,
@@ -150,18 +146,41 @@ let recorder = {
     inputs: [],
 
   },
-  startRecord: () => {
+  startRecord: (reply) => {
     recorder.recording = true;
     recorder.data.actionSet = structuredClone(recorder.templates.actionSet);
-    data.current.port.postMessage({ action: "startRecord" });
+    if (recorder.data.site) {
+      recorder.data.actionSet.actions.push(recorder.data.site)
+      recorder.data.site = undefined;
+    }
+    try {
+      data.current.port.postMessage({ action: "startRecord" });
+      reply({ log: "started" });
+    } catch {
+      console.log(`%c No Current Port`, "font-size: 20px; background-color: red;");
+      reply({ log: "noPort" });
+    }
+
   },
-  stopRecord: () => {
+  stopRecord: (reply) => {
     data.current.port.postMessage({ action: "stopRecord" });
     recorder.data.actionSet.log = "finished";
     recorder.recording = false;
-    recorder.urlLoad.loading = false;
+    console.log("stopping record");
+    console.log(recorder.data.actionSet);
+    if(recorder.data.actionSet.actions.length > 1){
+      reply(recorder.data.actionSet);
+    }else{
+      console.log(`%c Empty ActionList`, "font-size: 20px; background-color: red;");
+      reply({log: "emptyActions"})
+    }
+    
+    console.log("template is now:")
+    console.log(recorder.templates.actionSet)
+    recorder.data.actionSet = structuredClone(recorder.templates.actionSet);
   },
   cacheSite: (type, location) => {
+    console.log(`%c Caching site`, "font-size: 20px; background-color: green;")
     let site = structuredClone(recorder.templates.site);
     site.url = location;
     if (type == "newUrl" && recorder.recording && recorder.data.actionSet.actions.length > 0) {
@@ -169,7 +188,12 @@ let recorder = {
     } else {
       site.format = "tab";
     }
-    recorder.data.site = site 
+    if (recorder.recording) {
+      recorder.data.actionSet.actions.push(site);
+    } else {
+      recorder.data.site = site
+    }
+
   },
   /*postCacheSite: () => {
     if (recorder.data.site) {
@@ -197,10 +221,10 @@ let recorder = {
   },
   parseLog: (msg) => {
     //recorder.postCacheSite();
-    if(recorder.data.site && !recorder.urlLoad.loading){
+    /*if(recorder.data.site && !recorder.urlLoad.loading){
       recorder.data.actionSet.actions.push(recorder.data.site);
       recorder.data.site = undefined;
-    }
+    }*/
     console.log(msg);
     switch (msg.type) {
       case "click":
@@ -295,11 +319,11 @@ let recorder = {
         }
         break;
     }
-    if (recorder.urlLoad.loading && recorder.data.site) {
+    /*if (recorder.urlLoad.loading && recorder.data.site) {
       recorder.data.site.autoLoad = true;
       recorder.data.actionSet.actions.push(recorder.data.site);
       recorder.data.site = undefined;
-    }
+    }*/
 
   },
   inputHandler: (key) => {
@@ -450,19 +474,13 @@ chrome.storage.local.get(["scheduledEvents"]).then((result) => {
 });
 //Tab Management ***************************************************************
 chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
-  console.log("Tab Updated")
   if (recorder.recording) {
     let tabMatch = data.portArray.find(elem => elem.tabId == tabId);
-    if(tabMatch){
+    if (tabMatch) {
       tabMatch.name = tab.url
     }
-    recorder.cacheSite("newUrl", tab.url)
-    if (changeInfo.title) {
-      console.log(`%c Title: ${changeInfo.title}`, "background-color: green; font-size: 20px;")
-      recorder.urlLoad.loading = false;
-    } else if (changeInfo.status == "loading" && changeInfo.url) {
-      console.log(`%c Loading`, "background-color: green; font-size: 20px;")
-      recorder.urlLoad.loading = true;
+    if (changeInfo.title && data.current.tab == tabId) {
+      recorder.cacheSite("newUrl", tab.url)
     }
   }
 });
@@ -545,17 +563,10 @@ chrome.runtime.onConnect.addListener(function (port) {
 chrome.runtime.onMessage.addListener((request, sender, reply) => {
   switch (request.action) {
     case "startRecord":
-      recorder.startRecord();
-      reply({ log: "started" });
+      recorder.startRecord(reply);
       break;
     case "stopRecord":
-      recorder.stopRecord();
-      console.log("stopping record");
-      console.log(recorder.data.actionSet);
-      reply(recorder.data.actionSet);
-      console.log("template is now:")
-      console.log(recorder.templates.actionSet)
-      recorder.data.actionSet = structuredClone(recorder.templates.actionSet);
+      recorder.stopRecord(reply);
       break;
     case "scheduleActionSet":
       clock.addSchedule(request.set);
