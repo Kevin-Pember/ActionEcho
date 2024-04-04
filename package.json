@@ -4,6 +4,7 @@
   },
   "devDependencies": {
     "@webcomponents/webcomponentsjs": "^2.8.0",
+    "copy-webpack-plugin": "^12.0.2",
     "webpack-cli": "^5.1.4"
   },
   "name": "automade",
