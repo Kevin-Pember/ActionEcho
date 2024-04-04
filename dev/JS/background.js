@@ -425,12 +425,21 @@ let clock = {
     clock.schedule.times.push(event.date);
   },
   updateSchedule: async (index, pass) => {
-    let schedule = clock.schedule.actionLists[index];
-    if (pass) {
+    let item = clock.schedule.actionLists[index];
+    /*if (pass) {
       chrome.runtime.sendMessage(data.uiLink.id, { action: "changeSchedule", id: schedule.id, state: "completed" });
     } else {
       chrome.runtime.sendMessage(data.uiLink.id, { action: "changeSchedule", id: schedule.id, state: "failed" });
-    }
+    }*/
+    item.state = pass ? "completed": "failed";
+    chrome.storage.local.get(["pastEvents"]).then((result) => {
+      if (result.pastEvents != undefined) {
+        result.pastEvents.push(item);
+        chrome.storage.local.set(result);
+      }else{
+        chrome.storage.local.set({"pastEvents": [item]});
+      }
+    });
   },
   removeScheduledAction: (index) => {
     if (index > -1) {

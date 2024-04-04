@@ -155,7 +155,7 @@ let ui = {
   createTimeEntry(action) {
     console.log("creating time entry")
     let scheduledAction = document.createElement("scheduled-action");
-    if (Date.now() >= Number(action.date)) {
+    if (!action.state && Date.now() >= Number(action.date)) {
       action.state = "failed"
     }
     scheduledAction.linkAction(action);
@@ -190,8 +190,6 @@ window.addEventListener('load', () => {
     errorHandler: document.getElementById("errorHandler"),
     ...ui
   }
-
-
   chrome.storage.local.get(["actionSets"]).then((result) => {
     console.log(result)
     data.actionsData = result.actionSets == undefined ? [] : result.actionSets;
@@ -209,6 +207,14 @@ window.addEventListener('load', () => {
       }
     }
   });
+  chrome.storage.local.get(["pastEvents"]).then((result) => {
+    if(result.pastEvents){
+      for(let event of result.pastEvents){
+        ui.createTimeEntry(event)
+      }
+    }
+    chrome.storage.local.set({"pastEvents":[]})
+  })
   chrome.storage.local.get(["recording"]).then((result) => {
     console.log(result)
     if (result.recording == true) {

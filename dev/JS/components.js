@@ -476,6 +476,7 @@ class uniQuery extends basicElement {
                     date.setMinutes(data.minute);
                     date.setDate(data.day);
                     date.setMonth(data.month);
+                    date.setSeconds(0)
                     /*let time = this.ui.containedElements[0].Data;
                     let dateValues = this.ui.containedElements[1].Data;
                     date.setHours(time[0]);
