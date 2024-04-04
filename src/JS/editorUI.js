@@ -597,7 +597,7 @@ ui.editor.style.marginRight = "0px";
 ui.editor.style = `position: fixed; bottom: 10px; right: 10px; width: 400px; height: 500px; z-index: 10000000000; overflow: hidden; border: 3px solid var(--accentBorder); transition: margin-right 0.5s ease; margin-right: -500px;`;
 ui.stylesheet = document.createElement("link");
 ui.stylesheet.rel = "stylesheet";
-ui.stylesheet.href = "../styling.css";
+ui.stylesheet.href = "../public/styling.css";
 ui.stylesheet.type = "text/css";
 document.head.appendChild(ui.stylesheet);
 document.body.appendChild(ui.editor);

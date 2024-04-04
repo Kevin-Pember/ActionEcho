@@ -11,17 +11,17 @@ module.exports = {
     components: "./JS/components.js"
   },
   output:{
-    path: path.join(__dirname,"dist/JS/"),
-    filename: '[name].bundle.js'
+    path: path.join(__dirname,"dist"),
+    filename: 'JS/[name].js'
   },
-  plugin:[
+  plugins:[
     new CopyPlugin({
-      context: path.resolve(__dirname,"src"),
       patterns: [
-        {from:"public", to:"dist/public"},
-        {from:"index.html", to:"dist"},
-        {from:"LICENSE.txt", to: "dist"},
-        {from:"manifest.json", to: "dist"}
+        {from:"public", to:"public"},
+        {from:"index.html", to:""},
+        {from:"LICENSE.txt", to: ""},
+        {from:"manifest.json", to: ""},
+        {from:"./JS/webcomponents.bundle.js", to: "JS/"}
       ]
     })
   ]

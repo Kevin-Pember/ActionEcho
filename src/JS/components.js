@@ -279,7 +279,7 @@ class ScheduledAction extends basicElement {
                     <h3 id="meridiemArea" style="margin: 3px; color: var(--darkText); font-size: 20px"></h3>
                     <h3 id="dateArea" style="font-family: 'DM Sans', sans-serif; font-weight: 300; margin: 3px 0px 3px 3px; font-size: 20px; color: var(--darkText); direction: rtl; position: absolute; right: 0px; bottom: 0px;">Apr, 1</h3>
                 </div>
-                <img id="imgArea" style="width:35px;background-color: var(--accent);padding: 17.5px;border: 1px solid var(--accentBorder); filter: grayscale(50%);" src="icon.png">
+                <img id="imgArea" style="width:35px;background-color: var(--accent);padding: 17.5px;border: 1px solid var(--accentBorder); filter: grayscale(50%);" src="/public/icon.png">
                 
             </div>
             
@@ -342,7 +342,7 @@ class uniQuery extends basicElement {
     constructor() {
         super();
         this.shadowRoot.innerHTML += `
-        <link rel="stylesheet" href="styling.css">
+        <link rel="stylesheet" href="public/styling.css">
         <style>
             *{
                 margin: 0;
