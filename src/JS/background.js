@@ -335,7 +335,9 @@ let recorder = {
   },
 
 }
-let editor = {
+/*
+  before adding back to extension enable "scripting" permission
+  let editor = {
   openEditor: async (request) => {
     let editorEntry = {
       id: request.actionSet.name,
@@ -389,7 +391,7 @@ let editor = {
     console.log(compiledActions)
     return compiledActions;
   },
-}
+}*/
 let clock = {
   schedule: {
     times: [],
