@@ -5,6 +5,7 @@
   "devDependencies": {
     "@webcomponents/webcomponentsjs": "^2.8.0",
     "copy-webpack-plugin": "^12.0.2",
+    "webpack": "^5.91.0",
     "webpack-cli": "^5.1.4"
   },
   "name": "automade",
@@ -91,7 +92,6 @@
     "update-browserslist-db": "^1.0.13",
     "uri-js": "^4.4.1",
     "watchpack": "^2.4.0",
-    "webpack": "^5.89.0",
     "webpack-merge": "^5.10.0",
     "webpack-sources": "^3.2.3",
     "which": "^2.0.2",
