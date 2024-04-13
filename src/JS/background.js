@@ -138,7 +138,10 @@ let recorder = {
   data: {
     actionSet: undefined,
     site: {},
-    textAction: {},
+    textAction: {
+      type: "input",
+      text: "",
+    },
     caret: [],
     isSelection: false,
     edit: [],
@@ -177,7 +180,12 @@ let recorder = {
     
     console.log("template is now:")
     console.log(recorder.templates.actionSet)
-    recorder.data.actionSet = structuredClone(recorder.templates.actionSet);
+    recorder.data.inputs = []
+    recorder.data.currentTextAction = {
+      type: "input",
+      text: "",
+    }
+    //recorder.data.actionSet = structuredClone(recorder.templates.actionSet);
   },
   cacheSite: (type, location) => {
     console.log(`%c Caching site`, "font-size: 20px; background-color: green;")
@@ -228,9 +236,11 @@ let recorder = {
     console.log(msg);
     switch (msg.type) {
       case "click":
-        console.log(msg.textContext)
+        console.log(`%c New Click`, "background-color: green; font-size: 20px;")
+        console.log(msg)
         recorder.data.actionSet.actions.push(msg);
         if (msg.textContext != undefined) {
+          
           let exists = recorder.data.inputs.find((input) => input.specifier == msg.specifier);
           if (!exists) {
             let input = {
@@ -249,12 +259,12 @@ let recorder = {
             })
             recorder.data.isSelection = !(recorder.data.caret[0] === recorder.data.caret[1]);
             exists = input;
+          }else{
+            msg.textContext = undefined;
           }
           recorder.data.currentTextAction = exists.entry;
           recorder.data.redo = exists.redo;
           recorder.data.edit = exists.edit;
-          msg.caret = undefined;
-          msg.textContext = undefined;
 
         }
 

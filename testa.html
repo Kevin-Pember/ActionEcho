@@ -214,8 +214,10 @@
         console.log('click');
         checks.clickCheck = true;
         document.getElementById("clickableIndicator").classList.add("complete");
+        document.getElementById("editableElem").focus();
     };
     let Timestamp = () => {
+        document.getElementById("editableElem").textContent = "test"
         let now = new Date();
         let nowString = now.toString();
         console.log(nowString);

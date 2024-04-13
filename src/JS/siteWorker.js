@@ -6,12 +6,12 @@ window.addEventListener("load", () => { data.fullyLoaded = true });
 //editor.style = `position: fixed; bottom: 10px; right: 10px; width: 300px; height: 300px; background-color: white; z-index: 10000000000;`
 let ui = {
     body: document.body,
-    indicator:document.createElement("div"),
+    indicator: document.createElement("div"),
     highlight: document.createElement("div"),
     toggleIndicator: (way) => {
-        if(way){
-            ui.indicator.style="right:10px; z-index: 100000;"
-        }else{
+        if (way) {
+            ui.indicator.style = "right:10px; z-index: 100000;"
+        } else {
             ui.indicator.style.right = "-100px"
             setTimeout(() => {
                 ui.indicator.style.zIndex = "-100000";
@@ -46,8 +46,9 @@ let data = {
 }
 let input = {
     actionQueue: [],
-    data:{
+    data: {
         focusedElement: undefined,
+        range: [0, 0],
     },
     parsePacket: (packet) => {
         if (packet.v === 1.0) {
@@ -70,10 +71,15 @@ let input = {
                     let element = input.getElement(msg.specifier);
                     console.log(element)
                     input.data.focusedElement = element;
-                    if(element.tagName == "INPUT" || element.tagName == "TEXTAREA"){
-                        element.value = "";
-                    }else if(element.contentEditable == "true"){
-                        element.innerText = "";
+                    if ((element.tagName == "INPUT" || element.tagName == "TEXTAREA") && msg.textContext) {
+                        element.value = msg.textContext;
+                    } else if (element.contentEditable == "true" && msg.textContext) {
+                        element.innerText = msg.textContext;
+                    }
+                    //input.data.range = msg.caret.split("-");
+                    if(msg.caret){
+                        let range = msg.caret.split("-");
+                        input.setFocus(element, range)
                     }
                     element.dispatchEvent(new MouseEvent('click', {
                         bubbles: true,
@@ -99,25 +105,17 @@ let input = {
     enterText: (element, log) => {
         console.log("typing")
         console.log(log)
-        let typeInput, charArray = log.text.split(""), range = [0, 0];
+        let typeInput, charArray = log.text.split(""), range = input.data.range;
         console.log(element)
         console.log("Typing the text: " + log.text)
         if (element.contentEditable == "true") {
             typeInput = (text, range) => {
                 let index = 0,
-                    targetChild = undefined,
-                    higher = range[1],
-                    lower = range[0],
-                    sel = window.getSelection(),
-                    rangeSel = document.createRange();
+                    targetChild = undefined;
                 element.innerHTML = element.innerHTML + text;
                 targetChild = element.childNodes[0];
                 index = text.length;
-
-                rangeSel.setStart(targetChild, index);
-                rangeSel.collapse(true);
-                sel.removeAllRanges();
-                sel.addRange(rangeSel);
+                input.setFocus(element, range);
                 const inputEvent = new Event('input', { bubbles: true });
                 element.dispatchEvent(inputEvent);
             }
@@ -179,6 +177,22 @@ let input = {
             }
         }
     },
+    setFocus(elem, range) {
+        if (range || elem.contentEditable === "true") {
+            if ((elem.tagName === "input" && elem.type === "text") || elem.tagName === "TEXTAREA") {
+                elem.setSelectionRange(range[0], range[1])
+            } else if (elem.contentEditable === "true") {
+                let sel = window.getSelection();
+                let range = document.createRange();
+                range.setStart(elem, range[0]);
+                range.setEnd(elem,range[1])
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+        } else {
+            elem.focus()
+        }
+    }
 }
 let logger = {
     keyTable: [
@@ -240,7 +254,7 @@ let logger = {
         if (event.type == "click") {
             log = { ...logger.templates.click };
             log.specifier = logger.getSpecifier(target);
-            if((target.tagName == "INPUT" && target.type == "text") || target.tagName == "TEXTAREA" || target.contentEditable == "true"){
+            if ((target.tagName == "INPUT" && target.type == "text") || target.tagName == "TEXTAREA" || target.contentEditable == "true") {
                 log.textContext = target.contentEditable == "true" ? target.innerText : target.value;
                 log.caret = logger.getSelection(target);
                 data.targetElement = log.specifier;
@@ -265,13 +279,13 @@ let logger = {
             } else if (event.key.length > 1) {
                 if (event.key == "Enter") {
                     log.key = "Enter";
-                }else if(event.key == "Backspace"){
+                } else if (event.key == "Backspace") {
                     log.key = "Backspace";
-                }else if(event.key == "Delete"){
+                } else if (event.key == "Delete") {
                     log.key = "Delete";
-                }else if(event.key == "ArrowLeft"){
+                } else if (event.key == "ArrowLeft") {
                     log.key = "ArrowLeft";
-                }else if(event.key == "ArrowRight"){
+                } else if (event.key == "ArrowRight") {
                     log.key = "ArrowRight";
                 }
 
@@ -339,8 +353,8 @@ data.port.onMessage.addListener(function (msg) {
             document.addEventListener('click', logger.eventHandler);
             document.addEventListener('keydown', logger.eventHandler);
             document.addEventListener("paste", (e) => {
-                let log = {type: "key", selection: logger.getSelection(e.target), key: "paste", text: e.clipboardData.getData('text/plain')};
-                if(text != "" && text != undefined){
+                let log = { type: "key", selection: logger.getSelection(e.target), key: "paste", text: e.clipboardData.getData('text/plain') };
+                if (text != "" && text != undefined) {
                     data.port.postMessage(log);
                 }
             });

@@ -30,6 +30,9 @@ let data = {
   removeAction(action) {
     this.actionsData.splice(this.actionsData.indexOf(action), 1);
     this.saveActionList();
+    if(this.actionsData.length < 1){
+      ui.actionsNone.style = "";
+    }
   },
   removeScheduledAction(entry) {
 
