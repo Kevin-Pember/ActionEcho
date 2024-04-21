@@ -152,10 +152,14 @@ let recorder = {
   startRecord: (reply) => {
     recorder.recording = true;
     recorder.data.actionSet = structuredClone(recorder.templates.actionSet);
-    if (recorder.data.site) {
+    /*if (recorder.data.site) {
       recorder.data.actionSet.actions.push(recorder.data.site)
       recorder.data.site = undefined;
-    }
+    }*/
+    let site = structuredClone(recorder.templates.site)
+    site.url = data.current.port.name;
+    site.format = "tab"
+    recorder.data.actionSet.actions.push(recorder.data.site)
     try {
       data.current.port.postMessage({ action: "startRecord" });
       reply({ log: "started" });
@@ -171,7 +175,7 @@ let recorder = {
     recorder.recording = false;
     console.log("stopping record");
     console.log(recorder.data.actionSet);
-    if(recorder.data.actionSet.actions.length > 1){
+    if(recorder.data.actionSet.actions.length > 0){
       reply(recorder.data.actionSet);
     }else{
       console.log(`%c Empty ActionList`, "font-size: 20px; background-color: red;");
