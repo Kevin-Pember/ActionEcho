@@ -71,9 +71,10 @@ let input = {
                     let element = input.getElement(msg.specifier);
                     console.log(element)
                     input.data.focusedElement = element;
-                    if ((element.tagName == "INPUT" || element.tagName == "TEXTAREA") && msg.textContext) {
+                    console.log(`%c Checking Input`, "background-color: red; font-size: 20px;")
+                    if ((element.tagName == "INPUT" || element.tagName == "TEXTAREA")) {
                         element.value = msg.textContext;
-                    } else if (element.contentEditable == "true" && msg.textContext) {
+                    } else if (element.contentEditable == "true") {
                         element.innerText = msg.textContext;
                     }
                     //input.data.range = msg.caret.split("-");
