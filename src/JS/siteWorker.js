@@ -1,4 +1,4 @@
-console.log("AutoMade script loaded")
+console.log("AutoEcho script loaded")
 console.log("inject.js loaded")
 window.addEventListener("load", () => { data.fullyLoaded = true });
 
@@ -412,7 +412,7 @@ if (platInfo.indexOf("Macintosh") != -1) {
 } else {
     data.browserOS = "default";
 }
-ui.indicator.classList.add("autoMadeRecordIcon")
+ui.indicator.classList.add("autoEchoRecordIcon")
 ui.indicator.innerHTML = `<svg style="height:60px; width: 60px;" viewBox="0 0 1200 1200" xmlns="http://www.w3.org/2000/svg">
 <path d="m557.75 583.42c-39.443-39.443-103.39-39.443-142.84 0s-39.443 103.39 0 142.84 103.39 39.443 142.84 0 39.443-103.39 0-142.84zm-25.456 25.456c-25.384-25.384-66.54-25.384-91.924 0s-25.384 66.539 0 91.923c25.384 25.385 66.54 25.385 91.924 0 25.384-25.384 25.384-66.539 0-91.923z" clip-rule="evenodd" fill="#D9D9D9" fill-rule="evenodd"/>
 <path d="m557.75 583.42c-39.443-39.443-103.39-39.443-142.84 0s-39.443 103.39 0 142.84 103.39 39.443 142.84 0 39.443-103.39 0-142.84zm-25.456 25.456c-25.384-25.384-66.54-25.384-91.924 0s-25.384 66.539 0 91.923c25.384 25.385 66.54 25.385 91.924 0 25.384-25.384 25.384-66.539 0-91.923z" clip-rule="evenodd" fill-opacity=".3" fill-rule="evenodd"/>
@@ -439,7 +439,7 @@ ui.indicator.innerHTML = `<svg style="height:60px; width: 60px;" viewBox="0 0 12
 <path d="m910.77 1112.2-202.46-376.66h404.92l-202.46 376.66z" fill="#D9D9D9"/>
 <circle cx="911" cy="230" r="45" fill="#D9D9D9"/>
 <circle cx="487" cy="655" r="45" fill="#D9D9D9"/>">
-<span class="autoMadeToolTip">Recording</span>
+<span class="autoEchoToolTip">Recording</span>
 `
 ui.body.appendChild(ui.indicator)
 

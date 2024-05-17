@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
-    "name": "AutoMade",
-    "description": "Automate actions in chrome",
+    "name": "AutoEcho",
+    "description": "AutoEcho actions in chrome",
     "version": "1.0.1",
     "permissions": [
       "activeTab",
