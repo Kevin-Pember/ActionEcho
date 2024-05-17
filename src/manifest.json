@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
-    "name": "AutoEcho",
-    "description": "AutoEcho actions in chrome",
+    "name": "ActionEcho",
+    "description": "ActionEcho actions in chrome",
     "version": "1.0.1",
     "permissions": [
       "activeTab",

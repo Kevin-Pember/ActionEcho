@@ -1,4 +1,4 @@
-.autoEchoRecordIcon {
+.actionEchoRecordIcon {
     position: relative;
     display: inline-block;
     border: 1px solid rgba(0, 0, 0, 0.646);
@@ -19,7 +19,7 @@
     right: -100px
   }
   
-  .autoEchoRecordIcon .autoEchoToolTip {
+  .actionEchoRecordIcon .actionEchoToolTip {
     visibility: hidden;
     padding: 3px 5px;
     background-color: tomato;
@@ -32,7 +32,7 @@
     width:100%;
   }
   
-  .autoEchoRecordIcon:hover .autoEchoToolTip {
+  .actionEchoRecordIcon:hover .actionEchoToolTip {
     position: relative;
     visibility: visible;
 
