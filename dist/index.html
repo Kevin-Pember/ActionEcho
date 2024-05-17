@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoMade</title>
+    <link rel="stylesheet" href="public/styling.css">
+    <script type="module" src="JS/index.js"></script>
+</head>
+
+<body id="bodyID">
+    <style>
+        * {
+            color: var(--text);
+            background-color: transparent;
+            font-family: DM Sans;
+            padding: 0;
+            margin: 0;
+        }
+
+        #bodyID {
+            background-color: var(--primary);
+            overflow: visible;
+        }
+
+        #Title {
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 500;
+            position: relative;
+            font-size: 60px;
+            height: 35px;
+            transform: rotate(90deg);
+            width: 100%;
+            margin-left: 15px;
+            transform-origin: center;
+            margin-left: -55px;
+            margin-top: 90px;
+        }
+
+        #mainPage {
+            display: grid;
+            width: 500px;
+            height: 325px;
+            overflow: hidden;
+            grid-template-columns: calc(100% - 50px) 50px;
+            
+        }
+
+        .contentPage {
+            height: 100%;
+            width: 100%;
+            position: relative;
+            left: 0px;
+            top: 0px;
+        }
+
+        .hiddenPage {
+            visibility: hidden;
+            position: fixed;
+            z-index: -1;
+        }
+
+        #historyBar {
+            overflow-y: hidden;
+            overflow-x: auto;
+            display: grid;
+            grid-auto-flow: column;
+            grid-auto-columns: 40%;
+            column-gap: 10px;
+            height: 125px;
+            width: 400px;
+            position: relative;
+        }
+
+        button,
+        input,
+        scheduled-action,
+        action-set,
+        .inputArea {
+            border: none;
+            height: 50px;
+            background-color: var(--secondary);
+            outline: none;
+            border: 1px solid var(--accentBorder);
+            height: 100%;
+            position: relative;
+            box-sizing: border-box;
+        }
+
+        .entry {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            position: relative;
+            transition: all 0.5s ease;
+        }
+        .emptyHeader{
+            height: 100%;
+            font-size: 60px;
+            margin-top: -27px;
+            color: var(--darkText);
+        }
+
+        
+    </style>
+    <background-div id="bgDiv" style="position: fixed;top: 0px;left: 0px; height: 100%;width: 100%; z-index: 5; pointer-events: none;">
+    </background-div>
+    <svg id="dial" style="position: absolute; height: 600px; left: 85%; top: -150px; animation: 360s linear 1s infinite running rotation;" fill="none" viewBox="0 0 8080 8080" xmlns="http://www.w3.org/2000/svg">
+        <path d="m8040 4040c0 2209.1-1790.9 4e3 -4e3 4e3s-4e3 -1790.9-4e3 -4e3 1790.9-4e3 4e3 -4e3 4e3 1790.9 4e3 4e3z" stroke="var(--accentBorder)" stroke-dasharray="360 360 360 360" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="1.7434" stroke-width="20"/>
+        <path d="m6440 4040c0 1325.5-1074.5 2400-2400 2400s-2400-1074.5-2400-2400 1074.5-2400 2400-2400 2400 1074.5 2400 2400z" stroke="var(--accentBorder)" stroke-dasharray="360 360 360 360" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="1.7434" stroke-width="20"/>
+        <path d="m7240 4040c0 1767.3-1432.7 3200-3200 3200s-3200-1432.7-3200-3200 1432.7-3200 3200-3200 3200 1432.7 3200 3200z" stroke="var(--accentBorder)" stroke-dasharray="360 360 360 360" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="1.7434" stroke-width="20"/>
+    </svg>
+    <div id="mainPage" class="contentPage">
+        <div id="mainContent" style="margin: 10px;">
+            <div id="eventsStage" style="visibility: hidden;position: absolute;height:140px; width: 100%; display: inline-grid; grid-auto-columns: 225px; overflow: scroll hidden; gap: 5px; grid-auto-flow: column; ">
+            </div>
+            <div style="position: relative; height: 160px;">
+                <h3 style="margin: 0px; font-size: 30px; font-weight: 200;" class="textBorder">Actions</h3>
+                <div id="historyBar">
+                    <h1 id="actionsNone" class="emptyHeader">none</h1>
+                </div>
+            </div>
+        </div>
+        <div style="display: grid; grid-template-rows: calc(100% - 50px) 50px;">
+            <h1 id="Title" class="textBorder">AutoMade</h1>
+            <button-generic id="recordStart" style="background-color: var(--secondary); aspect-ratio: 1; height: 45px; padding: 0; display: grid; justify-items: center; align-items: center; position: relative;">
+                <svg style="height: 30px"; fill="none" viewBox="0 0 499 499" xmlns="http://www.w3.org/2000/svg">
+                    <path d="m190.95 486.2c0 7.031 5.7 12.732 12.732 12.732h91.673c7.031 0 12.732-5.701 12.732-12.733v-178.11h178.11c7.032 0 12.732-5.701 12.732-12.732v-91.673c0-7.031-5.701-12.732-12.732-12.732h-178.11v-178.11c0-7.0319-5.701-12.732-12.733-12.732l-91.672-2.18e-4c-7.031 7.3e-5 -12.732 5.7006-12.732 12.732v178.11h-178.11c-7.0318 0-12.732 5.7-12.732 12.732l-7.7e-5 91.673c0 7.031 5.7004 12.732 12.732 12.732h178.11v178.11z" fill="var(--darkText)"/>
+                </svg>
+            </button-generic>
+        </div>
+    </div>
+    <div id="recordPage" class="contentPage hiddenPage" style="display: grid; grid-auto-flow: row;  justify-items: center;
+    align-items: center; height: 150px; width: 260px;">
+        <button id="recordStop"
+            style="height: 75px;aspect-ratio: 1/1;display: grid;justify-content: center;align-items: center; background-color: tomato;">
+            <!--<div style="height: 45px;width: 45px;background-color: var(--translucent); border-radius: 50%;"></div>-->
+        </button>
+        <h2 style="text-align: center;">Click to stop recording</h2>
+        <h4 style="font-weight: lighter;">Please do you intended actions for playback</h4>
+    </div>
+    <uni-query id="uniPopup" style="top:100%; background-color: transparent;
+    position: absolute;left: 0px;height: 100%;width: 100%;display: grid;
+    justify-content: center;align-items: center;z-index: 100;
+    transition: top 0.25s ease;"></uni-query>
+    <error-message id="errorHandler" style="position: absolute; bottom: -50px; width: 100%; height: 50px; transition: bottom 0.25s; z-index: 10000;"></error-message>
+</body>
+</body>
+
+</html>

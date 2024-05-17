@@ -1,20 +1,16 @@
 {
     "manifest_version": 3,
-    "name": "AutoMade",
-    "description": "Automate actions in chrome",
-    "version": "1.0",
+    "name": "ActionEcho",
+    "description": "ActionEcho actions in chrome",
+    "version": "1.0.1",
     "permissions": [
-      "scripting", 
       "activeTab",
       "storage",
       "unlimitedStorage",
       "favicon", 
-      "webNavigation",
       "tabs",
-      "nativeMessaging",
       "alarms"
     ],
-    "host_permissions": ["<all_urls>"],
     "content_scripts": [
       {
         "matches": ["<all_urls>"],
@@ -23,7 +19,7 @@
       }
     ],
     "background": {
-      "service_worker": "js/background.js"
+      "service_worker": "JS/background.js"
     },
     "action": {
       "default_popup": "index.html",

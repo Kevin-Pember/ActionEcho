@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AutoMade</title>
+    <title>ActionEcho</title>
     <link rel="stylesheet" href="public/styling.css">
     <script type="module" src="JS/index.js"></script>
 </head>
@@ -124,7 +124,7 @@
             </div>
         </div>
         <div style="display: grid; grid-template-rows: calc(100% - 50px) 50px;">
-            <h1 id="Title" class="textBorder">AutoMade</h1>
+            <h1 id="Title" class="textBorder">ActionEcho</h1>
             <button-generic id="recordStart" style="background-color: var(--secondary); aspect-ratio: 1; height: 45px; padding: 0; display: grid; justify-items: center; align-items: center; position: relative;">
                 <svg style="height: 30px"; fill="none" viewBox="0 0 499 499" xmlns="http://www.w3.org/2000/svg">
                     <path d="m190.95 486.2c0 7.031 5.7 12.732 12.732 12.732h91.673c7.031 0 12.732-5.701 12.732-12.733v-178.11h178.11c7.032 0 12.732-5.701 12.732-12.732v-91.673c0-7.031-5.701-12.732-12.732-12.732h-178.11v-178.11c0-7.0319-5.701-12.732-12.733-12.732l-91.672-2.18e-4c-7.031 7.3e-5 -12.732 5.7006-12.732 12.732v178.11h-178.11c-7.0318 0-12.732 5.7-12.732 12.732l-7.7e-5 91.673c0 7.031 5.7004 12.732 12.732 12.732h178.11v178.11z" fill="var(--darkText)"/>
@@ -133,31 +133,13 @@
         </div>
     </div>
     <div id="recordPage" class="contentPage hiddenPage" style="display: grid; grid-auto-flow: row;  justify-items: center;
-    align-items: center; height: 200px; width: 150px;">
+    align-items: center; height: 150px; width: 260px;">
         <button id="recordStop"
-            style="height: 100px;aspect-ratio: 1/1;display: grid;justify-content: center;align-items: center;">
-            <div style="height: 45px;width: 45px;background-color: var(--translucent);"></div>
+            style="height: 75px;aspect-ratio: 1/1;display: grid;justify-content: center;align-items: center; background-color: tomato;">
+            <!--<div style="height: 45px;width: 45px;background-color: var(--translucent); border-radius: 50%;"></div>-->
         </button>
         <h2 style="text-align: center;">Click to stop recording</h2>
-    </div>
-    <div id="editPage" class="contentPage hiddenPage" style="width: 300px;">
-        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px">
-            <button-generic id="editBack" style="height: 35px; aspect-ratio:1; position: relative; display: block; ">
-                <svg fill="none" viewBox="0 0 1272 1124" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                        d="m516.15 700 219.97 219.97c11.715 11.715 11.715 30.71 0 42.426l-152.74 152.74c-11.716 11.71-30.711 11.71-42.427 0l-531.74-531.75c-11.716-11.716-11.715-30.711 0-42.427l531.74-531.74c11.716-11.716 30.711-11.716 42.427 0l152.74 152.73c11.715 11.716 11.715 30.711 0 42.426l-219.62 219.63h725.5c16.57 0 30 13.431 30 30v216c0 16.569-13.43 30-30 30h-725.85z"
-                        clip-rule="evenodd" fill="#FFF" fill-opacity=".3" fill-rule="evenodd" />
-                </svg>
-            </button-generic>
-            <input id="editName" type="text" style="width: 150px; height: 50px; font-size: 30px; text-align: center; ">
-            <button-generic id="editBack" style="height: 35px; aspect-ratio:1; position: relative; display: block; ">
-                <svg fill="none" viewBox="0 0 1324 1033" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                        d="m1162 8.7868c-11.71-11.716-30.71-11.716-42.42-1e-5l-646.5 646.5-269.08-269.08c-11.715-11.716-30.71-11.716-42.426 0l-152.74 152.74c-11.716 11.716-11.716 30.711-1e-5 42.427l442.74 442.74c5.932 5.93 13.732 8.86 21.507 8.78 7.771 0.08 15.565-2.85 21.495-8.78l820.16-820.16c11.71-11.715 11.71-30.71 0-42.426l-152.74-152.74z"
-                        fill="#FFF" fill-opacity=".3" />
-                </svg>
-            </button-generic>
-        </div>
+        <h4 style="font-weight: lighter;">Please do you intended actions for playback</h4>
     </div>
     <uni-query id="uniPopup" style="top:100%; background-color: transparent;
     position: absolute;left: 0px;height: 100%;width: 100%;display: grid;

@@ -138,7 +138,10 @@ let recorder = {
   data: {
     actionSet: undefined,
     site: {},
-    textAction: {},
+    textAction: {
+      type: "input",
+      text: "",
+    },
     caret: [],
     isSelection: false,
     edit: [],
@@ -149,10 +152,14 @@ let recorder = {
   startRecord: (reply) => {
     recorder.recording = true;
     recorder.data.actionSet = structuredClone(recorder.templates.actionSet);
-    if (recorder.data.site) {
+    /*if (recorder.data.site) {
       recorder.data.actionSet.actions.push(recorder.data.site)
       recorder.data.site = undefined;
-    }
+    }*/
+    let site = structuredClone(recorder.templates.site)
+    site.url = data.current.port.name;
+    site.format = "tab"
+    recorder.data.actionSet.actions.push(recorder.data.site)
     try {
       data.current.port.postMessage({ action: "startRecord" });
       reply({ log: "started" });
@@ -168,7 +175,7 @@ let recorder = {
     recorder.recording = false;
     console.log("stopping record");
     console.log(recorder.data.actionSet);
-    if(recorder.data.actionSet.actions.length > 1){
+    if(recorder.data.actionSet.actions.length > 0){
       reply(recorder.data.actionSet);
     }else{
       console.log(`%c Empty ActionList`, "font-size: 20px; background-color: red;");
@@ -177,7 +184,12 @@ let recorder = {
     
     console.log("template is now:")
     console.log(recorder.templates.actionSet)
-    recorder.data.actionSet = structuredClone(recorder.templates.actionSet);
+    recorder.data.inputs = []
+    recorder.data.currentTextAction = {
+      type: "input",
+      text: "",
+    }
+    //recorder.data.actionSet = structuredClone(recorder.templates.actionSet);
   },
   cacheSite: (type, location) => {
     console.log(`%c Caching site`, "font-size: 20px; background-color: green;")
@@ -228,9 +240,11 @@ let recorder = {
     console.log(msg);
     switch (msg.type) {
       case "click":
-        console.log(msg.textContext)
+        console.log(`%c New Click`, "background-color: green; font-size: 20px;")
+        console.log(msg)
         recorder.data.actionSet.actions.push(msg);
         if (msg.textContext != undefined) {
+          
           let exists = recorder.data.inputs.find((input) => input.specifier == msg.specifier);
           if (!exists) {
             let input = {
@@ -249,12 +263,12 @@ let recorder = {
             })
             recorder.data.isSelection = !(recorder.data.caret[0] === recorder.data.caret[1]);
             exists = input;
+          }else{
+            msg.textContext = undefined;
           }
           recorder.data.currentTextAction = exists.entry;
           recorder.data.redo = exists.redo;
           recorder.data.edit = exists.edit;
-          msg.caret = undefined;
-          msg.textContext = undefined;
 
         }
 
@@ -335,7 +349,9 @@ let recorder = {
   },
 
 }
-let editor = {
+/*
+  before adding back to extension enable "scripting" permission
+  let editor = {
   openEditor: async (request) => {
     let editorEntry = {
       id: request.actionSet.name,
@@ -389,7 +405,7 @@ let editor = {
     console.log(compiledActions)
     return compiledActions;
   },
-}
+}*/
 let clock = {
   schedule: {
     times: [],
