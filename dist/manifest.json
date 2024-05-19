@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
-    "name": "AutoMade",
-    "description": "Automate actions in chrome",
+    "name": "ActionEcho",
+    "description": "ActionEcho actions in chrome",
     "version": "1.0.1",
     "permissions": [
       "activeTab",
@@ -19,7 +19,7 @@
       }
     ],
     "background": {
-      "service_worker": "js/background.js"
+      "service_worker": "JS/background.js"
     },
     "action": {
       "default_popup": "index.html",
