@@ -134,7 +134,7 @@ class ButtonGeneric extends basicElement {
         });
     }
     static get observedAttributes() {
-        return ['bcolor'];
+        return ['bcolor', "pad"];
     }
     attributeChangedCallback(name, oldValue, newValue) {
         if (name == "bcolor") {
@@ -145,7 +145,15 @@ class ButtonGeneric extends basicElement {
             } else if (newValue == "accent") {
                 this.svgContainer.classList.add("accent")
             }
+        }else if(name == "pad"){
+            if(newValue == "on"){
+                this.svgContainer.style = "";
+            }else{
+                console.log("Padding Turned off")
+                this.svgContainer.style = "padding: 0px;";
+            }
         }
+        
     }
 }
 

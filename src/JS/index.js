@@ -191,6 +191,8 @@ window.addEventListener('load', () => {
     eventsStage: document.getElementById('eventsStage'),
     dial: document.getElementById('dial'),
     errorHandler: document.getElementById("errorHandler"),
+    settingsButton: document.getElementById("settingsButton"),
+    settingsBack: document.getElementById("settingsBack"),
     ...ui
   }
   chrome.storage.local.get(["actionSets"]).then((result) => {
@@ -260,6 +262,8 @@ window.addEventListener('load', () => {
       }
     });
   });
+  ui.settingsButton.addEventListener('click', () => { ui.setPage("settingsPage") });
+  ui.settingsBack.addEventListener('click', () => { ui.setPage("mainPage") });
   chrome.runtime.sendMessage({ action: "init" }, (response) => {
     for (let scheduled of response.lists) {
       ui.createTimeEntry(scheduled);
@@ -321,26 +325,6 @@ window.addEventListener('load', () => {
     } else if (result.signed == "false") {
       ui.tosReject()
     }
-    /*if (result.signed == undefined) {
-      ui.tosPrompt().then((value) => {
-        if (value) {
-          chrome.storage.local.set({ signed: "true" })
-        } else {
-          chrome.storage.local.set({ signed: "false" })
-          ui.getBool("TOS Rejected", "You have rejected the User Agreement. This extension will not function properly until you accept the User Agreement.").then((value) => {
-            if (value) {
-              ui.tosPrompt().then((value) => {
-                if (value) {
-                  chrome.storage.local.set({ signed: "true" })
-                } else {
-                  chrome.storage.local.set({ signed: "false" })
-                }
-              })
-            }
-          });
-        }
-      });
-    }*/
   });
 });
 export { data, ui };
