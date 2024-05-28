@@ -1,3 +1,5 @@
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.1/firebase-app.js'
+import { getFirestore, addDoc, collection } from 'https://www.gstatic.com/firebasejs/10.12.1/firebase-firestore.js'
 let data = {
   current: {
     actionSet: undefined,
@@ -68,6 +70,17 @@ let data = {
       port.disconnect();
     }
   },
+  generateRandomString: (length) => {
+    let string = "";
+    let len = length ? length : 8;
+    for (let i = 0; i < len; i++) {
+      string += String.fromCharCode(Math.floor(47 + Math.random() * 79))
+    }
+    return string;
+  },
+  anonymizeAction: (action) => {
+    action.name += data.generateRandomString();
+  }
 }
 let runner = {
   templates: {
@@ -175,13 +188,13 @@ let recorder = {
     recorder.recording = false;
     console.log("stopping record");
     console.log(recorder.data.actionSet);
-    if(recorder.data.actionSet.actions.length > 0){
+    if (recorder.data.actionSet.actions.length > 0) {
       reply(recorder.data.actionSet);
-    }else{
+    } else {
       console.log(`%c Empty ActionList`, "font-size: 20px; background-color: red;");
-      reply({log: "emptyActions"})
+      reply({ log: "emptyActions" })
     }
-    
+
     console.log("template is now:")
     console.log(recorder.templates.actionSet)
     recorder.data.inputs = []
@@ -244,7 +257,7 @@ let recorder = {
         console.log(msg)
         recorder.data.actionSet.actions.push(msg);
         if (msg.textContext != undefined) {
-          
+
           let exists = recorder.data.inputs.find((input) => input.specifier == msg.specifier);
           if (!exists) {
             let input = {
@@ -263,7 +276,7 @@ let recorder = {
             })
             recorder.data.isSelection = !(recorder.data.caret[0] === recorder.data.caret[1]);
             exists = input;
-          }else{
+          } else {
             msg.textContext = undefined;
           }
           recorder.data.currentTextAction = exists.entry;
@@ -447,13 +460,13 @@ let clock = {
     } else {
       chrome.runtime.sendMessage(data.uiLink.id, { action: "changeSchedule", id: schedule.id, state: "failed" });
     }*/
-    item.state = pass ? "completed": "failed";
+    item.state = pass ? "completed" : "failed";
     chrome.storage.local.get(["pastEvents"]).then((result) => {
       if (result.pastEvents != undefined) {
         result.pastEvents.push(item);
         chrome.storage.local.set(result);
-      }else{
-        chrome.storage.local.set({"pastEvents": [item]});
+      } else {
+        chrome.storage.local.set({ "pastEvents": [item] });
       }
     });
   },
@@ -586,6 +599,8 @@ chrome.runtime.onConnect.addListener(function (port) {
   console.log(data)
 });
 chrome.runtime.onMessage.addListener((request, sender, reply) => {
+  console.log("action received")
+  console.log(request)
   switch (request.action) {
     case "startRecord":
       recorder.startRecord(reply);
@@ -628,11 +643,43 @@ chrome.runtime.onMessage.addListener((request, sender, reply) => {
         reply({ log: "noEditor" });
       }
       break;
-    case "testLog":
-      console.log("test log");
-      reply({ log: "test" });
+    case "actionLog":
+      let copy = {... request.actionLog};
+      data.anonymizeAction(copy);
+      try {
+        addDoc(collection(data.db, "actions"), copy);
+        reply({ log: "success" });
+      } catch (e) {
+        console.error("Error adding document: ", e);
+        reply({ log: "failed" });
+      }
+
+      break;
+    case "setPreferences":
+      if (request.preferences) {
+        console.log("Setting Preferences")
+        data.preferences = request.preferences;
+        if (request.preferences.sendActData === "true"  && data.fireApp == undefined) {
+          const firebaseConfig = {
+            apiKey: "AIzaSyBj5CGVHf6b15TbJCMISL87koNVvbscNJc",
+            authDomain: "autoecho-70f5b.firebaseapp.com",
+            projectId: "autoecho-70f5b",
+            storageBucket: "autoecho-70f5b.appspot.com",
+            messagingSenderId: "385826425881",
+            appId: "1:385826425881:web:b49db849cbefa0afc8ee88",
+            measurementId: "G-PM216WXQPR"
+          }
+          console.log("Initializing Firebase")
+          data.fireApp = initializeApp(firebaseConfig);
+          data.db = getFirestore(data.fireApp);
+        } else if (request.preferences.sendActData === "false" && data.fireApp == undefined) {
+          data.fireApp = undefined;
+          data.db = undefined;
+        }
+      }
       break;
     case "init":
+      console.log("init received")
       data.uiLink = sender;
       reply({ log: "init", lists: clock.schedule.actionLists });
       break;

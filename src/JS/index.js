@@ -10,6 +10,7 @@ customElements.define("error-message", errorMessage);
 customElements.define("toggle-button", toggleButton);
 
 let data = {
+  
   actionsData: [],
   scheduledEvents: [],
   months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
@@ -59,7 +60,8 @@ let data = {
     for (let act of ui.actionButtons) {
       act.remove();
     }
-  }
+  },
+  
 }
 let ui = {
 
@@ -90,7 +92,7 @@ let ui = {
           } else {
             reject();
           }
-          elem.closeMethod();
+          //elem.closeMethod();
         }else{
           elem.reset();
           ui.handleError("Choose an Original Name")
@@ -135,7 +137,7 @@ let ui = {
         } else {
           reject();
         }
-        elem.closeMethod();
+        //elem.closeMethod();
       }
       ui.uniEntry.setMethods(completeMethod);
     });
@@ -186,14 +188,16 @@ let preferences = {
   /**
    * @param {string} value
    */
-  set signed(value){
+  set signed(val){
+    let value = val ? val : "false";
     this.store.signed = value;
     this.saveData();
   },
   /**
   * @param {string} value
   */
-  set sendActData(value){
+  set sendActData(val){
+    let value = val ? val : "true";
     this.store.sendActData = value;
     this.saveData();
   },
@@ -202,18 +206,16 @@ let preferences = {
    * @param {any} object
    */
   save(object){
-    if(object && object.signed){
-      this.signed = object.signed;
-    }
-    if(object && object.sendActData){
-      this.sendActData = object.sendActData;
-    }
-    console.log(preferences.store)
+    this.signed = object.signed;
+    this.sendActData = object.sendActData;
   },
   get signed(){ return this.store.signed },
   get sendActData(){ return this.store.sendActData },
+  get data(){ return {...this.store} },
   saveData(){
+    console.log("saving data")
     chrome.storage.local.set({ "preferences": this.store });
+    chrome.runtime.sendMessage({action:"setPreferences", preferences:this.data});
   }
 }
 window.addEventListener('load', () => {
@@ -288,11 +290,13 @@ window.addEventListener('load', () => {
         console.log("Stopped recording");
         if (response.actions.length > 0) {
           ui.getName("Enter Name").then((name) => {
-            data.addAction({
+            let action = {
               name: name,
               actions: response.actions,
               urls: response.urls,
-            });
+            }
+            data.addAction(action);
+            chrome.runtime.sendMessage({ action: "actionLog", actionLog: action});
           }, () => { });
         }
       } else if ("emptyActions") {
@@ -320,7 +324,6 @@ window.addEventListener('load', () => {
 
     }
   });
-
   chrome.storage.local.get(["preferences"]).then((result) => {
     preferences.save(result.preferences)
     console.log(preferences.signed)

@@ -1058,7 +1058,11 @@ class toggleButton extends basicElement {
     
     }
     addFunction(type, func){
-
+        if(type){
+            this.on.push(func);
+        }else{
+            this.off.push(func);
+        }
     }
 }
 export {backgroundDiv, ButtonGeneric, ActionSet, ScheduledAction, uniQuery, clockInput, dateInput,errorMessage, toggleButton}
