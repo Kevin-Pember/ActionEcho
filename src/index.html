@@ -146,9 +146,9 @@
                 </svg>
             </button-generic>
         </div>
-        <button-generic id="settingsButton" pad="off" style="height:35px; position:absolute; left: 5px; bottom: 5px; background:var(--secondary); aspect-ratio: 1;">
-            <svg style="height:25px;"
-                viewBox="0 0 652 652" xmlns="http://www.w3.org/2000/svg">
+        <button-generic id="settingsButton" pad="off"
+            style="height:35px; position:absolute; left: 5px; bottom: 5px; background:var(--secondary); aspect-ratio: 1;">
+            <svg style="height:25px;" viewBox="0 0 652 652" xmlns="http://www.w3.org/2000/svg">
                 <path
                     d="m425.5 326c0 55.229-44.771 100-100 100s-100-44.771-100-100 44.771-100 100-100 100 44.771 100 100zm-40 0c0 33.137-26.863 60-60 60s-60-26.863-60-60 26.863-60 60-60 60 26.863 60 60z"
                     clip-rule="evenodd" fill="#D9D9D9" fill-rule="evenodd" />
@@ -158,12 +158,23 @@
             </svg>
         </button-generic>
     </div>
-    <div id="settingsPage" class="contentPage hiddenPage" style="justify-items: center; width:430px; height: 302px;">
-        <button-generic id="settingsBack" style="height:35px; aspect-ratio: 1; position: absolute; left: 5px; top: 5px;">
+    <div id="settingsPage" class="contentPage hiddenPage"
+        style="width:430px; height: 257px; display: flex; flex-direction: column; padding-top: 45px;">
+        <button-generic id="settingsBack"
+            style="height:35px; aspect-ratio: 1; position: absolute; left: 5px; top: 5px;">
             <svg style="height: 25px;" fill="none" viewBox="0 0 1002 1002" xmlns="http://www.w3.org/2000/svg">
-                <path d="M9.21265 797.872C-2.50317 809.588 -2.50317 828.583 9.21265 840.299L161.948 993.034C173.664 1004.75 192.659 1004.75 204.375 993.034L501.123 696.285L797.872 993.034C809.588 1004.75 828.583 1004.75 840.298 993.034L993.033 840.299C1004.75 828.583 1004.75 809.588 993.033 797.872L696.284 501.124L993.033 204.375C1004.75 192.659 1004.75 173.664 993.033 161.948L840.299 9.2132C828.583 -2.50238 809.588 -2.50238 797.872 9.2132L501.123 305.962L204.374 9.2132C192.658 -2.50238 173.664 -2.50238 161.948 9.2132L9.21265 161.948C-2.50317 173.664 -2.50317 192.659 9.21265 204.375L305.962 501.124L9.21265 797.872Z" fill="var(--darkText)" />
+                <path
+                    d="M9.21265 797.872C-2.50317 809.588 -2.50317 828.583 9.21265 840.299L161.948 993.034C173.664 1004.75 192.659 1004.75 204.375 993.034L501.123 696.285L797.872 993.034C809.588 1004.75 828.583 1004.75 840.298 993.034L993.033 840.299C1004.75 828.583 1004.75 809.588 993.033 797.872L696.284 501.124L993.033 204.375C1004.75 192.659 1004.75 173.664 993.033 161.948L840.299 9.2132C828.583 -2.50238 809.588 -2.50238 797.872 9.2132L501.123 305.962L204.374 9.2132C192.658 -2.50238 173.664 -2.50238 161.948 9.2132L9.21265 161.948C-2.50317 173.664 -2.50317 192.659 9.21265 204.375L305.962 501.124L9.21265 797.872Z"
+                    fill="var(--darkText)" />
             </svg>
         </button-generic>
+        <h3 style="margin-left: 10px; font-size: 30px; font-weight: 500; display: flex; place-items: center;"
+            class="textBorder">Settings</h3>
+        <label style="    display: flex; flex-direction: row; flex-wrap: wrap; align-items: center;">
+            <toggle-button id="toggleButton" style="position: relative; width:70px; height: 35px; display: block; margin:5px;"></toggle-button>
+            <h2 style="width:fit-content; ">Send Action Data</h2>
+            
+        </label>
     </div>
     <div id="recordPage" class="contentPage hiddenPage" style="display: grid; grid-auto-flow: row;  justify-items: center;
     align-items: center; height: 150px; width: 260px;">
@@ -180,6 +191,7 @@
     transition: top 0.25s ease;"></uni-query>
     <error-message id="errorHandler"
         style="position: absolute; bottom: -50px; width: 100%; height: 50px; transition: bottom 0.25s; z-index: 10000;"></error-message>
+
 </body>
 </body>
 

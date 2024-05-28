@@ -997,4 +997,68 @@ class errorMessage extends basicElement{
         this.ui.message.innerText = text;
     }
 }
-export {backgroundDiv, ButtonGeneric, ActionSet, ScheduledAction, uniQuery, clockInput, dateInput,errorMessage}
+class toggleButton extends basicElement {
+    constructor(){
+        super();
+        this.shadowRoot.innerHTML += `
+        <style>
+            #toggleButton{
+                height: 100%;
+                width: 100%;
+                position: absolute;
+                transition: background-color 0.25s ease;
+                box-sizing: border-box;
+                align-items: center;
+                border: 1px solid var(--accentBorder);
+                border-radius: 50px;
+                overflow: hidden;
+            }
+            #selector{
+                left:0px;
+                position: absolute;
+                height: 100%;
+                width: 50%;
+                transition: background-color 0.25s ease,
+                left 0.25s ease,
+                border-radius 0.25s ease;
+                background-color: LightGreen;
+                border-radius: 50% 0 0 50%;
+            }
+        </style>
+        <div id="toggleButton">
+            <div id="selector"></div>
+        </div>
+        `;
+        this.ui.toggleButton = this.shadowRoot.getElementById("toggleButton");
+        this.ui.selector = this.shadowRoot.getElementById("selector");
+        this.toggled = true;
+        this.ui.toggleButton.addEventListener("click", () => {
+            this.toggle();
+        })
+        this.off = [];
+        this.on = [];
+    }
+    toggle(){
+        if(this.toggled){
+            this.ui.selector.style.backgroundColor = "Tomato";
+            this.ui.selector.style.left = "35px";
+            this.ui.selector.style.borderRadius = "0 50% 50% 0";
+            for(let func of this.off){
+                func();
+            }
+        }else{
+            this.ui.selector.style.backgroundColor = "LightGreen";
+            this.ui.selector.style.left = "0px";
+            this.ui.selector.style.borderRadius = "50% 0 0 50%";
+            for(let func of this.on){
+                func();
+            }
+        }
+        this.toggled = !this.toggled;
+    
+    }
+    addFunction(type, func){
+
+    }
+}
+export {backgroundDiv, ButtonGeneric, ActionSet, ScheduledAction, uniQuery, clockInput, dateInput,errorMessage, toggleButton}

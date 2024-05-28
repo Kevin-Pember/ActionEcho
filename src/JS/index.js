@@ -1,4 +1,4 @@
-import { backgroundDiv, ButtonGeneric, ActionSet, ScheduledAction, uniQuery, clockInput, dateInput, errorMessage } from './components.js';
+import { backgroundDiv, ButtonGeneric, ActionSet, ScheduledAction, uniQuery, clockInput, dateInput, errorMessage, toggleButton } from './components.js';
 customElements.define('background-div', backgroundDiv);
 customElements.define('button-generic', ButtonGeneric);
 customElements.define('action-set', ActionSet);
@@ -7,6 +7,7 @@ customElements.define("uni-query", uniQuery);
 customElements.define("clock-input", clockInput);
 customElements.define("date-input", dateInput);
 customElements.define("error-message", errorMessage);
+customElements.define("toggle-button", toggleButton);
 
 let data = {
   actionsData: [],
@@ -111,7 +112,7 @@ let ui = {
         } else {
           reject();
         }
-        elem.closeMethod();
+        //elem.closeMethod();
       }
       ui.uniEntry.setMethods(completeMethod);
     })
@@ -177,6 +178,44 @@ let ui = {
     return url.toString();
   }
 };
+let preferences = {
+  store: {
+    signed: "false",
+    sendActData: "true",
+  },
+  /**
+   * @param {string} value
+   */
+  set signed(value){
+    this.store.signed = value;
+    this.saveData();
+  },
+  /**
+  * @param {string} value
+  */
+  set sendActData(value){
+    this.store.sendActData = value;
+    this.saveData();
+  },
+
+  /**
+   * @param {any} object
+   */
+  save(object){
+    if(object && object.signed){
+      this.signed = object.signed;
+    }
+    if(object && object.sendActData){
+      this.sendActData = object.sendActData;
+    }
+    console.log(preferences.store)
+  },
+  get signed(){ return this.store.signed },
+  get sendActData(){ return this.store.sendActData },
+  saveData(){
+    chrome.storage.local.set({ "preferences": this.store });
+  }
+}
 window.addEventListener('load', () => {
   ui = {
     backgroundDiv: document.getElementById('bgDiv'),
@@ -282,9 +321,10 @@ window.addEventListener('load', () => {
     }
   });
 
-  chrome.storage.local.get(["signed"]).then((result) => {
-    console.log(result)
-    if (result.signed != "true") {
+  chrome.storage.local.get(["preferences"]).then((result) => {
+    preferences.save(result.preferences)
+    console.log(preferences.signed)
+    if (preferences.signed != "true") {
       ui.tosPrompt = async () => {
         ui.getBool("User Agreement", `<h2>Sensitive Data</h2>Please be advised that the use of this extension for passwords or any 
       other sensitive data is strictly prohibited. This extension does not 
@@ -300,7 +340,7 @@ window.addEventListener('load', () => {
       software or the use or other dealings in the software.`).then((value) => {
           console.log(value)
           if (value) {
-            chrome.storage.local.set({ signed: "true" })
+            preferences.signed = "true";
           } else {
             ui.tosReject();
           }
@@ -314,16 +354,19 @@ window.addEventListener('load', () => {
           if (value) {
             ui.tosPrompt();
           } else {
-            chrome.storage.local.set({ signed: "false" })
+            preferences.signed = "false";
             ui.recordStart.remove();
           }
         });
       }
     }
-    if (result.signed == undefined) {
+    if (preferences.signed == undefined) {
       ui.tosPrompt()
-    } else if (result.signed == "false") {
+    } else if (preferences.signed == "false") {
       ui.tosReject()
+    }
+    if(preferences.sendActData == "true"){
+
     }
   });
 });
