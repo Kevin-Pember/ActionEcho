@@ -1038,24 +1038,30 @@ class toggleButton extends basicElement {
         this.off = [];
         this.on = [];
     }
-    toggle(){
-        if(this.toggled){
+    switch(swit){
+        if(swit){
+            this.ui.selector.style.backgroundColor = "LightGreen";
+            this.ui.selector.style.left = "0px";
+            this.ui.selector.style.borderRadius = "50% 0 0 50%";
+        }else{
             this.ui.selector.style.backgroundColor = "Tomato";
             this.ui.selector.style.left = "35px";
             this.ui.selector.style.borderRadius = "0 50% 50% 0";
+        }
+        this.toggled = swit;
+    }
+    toggle(onOff){
+        let toggle = (onOff != undefined) ? onOff : this.toggled;
+        this.switch(!toggle)
+        if(toggle){
             for(let func of this.off){
                 func();
             }
         }else{
-            this.ui.selector.style.backgroundColor = "LightGreen";
-            this.ui.selector.style.left = "0px";
-            this.ui.selector.style.borderRadius = "50% 0 0 50%";
             for(let func of this.on){
                 func();
             }
         }
-        this.toggled = !this.toggled;
-    
     }
     addFunction(type, func){
         if(type){

@@ -1,5 +1,16 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.1/firebase-app.js'
 import { getFirestore, addDoc, collection } from 'https://www.gstatic.com/firebasejs/10.12.1/firebase-firestore.js'
+let firebase = {
+  config: {
+    apiKey: "AIzaSyBj5CGVHf6b15TbJCMISL87koNVvbscNJc",
+    authDomain: "autoecho-70f5b.firebaseapp.com",
+    projectId: "autoecho-70f5b",
+    storageBucket: "autoecho-70f5b.appspot.com",
+    messagingSenderId: "385826425881",
+    appId: "1:385826425881:web:b49db849cbefa0afc8ee88",
+    measurementId: "G-PM216WXQPR"
+  },
+}
 let data = {
   current: {
     actionSet: undefined,
@@ -251,6 +262,7 @@ let recorder = {
       recorder.data.site = undefined;
     }*/
     console.log(msg);
+    msg.action = undefined;
     switch (msg.type) {
       case "click":
         console.log(`%c New Click`, "background-color: green; font-size: 20px;")
@@ -632,11 +644,8 @@ chrome.runtime.onMessage.addListener((request, sender, reply) => {
       }
       break;
     case "closeEditor":
-      console.log("close Editor Called")
       if (data.current.editor) {
-        console.log("running close editor")
         data.closeEditor().then((actionList) => {
-          console.log("closed editor finished")
           reply({ log: "closed", actionList: actionList });
         });
       } else {
@@ -647,7 +656,7 @@ chrome.runtime.onMessage.addListener((request, sender, reply) => {
       let copy = {... request.actionLog};
       data.anonymizeAction(copy);
       try {
-        addDoc(collection(data.db, "actions"), copy);
+        addDoc(collection(firebase.db, "actions"), copy);
         reply({ log: "success" });
       } catch (e) {
         console.error("Error adding document: ", e);
@@ -657,10 +666,9 @@ chrome.runtime.onMessage.addListener((request, sender, reply) => {
       break;
     case "setPreferences":
       if (request.preferences) {
-        console.log("Setting Preferences")
         data.preferences = request.preferences;
-        if (request.preferences.sendActData === "true"  && data.fireApp == undefined) {
-          const firebaseConfig = {
+        if (request.preferences.sendActData === "true"  && firebase.app == undefined) {
+          /*const firebaseConfig = {
             apiKey: "AIzaSyBj5CGVHf6b15TbJCMISL87koNVvbscNJc",
             authDomain: "autoecho-70f5b.firebaseapp.com",
             projectId: "autoecho-70f5b",
@@ -668,18 +676,19 @@ chrome.runtime.onMessage.addListener((request, sender, reply) => {
             messagingSenderId: "385826425881",
             appId: "1:385826425881:web:b49db849cbefa0afc8ee88",
             measurementId: "G-PM216WXQPR"
-          }
-          console.log("Initializing Firebase")
-          data.fireApp = initializeApp(firebaseConfig);
-          data.db = getFirestore(data.fireApp);
-        } else if (request.preferences.sendActData === "false" && data.fireApp == undefined) {
-          data.fireApp = undefined;
-          data.db = undefined;
+          }*/
+          firebase.app = initializeApp(firebase.config);
+          firebase.db = getFirestore(firebase.app);
+        } else if (request.preferences.sendActData === "false" && firebase.app != undefined) {
+          firebase.app = undefined;
+          firebase.db = undefined;
         }
+        reply({ log: "success" });
+      }else{
+        reply({ log: "failed" });
       }
       break;
     case "init":
-      console.log("init received")
       data.uiLink = sender;
       reply({ log: "init", lists: clock.schedule.actionLists });
       break;

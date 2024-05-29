@@ -189,7 +189,7 @@ let preferences = {
    * @param {string} value
    */
   set signed(val){
-    let value = val ? val : "false";
+    let value = (val != undefined) ? val : "false";
     this.store.signed = value;
     this.saveData();
   },
@@ -197,7 +197,7 @@ let preferences = {
   * @param {string} value
   */
   set sendActData(val){
-    let value = val ? val : "true";
+    let value = (val != undefined) ? val : "true";
     this.store.sendActData = value;
     this.saveData();
   },
@@ -206,15 +206,19 @@ let preferences = {
    * @param {any} object
    */
   save(object){
-    this.signed = object.signed;
-    this.sendActData = object.sendActData;
+    console.log("running Save Preferences")
+    console.log(object)
+    this.store.signed = object.signed;
+    this.store.sendActData = object.sendActData;
+    this.saveData();
   },
   get signed(){ return this.store.signed },
   get sendActData(){ return this.store.sendActData },
   get data(){ return {...this.store} },
   saveData(){
-    console.log("saving data")
-    chrome.storage.local.set({ "preferences": this.store });
+    console.log("saving preferences")
+    console.log(this.data)
+    chrome.storage.local.set({ "preferences": this.data });
     chrome.runtime.sendMessage({action:"setPreferences", preferences:this.data});
   }
 }
@@ -234,6 +238,7 @@ window.addEventListener('load', () => {
     errorHandler: document.getElementById("errorHandler"),
     settingsButton: document.getElementById("settingsButton"),
     settingsBack: document.getElementById("settingsBack"),
+    firebaseToggle: document.getElementById("firebaseToggle"),
     ...ui
   }
   chrome.storage.local.get(["actionSets"]).then((result) => {
@@ -307,6 +312,8 @@ window.addEventListener('load', () => {
   });
   ui.settingsButton.addEventListener('click', () => { ui.setPage("settingsPage") });
   ui.settingsBack.addEventListener('click', () => { ui.setPage("mainPage") });
+  ui.firebaseToggle.addFunction(true, () => {preferences.sendActData = "true"});
+  ui.firebaseToggle.addFunction(false, () => {preferences.sendActData = "false"});
   chrome.runtime.sendMessage({ action: "init" }, (response) => {
     for (let scheduled of response.lists) {
       ui.createTimeEntry(scheduled);
@@ -325,6 +332,7 @@ window.addEventListener('load', () => {
     }
   });
   chrome.storage.local.get(["preferences"]).then((result) => {
+    console.log(result)
     preferences.save(result.preferences)
     console.log(preferences.signed)
     if (preferences.signed != "true") {
@@ -367,9 +375,10 @@ window.addEventListener('load', () => {
       ui.tosPrompt()
     } else if (preferences.signed == "false") {
       ui.tosReject()
+      
     }
-    if(preferences.sendActData == "true"){
-
+    if(preferences.sendActData == "false"){
+      ui.firebaseToggle.switch(false);
     }
   });
 });

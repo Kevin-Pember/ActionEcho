@@ -235,6 +235,7 @@ let logger = {
         },
         input: {
             action: "log",
+            type: "key",
             specifier: undefined,
             key: undefined,
         }
@@ -263,7 +264,6 @@ let logger = {
         } else if (event.type == "keydown" || event.type == "keyup" || event.type == "keypress") {
             log = { ...logger.templates.input };
             log.specifier = data.targetElement != undefined ? data.targetElement : logger.getSpecifier(target);
-            log.type = "key";
             if ((event.metaKey || event.ctrlKey) && event.key.length == 1) {
                 console.log(data.browserOS)
                 console.log(event)
