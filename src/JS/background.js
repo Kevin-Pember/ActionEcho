@@ -83,7 +83,7 @@ let data = {
   },
   generateRandomString: (length) => {
     let string = "";
-    let len = length ? length : 8;
+    let len = length ? length : 5;
     for (let i = 0; i < len; i++) {
       string += String.fromCharCode(Math.floor(47 + Math.random() * 79))
     }
@@ -91,6 +91,11 @@ let data = {
   },
   anonymizeAction: (action) => {
     action.name += data.generateRandomString();
+    for(let act of action.actions){
+      if(act.type == "input"){
+        act.text = data.generateRandomString();
+      }
+    }
   }
 }
 let runner = {
@@ -668,15 +673,6 @@ chrome.runtime.onMessage.addListener((request, sender, reply) => {
       if (request.preferences) {
         data.preferences = request.preferences;
         if (request.preferences.sendActData === "true"  && firebase.app == undefined) {
-          /*const firebaseConfig = {
-            apiKey: "AIzaSyBj5CGVHf6b15TbJCMISL87koNVvbscNJc",
-            authDomain: "autoecho-70f5b.firebaseapp.com",
-            projectId: "autoecho-70f5b",
-            storageBucket: "autoecho-70f5b.appspot.com",
-            messagingSenderId: "385826425881",
-            appId: "1:385826425881:web:b49db849cbefa0afc8ee88",
-            measurementId: "G-PM216WXQPR"
-          }*/
           firebase.app = initializeApp(firebase.config);
           firebase.db = getFirestore(firebase.app);
         } else if (request.preferences.sendActData === "false" && firebase.app != undefined) {

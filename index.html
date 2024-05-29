@@ -10,9 +10,10 @@
 
 <body style="background-color: grey; height: 100%; width: 100%; top: 0px; left: 0px;">
     <style>
-        body{
+        body {
             background-color: grey;
         }
+
         .inputArea {
             border-radius: 20px;
             margin: 10px;
@@ -54,6 +55,7 @@
             background-color: red;
             margin: auto;
         }
+
         .complete {
             background-color: green;
             color: darkGreen;
@@ -78,12 +80,41 @@
         </div>
         <div class="indicatorContainer">
             <button id="clickableElem" class="Button" onclick="Timestamp()">Timestamp</button>
-            <div id="timestampContainer" style="width: 500px; border-radius: 10px; height: 20px; background-color: transparent;"></div>
+            <div id="timestampContainer"
+                style="width: 500px; border-radius: 10px; height: 20px; background-color: transparent;"></div>
         </div>
     </div>
     <button id="testButton" class="Button" onclick="checkTest()">check</button>
     <button id="testButton" class="Button" onclick="resetTest()">reset</button>
     <h1 id="resultHeader" style="visibility: hidden; margin-bottom: 100px;">Pass</h1>
+    <div style="display: flex; flex-direction: column; width: 150px;">
+        <input id="buttInput" type="button">
+        <input id="checkboxInput" type="checkbox">
+        <input id="colorInput" type="color">
+        <input id="dateInput" type="date">
+        <input id="dateTimeInput" type="datetime-local">
+        <input id="emailInput" type="email">
+        <input id="fileInput" type="file">
+        <input id="hiddenInput" type="hidden">
+        <input id="imageInput" type="image">
+        <input id="monthInput" type="month">
+        <input id="numberInput" type="number">
+        <input id="passwordInput" type="password">
+        <div>
+            <input name="radio" id="radio1Input" type="radio">
+            <input name="radio" id="radio2Input" type="radio">
+            <input name="radio" id="radio3Input" type="radio">
+        </div>
+        <input id="rangeInput" type="range">
+        <input id="resetInput" type="reset">
+        <input id="searchInput" type="search">
+        <input id="submitInput" type="submit">
+        <input id="telInput" type="tel">
+        <input id="textInput" type="text">
+        <input id="timeInput" type="time">
+        <input id="urlInput" type="url">
+        <input id="weekInput" type="week">
+    </div>
 </body>
 <script>
     /*let queryElem = document.querySelector("uni-query");
@@ -276,6 +307,33 @@
     let string1 = "Welcome to Programiz!"
 
     console.log(string1.substring(0));
+
+    let inputs = {
+        button: document.getElementById("buttInput"),
+        checkbox: document.getElementById("checkboxInput"),
+        color: document.getElementById("colorInput"),
+        date: document.getElementById("dateInput"),
+        dateTime: document.getElementById("dateTimeInput"),
+        email: document.getElementById("emailInput"),
+        file: document.getElementById("fileInput"),
+        hidden: document.getElementById("hiddenInput"),
+        image: document.getElementById("imageInput"),
+        month: document.getElementById("monthInput"),
+        number: document.getElementById("numberInput"),
+        password: document.getElementById("passwordInput"),
+        radio1: document.getElementById("radio1Input"),
+        radio2: document.getElementById("radio2Input"),
+        radio3: document.getElementById("radio3Input"),
+        range: document.getElementById("rangeInput"),
+        reset: document.getElementById("resetInput"),
+        search: document.getElementById("searchInput"),
+        submit: document.getElementById("submitInput"),
+        tel: document.getElementById("telInput"),
+        text: document.getElementById("textInput"),
+        time: document.getElementById("timeInput"),
+        url: document.getElementById("urlInput"),
+        week: document.getElementById("weekInput"),
+    } 
 </script>
 
 </html>

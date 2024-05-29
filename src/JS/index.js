@@ -10,7 +10,7 @@ customElements.define("error-message", errorMessage);
 customElements.define("toggle-button", toggleButton);
 
 let data = {
-  
+
   actionsData: [],
   scheduledEvents: [],
   months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
@@ -26,13 +26,13 @@ let data = {
       ui.createActionEntry(action);
       this.saveActionList();
     } else {
-      ui.handleError("Choose an Original Name")
+      error.handle("Choose an Original Name")
     }
   },
   removeAction(action) {
     this.actionsData.splice(this.actionsData.indexOf(action), 1);
     this.saveActionList();
-    if(this.actionsData.length < 1){
+    if (this.actionsData.length < 1) {
       ui.actionsNone.style = "";
     }
   },
@@ -61,7 +61,7 @@ let data = {
       act.remove();
     }
   },
-  
+
 }
 let ui = {
 
@@ -93,9 +93,9 @@ let ui = {
             reject();
           }
           //elem.closeMethod();
-        }else{
+        } else {
           elem.reset();
-          ui.handleError("Choose an Original Name")
+          error.handle("Choose an Original Name")
         }
       }
       ui.uniEntry.setMethods(completeMethod);
@@ -106,7 +106,7 @@ let ui = {
       ui.uniEntry.setQueryType("bool", message, description);
       ui.uniEntry.style.top = "0px";
       ui.backgroundDiv.blurFocus();
-      let completeMethod = (complete, value,elem) => {
+      let completeMethod = (complete, value, elem) => {
         ui.uniEntry.style.top = "100%";
         ui.backgroundDiv.returnFocus();
         if (complete) {
@@ -124,7 +124,7 @@ let ui = {
       ui.uniEntry.setQueryType("time", message);
       ui.uniEntry.style.top = "0px";
       ui.backgroundDiv.blurFocus();
-      let completeMethod = (complete, value, now,elem) => {
+      let completeMethod = (complete, value, now, elem) => {
         ui.uniEntry.style.top = "100%";
         ui.backgroundDiv.returnFocus();
         if (complete) {
@@ -133,7 +133,7 @@ let ui = {
           } else {
             resolve(value);
           }
-          
+
         } else {
           reject();
         }
@@ -143,11 +143,11 @@ let ui = {
     });
 
   },
-  handleError: (message) => {
+  /*handleError: (message) => {
     ui.errorHandler.message = message;
     ui.errorHandler.style.bottom = "0px";
     setTimeout(() => { ui.errorHandler.style.bottom = "-50px"; }, 3000)
-  },
+  },*/
   createActionEntry(action) {
     let actionElem = document.createElement("action-set");
     actionElem.linkAction(action);
@@ -188,7 +188,7 @@ let preferences = {
   /**
    * @param {string} value
    */
-  set signed(val){
+  set signed(val) {
     let value = (val != undefined) ? val : "false";
     this.store.signed = value;
     this.saveData();
@@ -196,7 +196,7 @@ let preferences = {
   /**
   * @param {string} value
   */
-  set sendActData(val){
+  set sendActData(val) {
     let value = (val != undefined) ? val : "true";
     this.store.sendActData = value;
     this.saveData();
@@ -205,21 +205,21 @@ let preferences = {
   /**
    * @param {any} object
    */
-  save(object){
+  save(object) {
     console.log("running Save Preferences")
     console.log(object)
     this.store.signed = object.signed;
     this.store.sendActData = object.sendActData;
     this.saveData();
   },
-  get signed(){ return this.store.signed },
-  get sendActData(){ return this.store.sendActData },
-  get data(){ return {...this.store} },
-  saveData(){
+  get signed() { return this.store.signed },
+  get sendActData() { return this.store.sendActData },
+  get data() { return { ...this.store } },
+  saveData() {
     console.log("saving preferences")
     console.log(this.data)
     chrome.storage.local.set({ "preferences": this.data });
-    chrome.runtime.sendMessage({action:"setPreferences", preferences:this.data});
+    chrome.runtime.sendMessage({ action: "setPreferences", preferences: this.data });
   }
 }
 window.addEventListener('load', () => {
@@ -259,12 +259,12 @@ window.addEventListener('load', () => {
     }
   });
   chrome.storage.local.get(["pastEvents"]).then((result) => {
-    if(result.pastEvents){
-      for(let event of result.pastEvents){
+    if (result.pastEvents) {
+      for (let event of result.pastEvents) {
         ui.createTimeEntry(event)
       }
     }
-    chrome.storage.local.set({"pastEvents":[]})
+    chrome.storage.local.set({ "pastEvents": [] })
   })
   chrome.storage.local.get(["recording"]).then((result) => {
     console.log(result)
@@ -281,7 +281,7 @@ window.addEventListener('load', () => {
           ui.setPage("recordPage");
         });
       } else if (response.log == "noPort") {
-        ui.handleError("Load or Reload Site");
+        error.handle("Load or Reload Site");
         throw new Error("Failed to start recording");
       }
     });
@@ -301,19 +301,19 @@ window.addEventListener('load', () => {
               urls: response.urls,
             }
             data.addAction(action);
-            chrome.runtime.sendMessage({ action: "actionLog", actionLog: action});
+            chrome.runtime.sendMessage({ action: "actionLog", actionLog: action });
           }, () => { });
         }
       } else if ("emptyActions") {
-        ui.handleError("No actions were recorded")
+        error.handle("No actions were recorded")
         throw new Error("Failed to stop recording");
       }
     });
   });
   ui.settingsButton.addEventListener('click', () => { ui.setPage("settingsPage") });
   ui.settingsBack.addEventListener('click', () => { ui.setPage("mainPage") });
-  ui.firebaseToggle.addFunction(true, () => {preferences.sendActData = "true"});
-  ui.firebaseToggle.addFunction(false, () => {preferences.sendActData = "false"});
+  ui.firebaseToggle.addFunction(true, () => { preferences.sendActData = "true" });
+  ui.firebaseToggle.addFunction(false, () => { preferences.sendActData = "false" });
   chrome.runtime.sendMessage({ action: "init" }, (response) => {
     for (let scheduled of response.lists) {
       ui.createTimeEntry(scheduled);
@@ -375,11 +375,54 @@ window.addEventListener('load', () => {
       ui.tosPrompt()
     } else if (preferences.signed == "false") {
       ui.tosReject()
-      
+
     }
-    if(preferences.sendActData == "false"){
+    if (preferences.sendActData == "false") {
       ui.firebaseToggle.switch(false);
     }
   });
+  chrome.storage.local.get(["errors"]).then((result) => {
+
+  });
+  error.handle("test")
 });
+let error = {
+  queue: [],
+  running: false,
+  add: (message) => {
+    if (message != undefined) {
+      error.queue.push(message);
+    }
+  },
+  display: async (message) => {
+    if (message != undefined) {
+      ui.errorHandler.message = message;
+      ui.errorHandler.style.bottom = "0px";
+      //setTimeout(() => { ui.errorHandler.style.bottom = "-50px"; }, 3000)
+      return new Promise(r => {
+        let t = () => {
+          setTimeout(r, 1000);
+          ui.errorHandler.style.bottom = "-50px";
+          
+        }
+        setTimeout(t, 3000);
+      });
+    }
+
+  },
+  handle: async (message) => {
+    error.add(message);
+    if (!error.running) {
+      error.running = true;
+      while (error.queue.length > 0) {
+
+        let mes = error.queue.shift();
+        console.log(mes)
+        await error.display(mes);
+      }
+      error.running = false;
+    }
+  }
+}
+
 export { data, ui };
