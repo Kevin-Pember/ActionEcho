@@ -6,17 +6,10 @@ window.addEventListener("load", () => { data.fullyLoaded = true });
 //editor.style = `position: fixed; bottom: 10px; right: 10px; width: 300px; height: 300px; background-color: white; z-index: 10000000000;`
 let ui = {
     body: document.body,
-    indicator: document.createElement("div"),
+    
     highlight: document.createElement("div"),
     toggleIndicator: (way) => {
-        if (way) {
-            ui.indicator.style = "right:10px; z-index: 100000;"
-        } else {
-            ui.indicator.style.right = "-100px"
-            setTimeout(() => {
-                ui.indicator.style.zIndex = "-100000";
-            }, 500);
-        }
+        
     },
     highlightElement: (element) => {
         //ui.highlight.style.visibility = "visible";
@@ -78,7 +71,7 @@ let input = {
                         element.innerText = msg.textContext;
                     }
                     //input.data.range = msg.caret.split("-");
-                    if(msg.caret){
+                    if (msg.caret) {
                         let range = msg.caret.split("-");
                         input.setFocus(element, range)
                     }
@@ -186,12 +179,33 @@ let input = {
                 let sel = window.getSelection();
                 let range = document.createRange();
                 range.setStart(elem, range[0]);
-                range.setEnd(elem,range[1])
+                range.setEnd(elem, range[1])
                 sel.removeAllRanges();
                 sel.addRange(range);
             }
         } else {
             elem.focus()
+        }
+    }
+}
+let indicator = {
+    elem: document.createElement("div"),
+    error: () => {
+        if (indicator.elem != undefined) {
+            indicator.elem.style.backgroundColor = "red"
+            setTimeout(() => {
+                indicator.elem.style = "unset";
+            }, 3000)
+        }
+    },
+    toggle: (way) => {
+        if (way) {
+            indicator.elem.style = "right:10px; z-index: 100000;"
+        } else {
+            indicator.elem.style.right = "-100px"
+            setTimeout(() => {
+                indicator.elem.style.zIndex = "-100000";
+            }, 500);
         }
     }
 }
@@ -240,6 +254,22 @@ let logger = {
             key: undefined,
         }
     },
+    start: () => {
+        indicator.toggle(true)
+        document.addEventListener('click', logger.eventHandler);
+        document.addEventListener('keydown', logger.eventHandler);
+        document.addEventListener("paste", (e) => {
+            let log = { type: "key", selection: logger.getSelection(e.target), key: "paste", text: e.clipboardData.getData('text/plain') };
+            if (text != "" && text != undefined) {
+                data.port.postMessage(log);
+            }
+        });
+    },
+    stop: () => {
+        indicator.toggle(false)
+        document.removeEventListener('click', logger.eventHandler);
+        document.removeEventListener('keydown', logger.eventHandler);
+    },
     matchKeys: (event, key) => {
         let keys = Object.keys(key);
         for (let keyName of keys) {
@@ -260,6 +290,11 @@ let logger = {
                 log.textContext = target.contentEditable == "true" ? target.innerText : target.value;
                 log.caret = logger.getSelection(target);
                 data.targetElement = log.specifier;
+            } else if (target.tagName == "INPUT" && target.type == "password") {
+                indicator.error();
+                log.type = "error";
+                log.message = "Password Recording isn't Allowed";
+                log.level = "end";
             }
         } else if (event.type == "keydown" || event.type == "keyup" || event.type == "keypress") {
             log = { ...logger.templates.input };
@@ -350,20 +385,10 @@ document.onreadystatechange = () => {
 data.port.onMessage.addListener(function (msg) {
     switch (msg.action) {
         case "startRecord":
-            ui.toggleIndicator(true)
-            document.addEventListener('click', logger.eventHandler);
-            document.addEventListener('keydown', logger.eventHandler);
-            document.addEventListener("paste", (e) => {
-                let log = { type: "key", selection: logger.getSelection(e.target), key: "paste", text: e.clipboardData.getData('text/plain') };
-                if (text != "" && text != undefined) {
-                    data.port.postMessage(log);
-                }
-            });
+            logger.start();
             break;
         case "stopRecord":
-            ui.toggleIndicator(false)
-            document.removeEventListener('click', logger.eventHandler);
-            document.removeEventListener('keydown', logger.eventHandler);
+            logger.stop();
             break;
         case "highlight":
             console.log(msg)
@@ -412,8 +437,8 @@ if (platInfo.indexOf("Macintosh") != -1) {
 } else {
     data.browserOS = "default";
 }
-ui.indicator.classList.add("actionEchoRecordIcon")
-ui.indicator.innerHTML = `<svg style="height:60px; width: 60px;" viewBox="0 0 1200 1200" xmlns="http://www.w3.org/2000/svg">
+indicator.elem.classList.add("actionEchoRecordIcon")
+indicator.elem.innerHTML = `<svg style="height:60px; width: 60px;" viewBox="0 0 1200 1200" xmlns="http://www.w3.org/2000/svg">
 <path d="m557.75 583.42c-39.443-39.443-103.39-39.443-142.84 0s-39.443 103.39 0 142.84 103.39 39.443 142.84 0 39.443-103.39 0-142.84zm-25.456 25.456c-25.384-25.384-66.54-25.384-91.924 0s-25.384 66.539 0 91.923c25.384 25.385 66.54 25.385 91.924 0 25.384-25.384 25.384-66.539 0-91.923z" clip-rule="evenodd" fill="#D9D9D9" fill-rule="evenodd"/>
 <path d="m557.75 583.42c-39.443-39.443-103.39-39.443-142.84 0s-39.443 103.39 0 142.84 103.39 39.443 142.84 0 39.443-103.39 0-142.84zm-25.456 25.456c-25.384-25.384-66.54-25.384-91.924 0s-25.384 66.539 0 91.923c25.384 25.385 66.54 25.385 91.924 0 25.384-25.384 25.384-66.539 0-91.923z" clip-rule="evenodd" fill-opacity=".3" fill-rule="evenodd"/>
 <path d="m70.556 958.89 111.02 111.02 314.54-314.55c-29.002 2.805-58.986-6.899-81.198-29.111-22.615-22.615-32.264-53.287-28.945-82.777l-315.42 315.42z" fill="#D9D9D9"/>
@@ -441,6 +466,6 @@ ui.indicator.innerHTML = `<svg style="height:60px; width: 60px;" viewBox="0 0 12
 <circle cx="487" cy="655" r="45" fill="#D9D9D9"/>">
 <span class="actionEchoToolTip">Recording</span>
 `
-ui.body.appendChild(ui.indicator)
+ui.body.appendChild(indicator.elem)
 
-console.log(ui.indicator)
+console.log(indicator.elem)

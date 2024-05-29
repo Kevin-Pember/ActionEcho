@@ -180,6 +180,44 @@ let ui = {
     return url.toString();
   }
 };
+let error = {
+  queue: [],
+  running: false,
+  add: (message) => {
+    if (message != undefined) {
+      error.queue.push(message);
+    }
+  },
+  display: async (message) => {
+    if (message != undefined) {
+      ui.errorHandler.message = message;
+      ui.errorHandler.style.bottom = "0px";
+      //setTimeout(() => { ui.errorHandler.style.bottom = "-50px"; }, 3000)
+      return new Promise(r => {
+        let t = () => {
+          setTimeout(r, 1000);
+          ui.errorHandler.style.bottom = "-50px";
+          
+        }
+        setTimeout(t, 3000);
+      });
+    }
+
+  },
+  handle: async (message) => {
+    error.add(message);
+    if (!error.running) {
+      error.running = true;
+      while (error.queue.length > 0) {
+
+        let mes = error.queue.shift();
+        console.log(mes)
+        await error.display(mes);
+      }
+      error.running = false;
+    }
+  }
+}
 let preferences = {
   store: {
     signed: "false",
@@ -318,6 +356,9 @@ window.addEventListener('load', () => {
     for (let scheduled of response.lists) {
       ui.createTimeEntry(scheduled);
     }
+    for(let err of response.errors){
+      error.handle(err);
+    }
   });
   chrome.runtime.onMessage.addListener((request, sender, reply) => {
     console.log("messaged")
@@ -381,48 +422,6 @@ window.addEventListener('load', () => {
       ui.firebaseToggle.switch(false);
     }
   });
-  chrome.storage.local.get(["errors"]).then((result) => {
-
-  });
-  error.handle("test")
 });
-let error = {
-  queue: [],
-  running: false,
-  add: (message) => {
-    if (message != undefined) {
-      error.queue.push(message);
-    }
-  },
-  display: async (message) => {
-    if (message != undefined) {
-      ui.errorHandler.message = message;
-      ui.errorHandler.style.bottom = "0px";
-      //setTimeout(() => { ui.errorHandler.style.bottom = "-50px"; }, 3000)
-      return new Promise(r => {
-        let t = () => {
-          setTimeout(r, 1000);
-          ui.errorHandler.style.bottom = "-50px";
-          
-        }
-        setTimeout(t, 3000);
-      });
-    }
-
-  },
-  handle: async (message) => {
-    error.add(message);
-    if (!error.running) {
-      error.running = true;
-      while (error.queue.length > 0) {
-
-        let mes = error.queue.shift();
-        console.log(mes)
-        await error.display(mes);
-      }
-      error.running = false;
-    }
-  }
-}
 
 export { data, ui };

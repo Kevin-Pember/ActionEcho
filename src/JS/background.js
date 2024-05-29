@@ -11,6 +11,7 @@ let firebase = {
     measurementId: "G-PM216WXQPR"
   },
 }
+let errorLog = []
 let data = {
   current: {
     actionSet: undefined,
@@ -91,8 +92,8 @@ let data = {
   },
   anonymizeAction: (action) => {
     action.name += data.generateRandomString();
-    for(let act of action.actions){
-      if(act.type == "input"){
+    for (let act of action.actions) {
+      if (act.type == "input") {
         act.text = data.generateRandomString();
       }
     }
@@ -199,16 +200,18 @@ let recorder = {
 
   },
   stopRecord: (reply) => {
-    data.current.port.postMessage({ action: "stopRecord" });
     recorder.data.actionSet.log = "finished";
     recorder.recording = false;
     console.log("stopping record");
     console.log(recorder.data.actionSet);
-    if (recorder.data.actionSet.actions.length > 0) {
-      reply(recorder.data.actionSet);
-    } else {
-      console.log(`%c Empty ActionList`, "font-size: 20px; background-color: red;");
-      reply({ log: "emptyActions" })
+    if (reply != undefined) {
+      data.current.port.postMessage({ action: "stopRecord" });
+      if (recorder.data.actionSet.actions.length > 0) {
+        reply(recorder.data.actionSet);
+      } else {
+        console.log(`%c Empty ActionList`, "font-size: 20px; background-color: red;");
+        reply({ log: "emptyActions" })
+      }
     }
 
     console.log("template is now:")
@@ -361,6 +364,15 @@ let recorder = {
             console.log("Default key log");
             recorder.data.actionSet.actions.push(msg);
         }
+        break;
+      case "error":
+        console.log("%c Caught Site Level Error", "background-color: red; font-size: 30px;")
+        if(msg.level == "end"){
+          chrome.storage.local.set({ recording: false })
+          recorder.stopRecord()
+        }
+        
+        errorLog.push(msg.message)
         break;
     }
     /*if (recorder.urlLoad.loading && recorder.data.site) {
@@ -658,7 +670,7 @@ chrome.runtime.onMessage.addListener((request, sender, reply) => {
       }
       break;
     case "actionLog":
-      let copy = {... request.actionLog};
+      let copy = { ...request.actionLog };
       data.anonymizeAction(copy);
       try {
         addDoc(collection(firebase.db, "actions"), copy);
@@ -672,7 +684,7 @@ chrome.runtime.onMessage.addListener((request, sender, reply) => {
     case "setPreferences":
       if (request.preferences) {
         data.preferences = request.preferences;
-        if (request.preferences.sendActData === "true"  && firebase.app == undefined) {
+        if (request.preferences.sendActData === "true" && firebase.app == undefined) {
           firebase.app = initializeApp(firebase.config);
           firebase.db = getFirestore(firebase.app);
         } else if (request.preferences.sendActData === "false" && firebase.app != undefined) {
@@ -680,13 +692,14 @@ chrome.runtime.onMessage.addListener((request, sender, reply) => {
           firebase.db = undefined;
         }
         reply({ log: "success" });
-      }else{
+      } else {
         reply({ log: "failed" });
       }
       break;
     case "init":
       data.uiLink = sender;
-      reply({ log: "init", lists: clock.schedule.actionLists });
+      reply({ log: "init", lists: clock.schedule.actionLists, errors: errorLog });
+      errorLog = []
       break;
   }
   return true;
