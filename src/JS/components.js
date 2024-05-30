@@ -149,7 +149,6 @@ class ButtonGeneric extends basicElement {
             if(newValue == "on"){
                 this.svgContainer.style = "";
             }else{
-                console.log("Padding Turned off")
                 this.svgContainer.style = "padding: 0px;";
             }
         }

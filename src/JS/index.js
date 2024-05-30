@@ -14,6 +14,7 @@ let data = {
   actionsData: [],
   scheduledEvents: [],
   months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+  setLog: {},
   saveActionList() {
     chrome.storage.local.set({ "actionSets": this.actionsData });
   },
@@ -223,6 +224,9 @@ let preferences = {
     signed: "false",
     sendActData: "true",
   },
+
+  get signed() { return this.store.signed },
+  get sendActData() { return this.store.sendActData },
   /**
    * @param {string} value
    */
@@ -239,19 +243,20 @@ let preferences = {
     this.store.sendActData = value;
     this.saveData();
   },
-
+  /**
+   * @param {any} object
+   */
+  set(object){
+    this.store.signed = (object != undefined && object.signed != undefined) ? object.signed : undefined;
+    this.store.sendActData = (object != undefined && object.sendActData != undefined) ? object.sendActData : undefined;
+  },
   /**
    * @param {any} object
    */
   save(object) {
-    console.log("running Save Preferences")
-    console.log(object)
-    this.store.signed = object.signed;
-    this.store.sendActData = object.sendActData;
+    this.set(object)
     this.saveData();
   },
-  get signed() { return this.store.signed },
-  get sendActData() { return this.store.sendActData },
   get data() { return { ...this.store } },
   saveData() {
     console.log("saving preferences")
@@ -349,9 +354,16 @@ window.addEventListener('load', () => {
     });
   });
   ui.settingsButton.addEventListener('click', () => { ui.setPage("settingsPage") });
-  ui.settingsBack.addEventListener('click', () => { ui.setPage("mainPage") });
-  ui.firebaseToggle.addFunction(true, () => { preferences.sendActData = "true" });
-  ui.firebaseToggle.addFunction(false, () => { preferences.sendActData = "false" });
+  ui.settingsBack.addEventListener('click', () => { 
+    if(data.setLog.sendActData != undefined){
+      preferences.sendActData = data.setLog.sendActData;
+      data.setLog.sendActData = undefined;
+    }
+    
+    ui.setPage("mainPage") 
+  });
+  ui.firebaseToggle.addFunction(true, () => { data.setLog.sendActData = "true"});
+  ui.firebaseToggle.addFunction(false, () => { data.setLog.sendActData = "false"});
   chrome.runtime.sendMessage({ action: "init" }, (response) => {
     for (let scheduled of response.lists) {
       ui.createTimeEntry(scheduled);
@@ -374,11 +386,12 @@ window.addEventListener('load', () => {
   });
   chrome.storage.local.get(["preferences"]).then((result) => {
     console.log(result)
-    preferences.save(result.preferences)
+    preferences.set(result.preferences)
     console.log(preferences.signed)
     if (preferences.signed != "true") {
+      console.log("prompting tos")
       ui.tosPrompt = async () => {
-        ui.getBool("User Agreement", `<h2>Sensitive Data</h2>Please be advised that the use of this extension for passwords or any 
+        ui.getBool("User Agreement", `<h2>Sensitive Data</h2>Please be advised that the use of ActionEcho for passwords or any 
       other sensitive data is strictly prohibited. This extension does not 
       provide adequate security measures and should not be relied upon for 
       securing sensitive information. It is important to note that this extension 
@@ -418,10 +431,13 @@ window.addEventListener('load', () => {
       ui.tosReject()
 
     }
-    if (preferences.sendActData == "false") {
+    if (preferences.data.sendActData == "false") {
       ui.firebaseToggle.switch(false);
     }
+    console.log(preferences.signed)
+    console.log(preferences.sendActData)
   });
+  
 });
 
 export { data, ui };
