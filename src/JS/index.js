@@ -8,9 +8,16 @@ customElements.define("clock-input", clockInput);
 customElements.define("date-input", dateInput);
 customElements.define("error-message", errorMessage);
 customElements.define("toggle-button", toggleButton);
-
+console.clear()
+console.log("%c ActionEcho", "font-size:45px; font-weight:bold;");
+console.log('%c Welcome to ActionEcho Console, there is not much to see here.', "font-size:25px")
 let data = {
-
+  console:{
+    action: "background-color: DarkSlateBlue; font-size: 15px;",
+    preferences: "background-color: DarkCyan; font-size: 15px;",
+    recording: "background-color: OrangeRed; font-size: 15px;",
+    error: "background-color: Crimson; font-size: 15px;"
+  },
   actionsData: [],
   scheduledEvents: [],
   months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
@@ -52,6 +59,7 @@ let data = {
     chrome.storage.local.clear(function () {
       var error = chrome.runtime.lastError;
       if (error) {
+        console.log("%cError: Problem Clearing Local Storage", data.console.error)
         console.error(error);
       }
     });
@@ -85,10 +93,10 @@ let ui = {
       ui.backgroundDiv.blurFocus();
       let completeMethod = (complete, value, elem) => {
         if (!data.actionsData.find((element) => element.name == value)) {
-          console.log("Complete called as: " + complete)
           ui.uniEntry.style.top = "100%";
           ui.backgroundDiv.returnFocus();
           if (complete) {
+            console.log(`%cAction: action named ${value}`, data.console.action)
             resolve(value);
           } else {
             reject();
@@ -160,7 +168,7 @@ let ui = {
     actionsContainer.insertBefore(actionElem, actionsContainer.firstChild);
   },
   createTimeEntry(action) {
-    console.log("creating time entry")
+    console.log("%cAction: Scheduled Action Created", data.console.action)
     let scheduledAction = document.createElement("scheduled-action");
     if (!action.state && Date.now() >= Number(action.date)) {
       action.state = "failed"
@@ -168,7 +176,6 @@ let ui = {
     scheduledAction.linkAction(action);
     ui.eventsStage.appendChild(scheduledAction);
     ui.scheduleButtons.push(scheduledAction);
-    console.log(ui.eventsStage.style.visibility)
     if (ui.eventsStage.style.visibility != "inherit") {
       ui.eventsStage.style.visibility = "inherit";
       ui.eventsStage.style.position = "inherit";
@@ -212,7 +219,7 @@ let error = {
       while (error.queue.length > 0) {
 
         let mes = error.queue.shift();
-        console.log(mes)
+        console.log(`%cError: ${mes}`, data.console.error)
         await error.display(mes);
       }
       error.running = false;
@@ -259,8 +266,7 @@ let preferences = {
   },
   get data() { return { ...this.store } },
   saveData() {
-    console.log("saving preferences")
-    console.log(this.data)
+    console.log(`%cPreferences: Saving Preferences to Storage,`,data.console.preferences, this.data)
     chrome.storage.local.set({ "preferences": this.data });
     chrome.runtime.sendMessage({ action: "setPreferences", preferences: this.data });
   }
@@ -285,7 +291,7 @@ window.addEventListener('load', () => {
     ...ui
   }
   chrome.storage.local.get(["actionSets"]).then((result) => {
-    console.log(result)
+    console.log(`%cAction: Getting Actions from local storage`, data.console.action, result);
     data.actionsData = result.actionSets == undefined ? [] : result.actionSets;
     if (result.actionSets != undefined && Array.isArray(result.actionSets) && result.actionSets.length > 0) {
       for (let action of data.actionsData.reverse()) {
@@ -294,7 +300,7 @@ window.addEventListener('load', () => {
     }
   });
   chrome.storage.local.get(["scheduledEvents"]).then((result) => {
-    console.log(result)
+    console.log(`%cAction: Getting Scheduled Actions from local storage`, data.console.action,result)
     if (result.scheduledEvents != undefined) {
       for (let event of result.scheduledEvents) {
         ui.createTimeEntry(event)
@@ -310,21 +316,20 @@ window.addEventListener('load', () => {
     chrome.storage.local.set({ "pastEvents": [] })
   })
   chrome.storage.local.get(["recording"]).then((result) => {
-    console.log(result)
+    console.log(`%cRecording:  is recording, ${result.recording}`,data.console.recording, result);
     if (result.recording == true) {
       ui.setPage("recordPage");
     }
   });
   ui.recordStart.addEventListener('click', () => {
-    console.log("Starting recording");
+    console.log(`%cRecording: Starting recording`, data.console.recording);
     chrome.runtime.sendMessage({ action: "startRecord" }, (response) => {
       if (response.log == "started") {
-        console.log("Started recording");
         chrome.storage.local.set({ recording: true }).then(() => {
           ui.setPage("recordPage");
         });
       } else if (response.log == "noPort") {
-        error.handle("Load or Reload Site");
+        error.handle("Load a Site");
         throw new Error("Failed to start recording");
       }
     });
@@ -335,8 +340,7 @@ window.addEventListener('load', () => {
     });
     chrome.runtime.sendMessage({ action: "stopRecord" }, (response) => {
       if (response.log == "finished") {
-        console.log("Stopped recording");
-        if (response.actions.length > 0) {
+        
           ui.getName("Enter Name").then((name) => {
             let action = {
               name: name,
@@ -346,7 +350,6 @@ window.addEventListener('load', () => {
             data.addAction(action);
             chrome.runtime.sendMessage({ action: "actionLog", actionLog: action });
           }, () => { });
-        }
       } else if ("emptyActions") {
         error.handle("No actions were recorded")
         throw new Error("Failed to stop recording");
@@ -372,7 +375,7 @@ window.addEventListener('load', () => {
       error.handle(err);
     }
   });
-  chrome.runtime.onMessage.addListener((request, sender, reply) => {
+  /*chrome.runtime.onMessage.addListener((request, sender, reply) => {
     console.log("messaged")
     let target;
     switch (request.action) {
@@ -383,13 +386,13 @@ window.addEventListener('load', () => {
         break;
 
     }
-  });
+  });*/
   chrome.storage.local.get(["preferences"]).then((result) => {
-    console.log(result)
+    console.log(`%cPreferences: Loading Preferences From Local Storage,`, data.console.preferences, result)
     preferences.set(result.preferences)
-    console.log(preferences.signed)
     if (preferences.signed != "true") {
-      console.log("prompting tos")
+
+      console.log(`%cPreferences: Prompting TOS`, data.console.preferences)
       ui.tosPrompt = async () => {
         ui.getBool("User Agreement", `<h2>Sensitive Data</h2>Please be advised that the use of ActionEcho for passwords or any 
       other sensitive data is strictly prohibited. This extension does not 
@@ -403,7 +406,6 @@ window.addEventListener('load', () => {
       be liable for any claim, damages, or other liability, whether in an action of 
       contract, tort, or otherwise, arising from, out of, or in connection with the 
       software or the use or other dealings in the software.`).then((value) => {
-          console.log(value)
           if (value) {
             preferences.signed = "true";
           } else {
@@ -434,10 +436,12 @@ window.addEventListener('load', () => {
     if (preferences.data.sendActData == "false") {
       ui.firebaseToggle.switch(false);
     }
-    console.log(preferences.signed)
-    console.log(preferences.sendActData)
   });
-  
 });
-
+console.group("%cUI Color Codes","font-size: 20px;")
+console.log(`%cAction`, data.console.action);
+console.log(`%cPreferences`, data.console.preferences);
+console.log(`%cRecording`, data.console.recording);
+console.log(`%cError`, data.console.error);
+console.groupEnd()
 export { data, ui };
