@@ -17,12 +17,13 @@ let firebase = {
 }
 let errorLog = []
 let data = {
-  console:{
+  console: {
     clock: "background-color: PaleVioletRed; font-size: 15px;",
     firebase: "background-color: Coral; font-size: 15px;",
     recording: "background-color: DarkOrange; font-size: 15px;",
     sites: "background-color: RebeccaPurple; font-size: 15px;",
-    error: "background-color: FireBrick; font-size: 15px;"
+    error: "background-color: FireBrick; font-size: 15px;",
+    index: "background-color: SeaGreen; font-size: 15px;",
   },
   current: {
     actionSet: undefined,
@@ -56,6 +57,7 @@ let data = {
     }
   },
   openTab: (url) => {
+    console.log(`%cSite_Manager: Loading Url in New Tab, ${url}`, data.console.sites)
     return new Promise((resolve, reject) => {
       let match = data.portArray.find((port) => {
         return port.name == url;
@@ -71,6 +73,7 @@ let data = {
     });
   },
   openURL: (port, url) => {
+    console.log(`%cSite_Manager: Loading Url in Current Tab, ${url}`, data.console.sites)
     return new Promise((resolve, reject) => {
       port.postMessage({ action: "setURL", url: url });
       data.promisePorts.push({ url: url, resolve: resolve, reject: reject });
@@ -600,12 +603,21 @@ chrome.runtime.onConnect.addListener(function (port) {
   data.promisePorts.resolveTarget(port);
 });
 chrome.runtime.onMessage.addListener((request, sender, reply) => {
+  console.log("%cIndex: Message from UI", data.console.index, request)
   switch (request.action) {
     case "startRecord":
       recorder.startRecord(reply);
       break;
     case "stopRecord":
       recorder.stopRecord(reply);
+      break;
+    case "link":
+      try {
+        data.openTab(request.url)
+        reply({ log: "success" })
+      }catch(e){
+        reply({log: "failed"})
+      }
       break;
     case "scheduleActionSet":
       clock.addSchedule(request.set);
@@ -673,10 +685,11 @@ chrome.runtime.onMessage.addListener((request, sender, reply) => {
   }
   return true;
 });
-console.group("%cBackground Color Code","font-size: 20px;")
-  console.log("%cClock", data.console.clock)
-  console.log("%cFirebase", data.console.firebase)
-  console.log("%cBRecording", data.console.recording)
-  console.log("%cSite_Manager", data.console.sites)
-  console.log("%cError", data.console.error)
+console.group("%cBackground Color Code", "font-size: 20px;")
+console.log("%cClock", data.console.clock)
+console.log("%cFirebase", data.console.firebase)
+console.log("%cBRecording", data.console.recording)
+console.log("%cSite_Manager", data.console.sites)
+console.log("%cError", data.console.error)
+console.log("%cIndex", data.console.index)
 console.groupEnd()

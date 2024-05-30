@@ -288,6 +288,7 @@ window.addEventListener('load', () => {
     settingsButton: document.getElementById("settingsButton"),
     settingsBack: document.getElementById("settingsBack"),
     firebaseToggle: document.getElementById("firebaseToggle"),
+    privacyButton: document.getElementById("privacyPolicyButton"),
     ...ui
   }
   chrome.storage.local.get(["actionSets"]).then((result) => {
@@ -367,6 +368,9 @@ window.addEventListener('load', () => {
   });
   ui.firebaseToggle.addFunction(true, () => { data.setLog.sendActData = "true"});
   ui.firebaseToggle.addFunction(false, () => { data.setLog.sendActData = "false"});
+  ui.privacyButton.addEventListener("click", () => {
+    chrome.runtime.sendMessage({ action: "link", url: "https://kevinpember.com/ActionEcho/privacy" }, (response) => { });
+  })
   chrome.runtime.sendMessage({ action: "init" }, (response) => {
     for (let scheduled of response.lists) {
       ui.createTimeEntry(scheduled);
@@ -394,7 +398,12 @@ window.addEventListener('load', () => {
 
       console.log(`%cPreferences: Prompting TOS`, data.console.preferences)
       ui.tosPrompt = async () => {
-        ui.getBool("User Agreement", `<h2>Sensitive Data</h2>Please be advised that the use of ActionEcho for passwords or any 
+        ui.getBool("User Agreement", `
+        <h2>Data Collection</h2> Actions by default are striped of All identifying information aside 
+        from their name and uploaded to the cloud. This can be changed in settings by toggling the 
+        Save Action Data button. The data uploaded into the cloud is intended for used Large 
+        Language Models to develop a language to web action model. <br><br>
+        <h2>Sensitive Data</h2>Please be advised that the use of ActionEcho for passwords or any 
       other sensitive data is strictly prohibited. This extension does not 
       provide adequate security measures and should not be relied upon for 
       securing sensitive information. It is important to note that this extension 
@@ -435,6 +444,9 @@ window.addEventListener('load', () => {
     }
     if (preferences.data.sendActData == "false") {
       ui.firebaseToggle.switch(false);
+    }else if (preferences.data.sendActData == undefined){
+      ui.setPage("settingsPage")
+      data.setLog.sendActData = "true";
     }
   });
 });
