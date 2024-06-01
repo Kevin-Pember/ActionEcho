@@ -1,4 +1,4 @@
-import { backgroundDiv, ButtonGeneric, ActionSet, ScheduledAction, uniQuery, clockInput, dateInput, errorMessage } from './components.js';
+import { backgroundDiv, ButtonGeneric, ActionSet, ScheduledAction, uniQuery, clockInput, dateInput, errorMessage, toggleButton } from './components.js';
 customElements.define('background-div', backgroundDiv);
 customElements.define('button-generic', ButtonGeneric);
 customElements.define('action-set', ActionSet);
@@ -7,11 +7,21 @@ customElements.define("uni-query", uniQuery);
 customElements.define("clock-input", clockInput);
 customElements.define("date-input", dateInput);
 customElements.define("error-message", errorMessage);
-
+customElements.define("toggle-button", toggleButton);
+console.clear()
+console.log("%c ActionEcho", "font-size:45px; font-weight:bold;");
+console.log('%c Welcome to ActionEcho Console, there is not much to see here.', "font-size:25px")
 let data = {
+  console:{
+    action: "background-color: DarkSlateBlue; font-size: 15px;",
+    preferences: "background-color: DarkCyan; font-size: 15px;",
+    recording: "background-color: OrangeRed; font-size: 15px;",
+    error: "background-color: Crimson; font-size: 15px;"
+  },
   actionsData: [],
   scheduledEvents: [],
   months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+  setLog: {},
   saveActionList() {
     chrome.storage.local.set({ "actionSets": this.actionsData });
   },
@@ -24,13 +34,13 @@ let data = {
       ui.createActionEntry(action);
       this.saveActionList();
     } else {
-      ui.handleError("Choose an Original Name")
+      error.handle("Choose an Original Name")
     }
   },
   removeAction(action) {
     this.actionsData.splice(this.actionsData.indexOf(action), 1);
     this.saveActionList();
-    if(this.actionsData.length < 1){
+    if (this.actionsData.length < 1) {
       ui.actionsNone.style = "";
     }
   },
@@ -49,6 +59,7 @@ let data = {
     chrome.storage.local.clear(function () {
       var error = chrome.runtime.lastError;
       if (error) {
+        console.log("%cError: Problem Clearing Local Storage", data.console.error)
         console.error(error);
       }
     });
@@ -58,7 +69,8 @@ let data = {
     for (let act of ui.actionButtons) {
       act.remove();
     }
-  }
+  },
+
 }
 let ui = {
 
@@ -81,18 +93,18 @@ let ui = {
       ui.backgroundDiv.blurFocus();
       let completeMethod = (complete, value, elem) => {
         if (!data.actionsData.find((element) => element.name == value)) {
-          console.log("Complete called as: " + complete)
           ui.uniEntry.style.top = "100%";
           ui.backgroundDiv.returnFocus();
           if (complete) {
+            console.log(`%cAction: action named ${value}`, data.console.action)
             resolve(value);
           } else {
             reject();
           }
-          elem.closeMethod();
-        }else{
+          //elem.closeMethod();
+        } else {
           elem.reset();
-          ui.handleError("Choose an Original Name")
+          error.handle("Choose an Original Name")
         }
       }
       ui.uniEntry.setMethods(completeMethod);
@@ -103,7 +115,7 @@ let ui = {
       ui.uniEntry.setQueryType("bool", message, description);
       ui.uniEntry.style.top = "0px";
       ui.backgroundDiv.blurFocus();
-      let completeMethod = (complete, value,elem) => {
+      let completeMethod = (complete, value, elem) => {
         ui.uniEntry.style.top = "100%";
         ui.backgroundDiv.returnFocus();
         if (complete) {
@@ -111,7 +123,7 @@ let ui = {
         } else {
           reject();
         }
-        elem.closeMethod();
+        //elem.closeMethod();
       }
       ui.uniEntry.setMethods(completeMethod);
     })
@@ -121,7 +133,7 @@ let ui = {
       ui.uniEntry.setQueryType("time", message);
       ui.uniEntry.style.top = "0px";
       ui.backgroundDiv.blurFocus();
-      let completeMethod = (complete, value, now,elem) => {
+      let completeMethod = (complete, value, now, elem) => {
         ui.uniEntry.style.top = "100%";
         ui.backgroundDiv.returnFocus();
         if (complete) {
@@ -130,21 +142,21 @@ let ui = {
           } else {
             resolve(value);
           }
-          
+
         } else {
           reject();
         }
-        elem.closeMethod();
+        //elem.closeMethod();
       }
       ui.uniEntry.setMethods(completeMethod);
     });
 
   },
-  handleError: (message) => {
+  /*handleError: (message) => {
     ui.errorHandler.message = message;
     ui.errorHandler.style.bottom = "0px";
     setTimeout(() => { ui.errorHandler.style.bottom = "-50px"; }, 3000)
-  },
+  },*/
   createActionEntry(action) {
     let actionElem = document.createElement("action-set");
     actionElem.linkAction(action);
@@ -156,7 +168,7 @@ let ui = {
     actionsContainer.insertBefore(actionElem, actionsContainer.firstChild);
   },
   createTimeEntry(action) {
-    console.log("creating time entry")
+    console.log("%cAction: Scheduled Action Created", data.console.action)
     let scheduledAction = document.createElement("scheduled-action");
     if (!action.state && Date.now() >= Number(action.date)) {
       action.state = "failed"
@@ -164,7 +176,6 @@ let ui = {
     scheduledAction.linkAction(action);
     ui.eventsStage.appendChild(scheduledAction);
     ui.scheduleButtons.push(scheduledAction);
-    console.log(ui.eventsStage.style.visibility)
     if (ui.eventsStage.style.visibility != "inherit") {
       ui.eventsStage.style.visibility = "inherit";
       ui.eventsStage.style.position = "inherit";
@@ -177,6 +188,89 @@ let ui = {
     return url.toString();
   }
 };
+let error = {
+  queue: [],
+  running: false,
+  add: (message) => {
+    if (message != undefined) {
+      error.queue.push(message);
+    }
+  },
+  display: async (message) => {
+    if (message != undefined) {
+      ui.errorHandler.message = message;
+      ui.errorHandler.style.bottom = "0px";
+      //setTimeout(() => { ui.errorHandler.style.bottom = "-50px"; }, 3000)
+      return new Promise(r => {
+        let t = () => {
+          setTimeout(r, 1000);
+          ui.errorHandler.style.bottom = "-50px";
+          
+        }
+        setTimeout(t, 3000);
+      });
+    }
+
+  },
+  handle: async (message) => {
+    error.add(message);
+    if (!error.running) {
+      error.running = true;
+      while (error.queue.length > 0) {
+
+        let mes = error.queue.shift();
+        console.log(`%cError: ${mes}`, data.console.error)
+        await error.display(mes);
+      }
+      error.running = false;
+    }
+  }
+}
+let preferences = {
+  store: {
+    signed: "false",
+    sendActData: "true",
+  },
+
+  get signed() { return this.store.signed },
+  get sendActData() { return this.store.sendActData },
+  /**
+   * @param {string} value
+   */
+  set signed(val) {
+    let value = (val != undefined) ? val : "false";
+    this.store.signed = value;
+    this.saveData();
+  },
+  /**
+  * @param {string} value
+  */
+  set sendActData(val) {
+    let value = (val != undefined) ? val : "true";
+    this.store.sendActData = value;
+    this.saveData();
+  },
+  /**
+   * @param {any} object
+   */
+  set(object){
+    this.store.signed = (object != undefined && object.signed != undefined) ? object.signed : undefined;
+    this.store.sendActData = (object != undefined && object.sendActData != undefined) ? object.sendActData : undefined;
+  },
+  /**
+   * @param {any} object
+   */
+  save(object) {
+    this.set(object)
+    this.saveData();
+  },
+  get data() { return { ...this.store } },
+  saveData() {
+    console.log(`%cPreferences: Saving Preferences to Storage,`,data.console.preferences, this.data)
+    chrome.storage.local.set({ "preferences": this.data });
+    chrome.runtime.sendMessage({ action: "setPreferences", preferences: this.data });
+  }
+}
 window.addEventListener('load', () => {
   ui = {
     backgroundDiv: document.getElementById('bgDiv'),
@@ -191,10 +285,14 @@ window.addEventListener('load', () => {
     eventsStage: document.getElementById('eventsStage'),
     dial: document.getElementById('dial'),
     errorHandler: document.getElementById("errorHandler"),
+    settingsButton: document.getElementById("settingsButton"),
+    settingsBack: document.getElementById("settingsBack"),
+    firebaseToggle: document.getElementById("firebaseToggle"),
+    privacyButton: document.getElementById("privacyPolicyButton"),
     ...ui
   }
   chrome.storage.local.get(["actionSets"]).then((result) => {
-    console.log(result)
+    console.log(`%cAction: Getting Actions from local storage`, data.console.action, result);
     data.actionsData = result.actionSets == undefined ? [] : result.actionSets;
     if (result.actionSets != undefined && Array.isArray(result.actionSets) && result.actionSets.length > 0) {
       for (let action of data.actionsData.reverse()) {
@@ -203,7 +301,7 @@ window.addEventListener('load', () => {
     }
   });
   chrome.storage.local.get(["scheduledEvents"]).then((result) => {
-    console.log(result)
+    console.log(`%cAction: Getting Scheduled Actions from local storage`, data.console.action,result)
     if (result.scheduledEvents != undefined) {
       for (let event of result.scheduledEvents) {
         ui.createTimeEntry(event)
@@ -211,29 +309,28 @@ window.addEventListener('load', () => {
     }
   });
   chrome.storage.local.get(["pastEvents"]).then((result) => {
-    if(result.pastEvents){
-      for(let event of result.pastEvents){
+    if (result.pastEvents) {
+      for (let event of result.pastEvents) {
         ui.createTimeEntry(event)
       }
     }
-    chrome.storage.local.set({"pastEvents":[]})
+    chrome.storage.local.set({ "pastEvents": [] })
   })
   chrome.storage.local.get(["recording"]).then((result) => {
-    console.log(result)
+    console.log(`%cRecording:  is recording, ${result.recording}`,data.console.recording, result);
     if (result.recording == true) {
       ui.setPage("recordPage");
     }
   });
   ui.recordStart.addEventListener('click', () => {
-    console.log("Starting recording");
+    console.log(`%cRecording: Starting recording`, data.console.recording);
     chrome.runtime.sendMessage({ action: "startRecord" }, (response) => {
       if (response.log == "started") {
-        console.log("Started recording");
         chrome.storage.local.set({ recording: true }).then(() => {
           ui.setPage("recordPage");
         });
       } else if (response.log == "noPort") {
-        ui.handleError("Load or Reload Site");
+        error.handle("Load a Site");
         throw new Error("Failed to start recording");
       }
     });
@@ -244,28 +341,45 @@ window.addEventListener('load', () => {
     });
     chrome.runtime.sendMessage({ action: "stopRecord" }, (response) => {
       if (response.log == "finished") {
-        console.log("Stopped recording");
-        if (response.actions.length > 0) {
+        
           ui.getName("Enter Name").then((name) => {
-            data.addAction({
+            let action = {
               name: name,
               actions: response.actions,
               urls: response.urls,
-            });
+            }
+            data.addAction(action);
+            chrome.runtime.sendMessage({ action: "actionLog", actionLog: action });
           }, () => { });
-        }
       } else if ("emptyActions") {
-        ui.handleError("No actions were recorded")
+        error.handle("No actions were recorded")
         throw new Error("Failed to stop recording");
       }
     });
   });
+  ui.settingsButton.addEventListener('click', () => { ui.setPage("settingsPage") });
+  ui.settingsBack.addEventListener('click', () => { 
+    if(data.setLog.sendActData != undefined){
+      preferences.sendActData = data.setLog.sendActData;
+      data.setLog.sendActData = undefined;
+    }
+    
+    ui.setPage("mainPage") 
+  });
+  ui.firebaseToggle.addFunction(true, () => { data.setLog.sendActData = "true"});
+  ui.firebaseToggle.addFunction(false, () => { data.setLog.sendActData = "false"});
+  ui.privacyButton.addEventListener("click", () => {
+    chrome.runtime.sendMessage({ action: "link", url: "https://kevinpember.com/ActionEcho/privacy" }, (response) => { });
+  })
   chrome.runtime.sendMessage({ action: "init" }, (response) => {
     for (let scheduled of response.lists) {
       ui.createTimeEntry(scheduled);
     }
+    for(let err of response.errors){
+      error.handle(err);
+    }
   });
-  chrome.runtime.onMessage.addListener((request, sender, reply) => {
+  /*chrome.runtime.onMessage.addListener((request, sender, reply) => {
     console.log("messaged")
     let target;
     switch (request.action) {
@@ -276,27 +390,28 @@ window.addEventListener('load', () => {
         break;
 
     }
-  });
+  });*/
+  chrome.storage.local.get(["preferences"]).then((result) => {
+    console.log(`%cPreferences: Loading Preferences From Local Storage,`, data.console.preferences, result)
+    preferences.set(result.preferences)
+    if (preferences.signed != "true") {
 
-  chrome.storage.local.get(["signed"]).then((result) => {
-    console.log(result)
-    if (result.signed != "true") {
+      console.log(`%cPreferences: Prompting TOS`, data.console.preferences)
       ui.tosPrompt = async () => {
-        ui.getBool("User Agreement", `<h2>Sensitive Data</h2>Please be advised that the use of this extension for passwords or any 
+        ui.getBool("User Agreement", `
+        <h2>Action Diagnostics</h2> Actions by default are striped of text information and 
+        uploaded to the cloud for Diagnostics. This information helps us improve ActionEcho but can be changed by toggling the 
+        Send Action Diagnostic Data button then Pressing the X button on the Settings Page. Diagnostics previously uploaded aren't deleted upon disabling Diagnostics. <br><br>
+        <h2>Sensitive Data</h2>Please be advised that the use of ActionEcho for passwords or any 
       other sensitive data is strictly prohibited. This extension does not 
       provide adequate security measures and should not be relied upon for 
       securing sensitive information. It is important to note that this extension 
       is intended solely for the storage of non-sensitive data. 
-      <br><br><h2>Liability</h2>This extension is 
-      provided "AS IS", without warranty of any kind, express or implied, including 
-      but not limited to the warranties of merchantability, fitness for a particular 
-      purpose, and noninfringement. In no event shall the authors or copyright holders
-      be liable for any claim, damages, or other liability, whether in an action of 
-      contract, tort, or otherwise, arising from, out of, or in connection with the 
-      software or the use or other dealings in the software.`).then((value) => {
-          console.log(value)
+      <br><br><h2>License</h2>This extension is open-source and it's code can be 
+      found at https://github.com/Kevin-Pember/ActionEcho. ActionEcho is under the 
+      GNU General Public License with can be found in full at https://www.gnu.org/licenses/gpl-3.0.en.html.`).then((value) => {
           if (value) {
-            chrome.storage.local.set({ signed: "true" })
+            preferences.signed = "true";
           } else {
             ui.tosReject();
           }
@@ -310,37 +425,30 @@ window.addEventListener('load', () => {
           if (value) {
             ui.tosPrompt();
           } else {
-            chrome.storage.local.set({ signed: "false" })
+            preferences.signed = "false";
             ui.recordStart.remove();
           }
         });
       }
     }
-    if (result.signed == undefined) {
+    if (preferences.signed == undefined) {
       ui.tosPrompt()
-    } else if (result.signed == "false") {
+    } else if (preferences.signed == "false") {
       ui.tosReject()
+
     }
-    /*if (result.signed == undefined) {
-      ui.tosPrompt().then((value) => {
-        if (value) {
-          chrome.storage.local.set({ signed: "true" })
-        } else {
-          chrome.storage.local.set({ signed: "false" })
-          ui.getBool("TOS Rejected", "You have rejected the User Agreement. This extension will not function properly until you accept the User Agreement.").then((value) => {
-            if (value) {
-              ui.tosPrompt().then((value) => {
-                if (value) {
-                  chrome.storage.local.set({ signed: "true" })
-                } else {
-                  chrome.storage.local.set({ signed: "false" })
-                }
-              })
-            }
-          });
-        }
-      });
-    }*/
+    if (preferences.data.sendActData == "false") {
+      ui.firebaseToggle.switch(false);
+    }else if (preferences.data.sendActData == undefined){
+      ui.setPage("settingsPage")
+      data.setLog.sendActData = "true";
+    }
   });
 });
+console.group("%cUI Color Codes","font-size: 20px;")
+console.log(`%cAction`, data.console.action);
+console.log(`%cPreferences`, data.console.preferences);
+console.log(`%cRecording`, data.console.recording);
+console.log(`%cError`, data.console.error);
+console.groupEnd()
 export { data, ui };

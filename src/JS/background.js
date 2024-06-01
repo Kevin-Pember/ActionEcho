@@ -1,4 +1,24 @@
+//import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.1/firebase-app.js'
+//import { getFirestore, addDoc, collection } from 'https://www.gstatic.com/firebasejs/10.12.1/firebase-firestore.js'
+import {Config} from "./firebaseConfig.js"
+import { initializeApp } from 'firebase/app'
+import { getFirestore, addDoc, collection } from 'firebase/firestore'
+
+console.log()
+let firebase = {
+  app: undefined,
+  db: undefined
+}
+let errorLog = []
 let data = {
+  console: {
+    clock: "background-color: PaleVioletRed; font-size: 15px;",
+    firebase: "background-color: Coral; font-size: 15px;",
+    recording: "background-color: DarkOrange; font-size: 15px;",
+    sites: "background-color: RebeccaPurple; font-size: 15px;",
+    error: "background-color: FireBrick; font-size: 15px;",
+    index: "background-color: SeaGreen; font-size: 15px;",
+  },
   current: {
     actionSet: undefined,
     port: undefined,
@@ -25,13 +45,13 @@ let data = {
       })
       if (target) {
         target.resolve(port);
-        console.log(`%c Setting Current Port`, "background-color: green; font-size: 20px;")
         data.current.port = port;
         data.promisePorts.tabs.splice(idx, 1);
       }
     }
   },
   openTab: (url) => {
+    console.log(`%cSite_Manager: Loading Url in New Tab, ${url}`, data.console.sites)
     return new Promise((resolve, reject) => {
       let match = data.portArray.find((port) => {
         return port.name == url;
@@ -47,6 +67,7 @@ let data = {
     });
   },
   openURL: (port, url) => {
+    console.log(`%cSite_Manager: Loading Url in Current Tab, ${url}`, data.console.sites)
     return new Promise((resolve, reject) => {
       port.postMessage({ action: "setURL", url: url });
       data.promisePorts.push({ url: url, resolve: resolve, reject: reject });
@@ -68,6 +89,22 @@ let data = {
       port.disconnect();
     }
   },
+  generateRandomString: (length) => {
+    let string = "";
+    let len = length ? length : 5;
+    for (let i = 0; i < len; i++) {
+      string += String.fromCharCode(Math.floor(47 + Math.random() * 79))
+    }
+    return string;
+  },
+  anonymizeAction: (action) => {
+    action.name += data.generateRandomString();
+    for (let act of action.actions) {
+      if (act.type == "input") {
+        act.text = data.generateRandomString();
+      }
+    }
+  }
 }
 let runner = {
   templates: {
@@ -84,9 +121,7 @@ let runner = {
     for (let packet of packets) {
       url = packet.site;
       if (url.format == "url") {
-        console.log()
         if (data.current.port.name != url.url) {
-          console.log(`%c Forcing URL`, "background-color: green; font-size: 20px;")
           await data.openURL(data.current.port, url.url)
         }
       } else {
@@ -150,40 +185,31 @@ let recorder = {
 
   },
   startRecord: (reply) => {
-    recorder.recording = true;
-    recorder.data.actionSet = structuredClone(recorder.templates.actionSet);
-    /*if (recorder.data.site) {
-      recorder.data.actionSet.actions.push(recorder.data.site)
-      recorder.data.site = undefined;
-    }*/
-    let site = structuredClone(recorder.templates.site)
-    site.url = data.current.port.name;
-    site.format = "tab"
-    recorder.data.actionSet.actions.push(recorder.data.site)
     try {
+      recorder.recording = true;
+      recorder.data.actionSet = structuredClone(recorder.templates.actionSet);
+      let site = structuredClone(recorder.templates.site)
+      site.url = data.current.port.name;
+      site.format = "tab"
+      recorder.data.actionSet.actions.push(recorder.data.site)
       data.current.port.postMessage({ action: "startRecord" });
       reply({ log: "started" });
     } catch {
-      console.log(`%c No Current Port`, "font-size: 20px; background-color: red;");
       reply({ log: "noPort" });
     }
 
   },
   stopRecord: (reply) => {
-    data.current.port.postMessage({ action: "stopRecord" });
     recorder.data.actionSet.log = "finished";
     recorder.recording = false;
-    console.log("stopping record");
-    console.log(recorder.data.actionSet);
-    if(recorder.data.actionSet.actions.length > 0){
-      reply(recorder.data.actionSet);
-    }else{
-      console.log(`%c Empty ActionList`, "font-size: 20px; background-color: red;");
-      reply({log: "emptyActions"})
+    if (reply != undefined) {
+      data.current.port.postMessage({ action: "stopRecord" });
+      if (recorder.data.actionSet.actions.length > 1) {
+        reply(recorder.data.actionSet);
+      } else {
+        reply({ log: "emptyActions" })
+      }
     }
-    
-    console.log("template is now:")
-    console.log(recorder.templates.actionSet)
     recorder.data.inputs = []
     recorder.data.currentTextAction = {
       type: "input",
@@ -192,7 +218,6 @@ let recorder = {
     //recorder.data.actionSet = structuredClone(recorder.templates.actionSet);
   },
   cacheSite: (type, location) => {
-    console.log(`%c Caching site`, "font-size: 20px; background-color: green;")
     let site = structuredClone(recorder.templates.site);
     site.url = location;
     if (type == "newUrl" && recorder.recording && recorder.data.actionSet.actions.length > 0) {
@@ -237,14 +262,12 @@ let recorder = {
       recorder.data.actionSet.actions.push(recorder.data.site);
       recorder.data.site = undefined;
     }*/
-    console.log(msg);
+    msg.action = undefined;
     switch (msg.type) {
       case "click":
-        console.log(`%c New Click`, "background-color: green; font-size: 20px;")
-        console.log(msg)
         recorder.data.actionSet.actions.push(msg);
         if (msg.textContext != undefined) {
-          
+
           let exists = recorder.data.inputs.find((input) => input.specifier == msg.specifier);
           if (!exists) {
             let input = {
@@ -263,7 +286,7 @@ let recorder = {
             })
             recorder.data.isSelection = !(recorder.data.caret[0] === recorder.data.caret[1]);
             exists = input;
-          }else{
+          } else {
             msg.textContext = undefined;
           }
           recorder.data.currentTextAction = exists.entry;
@@ -274,16 +297,12 @@ let recorder = {
 
         break;
       case "input":
-        console.log("input log")
-        console.log(recorder.data.currentTextAction)
         recorder.inputHandler(msg.key, msg.selection.split("-"));
         recorder.lastTextLog = msg;
         break;
       case "key":
-        console.log("key log")
         switch (msg.key) {
           case "undo":
-            console.log("undo");
             if (recorder.data.edit.length > 0) {
               recorder.data.redo.push(recorder.data.currentTextAction.text);
               recorder.data.currentTextAction.text = recorder.data.edit.pop();
@@ -328,9 +347,16 @@ let recorder = {
             recorder.data.caret[0] = recorder.data.caret[1]
             break;
           default:
-            console.log("Default key log");
             recorder.data.actionSet.actions.push(msg);
         }
+        break;
+      case "error":
+        if (msg.level == "end") {
+          chrome.storage.local.set({ recording: false })
+          recorder.stopRecord()
+        }
+
+        errorLog.push(msg.message)
         break;
     }
     /*if (recorder.urlLoad.loading && recorder.data.site) {
@@ -414,9 +440,6 @@ let clock = {
   checkTime: () => {
     let now = Date.now();
     for (let i = 0; i < clock.schedule.times.length; i++) {
-      /*console.log("now vs check")
-      console.log(now, clock.schedule.times[i])
-      console.log("Difference:"+(now - clock.schedule.times[i]))*/
       if (now >= clock.schedule.times[i]) {
         if (now - clock.schedule.times[i] > 10000) {
           clock.updateSchedule(i, false);
@@ -433,7 +456,6 @@ let clock = {
   },
   completeIndex: async (index) => {
     let actions = clock.schedule.actionLists[index].actions;
-    console.log(actions);
     await runner.runActions(actions);
   },
   addSchedule: (event) => {
@@ -447,13 +469,13 @@ let clock = {
     } else {
       chrome.runtime.sendMessage(data.uiLink.id, { action: "changeSchedule", id: schedule.id, state: "failed" });
     }*/
-    item.state = pass ? "completed": "failed";
+    item.state = pass ? "completed" : "failed";
     chrome.storage.local.get(["pastEvents"]).then((result) => {
       if (result.pastEvents != undefined) {
         result.pastEvents.push(item);
         chrome.storage.local.set(result);
-      }else{
-        chrome.storage.local.set({"pastEvents": [item]});
+      } else {
+        chrome.storage.local.set({ "pastEvents": [item] });
       }
     });
   },
@@ -480,7 +502,6 @@ let checkAlarmState = async () => {
 let iterate = 0;
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === "clockAlarm") {
-    //console.log(iterate++);
     clock.checkTime();
   }
 });
@@ -489,7 +510,6 @@ chrome.storage.local.get(["recording"]).then((result) => {
   recorder.recording = result.recording == undefined ? false : result.recording;
 });
 chrome.storage.local.get(["scheduledEvents"]).then((result) => {
-  console.log(result)
   if (result.scheduledEvents != undefined) {
     for (let event of result.scheduledEvents) {
       //ui.createTimeEntry(event)
@@ -510,12 +530,10 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
   }
 });
 chrome.tabs.onActivated.addListener((activeInfo) => {
-  console.log("Tab Activated")
   chrome.tabs.get(activeInfo.tabId, (tab) => {
     if (tab.url != "chrome://newtab/") {
       let port = data.portArray.find((port) => port.tabId == activeInfo.tabId);
       if (port) {
-        console.log(`cached new site: ${tab.url}`)
         recorder.cacheSite("newTab", tab.url);
         recorder.setCurrentPort(port);
       }
@@ -525,8 +543,6 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
 });
 //Tab Management end ***********************************************************
 chrome.runtime.onConnect.addListener(function (port) {
-  console.log("Port Connected");
-  console.log(port);
   port.onMessage.addListener(function (msg) {
     switch (msg.action) {
       case "log":
@@ -545,7 +561,6 @@ chrome.runtime.onConnect.addListener(function (port) {
         break;
       case "closeEditor":
         //handles messages from the port Editor ui to close itself using the data.closeEditor function
-        console.log("messaged to close editor")
         data.closeEditor()
         break;
       case "testLog":
@@ -561,9 +576,7 @@ chrome.runtime.onConnect.addListener(function (port) {
     tabIndex = index;
     return test.tabId == port.sender.tab.id
   });
-  console.log(tabMatch)
   if (tabMatch) {
-    console.log("Port replaced: " + tabMatch.name);
     //if the port it is replacing is the current port, replace it
     if (data.current.port == tabMatch) {
       recorder.cacheSite("newUrl", tabMatch.name);
@@ -580,12 +593,11 @@ chrome.runtime.onConnect.addListener(function (port) {
     data.current.port = port;
   }
   data.portArray.push(port);
-  console.log(data.portArray)
-  console.log("Port Name: " + port.name)
+  console.debug("Port Name: " + port.name)
   data.promisePorts.resolveTarget(port);
-  console.log(data)
 });
 chrome.runtime.onMessage.addListener((request, sender, reply) => {
+  console.log("%cIndex: Message from UI", data.console.index, request)
   switch (request.action) {
     case "startRecord":
       recorder.startRecord(reply);
@@ -593,9 +605,16 @@ chrome.runtime.onMessage.addListener((request, sender, reply) => {
     case "stopRecord":
       recorder.stopRecord(reply);
       break;
+    case "link":
+      try {
+        data.openTab(request.url)
+        reply({ log: "success" })
+      }catch(e){
+        reply({log: "failed"})
+      }
+      break;
     case "scheduleActionSet":
       clock.addSchedule(request.set);
-      console.log(request.set)
       reply({ log: "added" })
       break;
     case "removeScheduledAction":
@@ -617,25 +636,56 @@ chrome.runtime.onMessage.addListener((request, sender, reply) => {
       }
       break;
     case "closeEditor":
-      console.log("close Editor Called")
       if (data.current.editor) {
-        console.log("running close editor")
         data.closeEditor().then((actionList) => {
-          console.log("closed editor finished")
           reply({ log: "closed", actionList: actionList });
         });
       } else {
         reply({ log: "noEditor" });
       }
       break;
-    case "testLog":
-      console.log("test log");
-      reply({ log: "test" });
+    case "actionLog":
+      let copy = { ...request.actionLog };
+      data.anonymizeAction(copy);
+      try {
+        addDoc(collection(firebase.db, "actions"), copy);
+        reply({ log: "success" });
+      } catch (e) {
+        console.error("Error adding document: ", e);
+        reply({ log: "failed" });
+      }
+
+      break;
+    case "setPreferences":
+      if (request.preferences) {
+        data.preferences = request.preferences;
+        if (request.preferences.sendActData === "true" && firebase.app == undefined) {
+          firebase.app = initializeApp(Config);
+          firebase.db = getFirestore(firebase.app);
+          console.log("%cFirebase: Firebase Database Connected", data.console.firebase, firebase.app)
+        } else if (request.preferences.sendActData === "false" && firebase.app != undefined) {
+          firebase.app = undefined;
+          firebase.db = undefined;
+          console.log("%cFirebase: Firebase Disconnected", data.console.firebase, firebase)
+        }
+        reply({ log: "success" });
+      } else {
+        reply({ log: "failed" });
+      }
       break;
     case "init":
       data.uiLink = sender;
-      reply({ log: "init", lists: clock.schedule.actionLists });
+      reply({ log: "init", lists: clock.schedule.actionLists, errors: errorLog });
+      errorLog = []
       break;
   }
   return true;
 });
+console.group("%cBackground Color Code", "font-size: 20px;")
+console.log("%cClock", data.console.clock)
+console.log("%cFirebase", data.console.firebase)
+console.log("%cBRecording", data.console.recording)
+console.log("%cSite_Manager", data.console.sites)
+console.log("%cError", data.console.error)
+console.log("%cIndex", data.console.index)
+console.groupEnd()

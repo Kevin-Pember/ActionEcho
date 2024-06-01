@@ -1,0 +1,3 @@
+node_modules
+src/JS/firebaseConfig.js
+dist/JS/firebaseConfig.js

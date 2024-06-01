@@ -4,11 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AutoMade</title>
+    <title>ActionEcho</title>
     <link rel="stylesheet" href="public/styling.css">
     <script type="module" src="JS/index.js"></script>
 </head>
-
 <body id="bodyID">
     <style>
         * {
@@ -28,13 +27,13 @@
             font-family: 'DM Sans', sans-serif;
             font-weight: 500;
             position: relative;
-            font-size: 60px;
+            font-size: 55px;
             height: 35px;
             transform: rotate(90deg);
             width: 100%;
             margin-left: 15px;
             transform-origin: center;
-            margin-left: -55px;
+            margin-left: -57px;
             margin-top: 90px;
         }
 
@@ -44,7 +43,7 @@
             height: 325px;
             overflow: hidden;
             grid-template-columns: calc(100% - 50px) 50px;
-            
+
         }
 
         .contentPage {
@@ -96,41 +95,86 @@
             position: relative;
             transition: all 0.5s ease;
         }
-        .emptyHeader{
+
+        .emptyHeader {
             height: 100%;
             font-size: 60px;
             margin-top: -27px;
             color: var(--darkText);
         }
-
-        
     </style>
-    <background-div id="bgDiv" style="position: fixed;top: 0px;left: 0px; height: 100%;width: 100%; z-index: 5; pointer-events: none;">
+    <background-div id="bgDiv"
+        style="position: fixed;top: 0px;left: 0px; height: 100%;width: 100%; z-index: 5; pointer-events: none;">
     </background-div>
-    <svg id="dial" style="position: absolute; height: 600px; left: 85%; top: -150px; animation: 360s linear 1s infinite running rotation;" fill="none" viewBox="0 0 8080 8080" xmlns="http://www.w3.org/2000/svg">
-        <path d="m8040 4040c0 2209.1-1790.9 4e3 -4e3 4e3s-4e3 -1790.9-4e3 -4e3 1790.9-4e3 4e3 -4e3 4e3 1790.9 4e3 4e3z" stroke="var(--accentBorder)" stroke-dasharray="360 360 360 360" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="1.7434" stroke-width="20"/>
-        <path d="m6440 4040c0 1325.5-1074.5 2400-2400 2400s-2400-1074.5-2400-2400 1074.5-2400 2400-2400 2400 1074.5 2400 2400z" stroke="var(--accentBorder)" stroke-dasharray="360 360 360 360" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="1.7434" stroke-width="20"/>
-        <path d="m7240 4040c0 1767.3-1432.7 3200-3200 3200s-3200-1432.7-3200-3200 1432.7-3200 3200-3200 3200 1432.7 3200 3200z" stroke="var(--accentBorder)" stroke-dasharray="360 360 360 360" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="1.7434" stroke-width="20"/>
+    <svg id="dial"
+        style="position: absolute; height: 600px; left: 85%; top: -150px; animation: 360s linear 1s infinite running rotation;"
+        fill="none" viewBox="0 0 8080 8080" xmlns="http://www.w3.org/2000/svg">
+        <path d="m8040 4040c0 2209.1-1790.9 4e3 -4e3 4e3s-4e3 -1790.9-4e3 -4e3 1790.9-4e3 4e3 -4e3 4e3 1790.9 4e3 4e3z"
+            stroke="var(--accentBorder)" stroke-dasharray="360 360 360 360" stroke-linecap="round"
+            stroke-linejoin="round" stroke-miterlimit="1.7434" stroke-width="20" />
+        <path
+            d="m6440 4040c0 1325.5-1074.5 2400-2400 2400s-2400-1074.5-2400-2400 1074.5-2400 2400-2400 2400 1074.5 2400 2400z"
+            stroke="var(--accentBorder)" stroke-dasharray="360 360 360 360" stroke-linecap="round"
+            stroke-linejoin="round" stroke-miterlimit="1.7434" stroke-width="20" />
+        <path
+            d="m7240 4040c0 1767.3-1432.7 3200-3200 3200s-3200-1432.7-3200-3200 1432.7-3200 3200-3200 3200 1432.7 3200 3200z"
+            stroke="var(--accentBorder)" stroke-dasharray="360 360 360 360" stroke-linecap="round"
+            stroke-linejoin="round" stroke-miterlimit="1.7434" stroke-width="20" />
     </svg>
     <div id="mainPage" class="contentPage">
         <div id="mainContent" style="margin: 10px;">
-            <div id="eventsStage" style="visibility: hidden;position: absolute;height:140px; width: 100%; display: inline-grid; grid-auto-columns: 225px; overflow: scroll hidden; gap: 5px; grid-auto-flow: column; ">
+            <div id="eventsStage"
+                style="visibility: hidden;position: absolute;height:140px; width: 100%; display: inline-grid; grid-auto-columns: 225px; overflow: scroll hidden; gap: 5px; grid-auto-flow: column; ">
             </div>
             <div style="position: relative; height: 160px;">
-                <h3 style="margin: 0px; font-size: 30px; font-weight: 200;" class="textBorder">Actions</h3>
+                <h3 style="margin: 0px; font-size: 30px; font-weight: 200; display: flex; place-items: center;"
+                    class="textBorder">Actions</h3>
                 <div id="historyBar">
                     <h1 id="actionsNone" class="emptyHeader">none</h1>
                 </div>
             </div>
         </div>
         <div style="display: grid; grid-template-rows: calc(100% - 50px) 50px;">
-            <h1 id="Title" class="textBorder">AutoMade</h1>
-            <button-generic id="recordStart" style="background-color: var(--secondary); aspect-ratio: 1; height: 45px; padding: 0; display: grid; justify-items: center; align-items: center; position: relative;">
-                <svg style="height: 30px"; fill="none" viewBox="0 0 499 499" xmlns="http://www.w3.org/2000/svg">
-                    <path d="m190.95 486.2c0 7.031 5.7 12.732 12.732 12.732h91.673c7.031 0 12.732-5.701 12.732-12.733v-178.11h178.11c7.032 0 12.732-5.701 12.732-12.732v-91.673c0-7.031-5.701-12.732-12.732-12.732h-178.11v-178.11c0-7.0319-5.701-12.732-12.733-12.732l-91.672-2.18e-4c-7.031 7.3e-5 -12.732 5.7006-12.732 12.732v178.11h-178.11c-7.0318 0-12.732 5.7-12.732 12.732l-7.7e-5 91.673c0 7.031 5.7004 12.732 12.732 12.732h178.11v178.11z" fill="var(--darkText)"/>
+            <h1 id="Title" class="textBorder">ActionEcho</h1>
+            <button-generic id="recordStart"
+                style="background-color: var(--secondary); aspect-ratio: 1; height: 45px; padding: 0; display: grid; justify-items: center; align-items: center; position: relative;">
+                <svg style="height: 30px" ; fill="none" viewBox="0 0 499 499" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="m190.95 486.2c0 7.031 5.7 12.732 12.732 12.732h91.673c7.031 0 12.732-5.701 12.732-12.733v-178.11h178.11c7.032 0 12.732-5.701 12.732-12.732v-91.673c0-7.031-5.701-12.732-12.732-12.732h-178.11v-178.11c0-7.0319-5.701-12.732-12.733-12.732l-91.672-2.18e-4c-7.031 7.3e-5 -12.732 5.7006-12.732 12.732v178.11h-178.11c-7.0318 0-12.732 5.7-12.732 12.732l-7.7e-5 91.673c0 7.031 5.7004 12.732 12.732 12.732h178.11v178.11z"
+                        fill="var(--darkText)" />
                 </svg>
             </button-generic>
         </div>
+        <button-generic id="settingsButton" pad="off"
+            style="height:35px; position:absolute; left: 5px; bottom: 5px; background:var(--secondary); aspect-ratio: 1;">
+            <svg style="height:25px;" viewBox="0 0 652 652" xmlns="http://www.w3.org/2000/svg">
+                <path
+                    d="m425.5 326c0 55.229-44.771 100-100 100s-100-44.771-100-100 44.771-100 100-100 100 44.771 100 100zm-40 0c0 33.137-26.863 60-60 60s-60-26.863-60-60 26.863-60 60-60 60 26.863 60 60z"
+                    clip-rule="evenodd" fill="#D9D9D9" fill-rule="evenodd" />
+                <path
+                    d="m288.5 0c-11.046 0-20 8.9541-20 20v62.527c-26.578 6.1978-51.526 16.635-74.095 30.561l-44.122-44.122c-7.809-7.8105-20.473-7.8105-28.284 0l-53.032 53.034c-7.8106 7.81-7.8106 20.473 0 28.284l44.004 44.004c-14.03 22.588-24.558 47.579-30.826 74.212h-62.144c-11.046 0-20 8.954-20 20v75c0 11.046 8.9541 20 20 20h62.144c6.2686 26.633 16.797 51.623 30.826 74.212l-44.004 44.004c-7.8105 7.81-7.8105 20.473 0 28.284l53.033 53.033c7.811 7.81 20.474 7.81 28.284 0l44.121-44.121c22.569 13.925 47.518 24.363 74.096 30.561v62.527c0 11.046 8.954 20 20 20h75c11.046 0 20-8.954 20-20v-62.763c26.446-6.282 51.266-16.766 73.713-30.707l44.503 44.503c7.81 7.811 20.473 7.811 28.284 0l53.033-53.033c7.811-7.811 7.811-20.474 0-28.284l-44.621-44.621c13.838-22.427 24.232-47.204 30.443-73.595h63.145c11.046 0 20-8.954 20-20v-75c0-11.046-8.954-20-20-20h-63.145c-6.211-26.391-16.605-51.169-30.443-73.596l44.62-44.62c7.811-7.811 7.811-20.474 0-28.284l-53.032-53.034c-7.811-7.8105-20.475-7.8105-28.285 0l-44.503 44.504c-22.447-13.941-47.267-24.425-73.712-30.707v-62.763c0-11.046-8.954-20-20-20h-75zm187 326c0 82.843-67.157 150-150 150s-150-67.157-150-150 67.157-150 150-150 150 67.157 150 150z"
+                    clip-rule="evenodd" fill="#D9D9D9" fill-rule="evenodd" />
+            </svg>
+        </button-generic>
+    </div>
+    <div id="settingsPage" class="contentPage hiddenPage"
+        style="width:430px; height: 257px; display: flex; flex-direction: column; padding-top: 45px;">
+        <button-generic id="settingsBack"
+            style="height:35px; aspect-ratio: 1; position: absolute; left: 5px; top: 5px;">
+            <svg style="height: 25px;" fill="none" viewBox="0 0 1002 1002" xmlns="http://www.w3.org/2000/svg">
+                <path
+                    d="M9.21265 797.872C-2.50317 809.588 -2.50317 828.583 9.21265 840.299L161.948 993.034C173.664 1004.75 192.659 1004.75 204.375 993.034L501.123 696.285L797.872 993.034C809.588 1004.75 828.583 1004.75 840.298 993.034L993.033 840.299C1004.75 828.583 1004.75 809.588 993.033 797.872L696.284 501.124L993.033 204.375C1004.75 192.659 1004.75 173.664 993.033 161.948L840.299 9.2132C828.583 -2.50238 809.588 -2.50238 797.872 9.2132L501.123 305.962L204.374 9.2132C192.658 -2.50238 173.664 -2.50238 161.948 9.2132L9.21265 161.948C-2.50317 173.664 -2.50317 192.659 9.21265 204.375L305.962 501.124L9.21265 797.872Z"
+                    fill="var(--darkText)" />
+            </svg>
+        </button-generic>
+        <h3 style="margin-left: 10px; font-size: 30px; font-weight: 500; display: flex; place-items: center;"
+            class="textBorder">Settings</h3>
+        <label title="Send Action Diagnostic Data" style="display: flex; flex-direction: row; flex-wrap: wrap; align-items: center;">
+            <toggle-button  id="firebaseToggle" style="position: relative; width:70px; height: 35px; display: block; margin:5px;"></toggle-button>
+            <h2 style="width:fit-content; ">Send Diagnostic Data</h2>
+            
+        </label>
+        <button id="privacyPolicyButton" style="height: fit-content; width: fit-content; padding: 10px; position: absolute; left: 5px; bottom: 5px;">Privacy Policy</button>
     </div>
     <div id="recordPage" class="contentPage hiddenPage" style="display: grid; grid-auto-flow: row;  justify-items: center;
     align-items: center; height: 150px; width: 260px;">
@@ -145,7 +189,9 @@
     position: absolute;left: 0px;height: 100%;width: 100%;display: grid;
     justify-content: center;align-items: center;z-index: 100;
     transition: top 0.25s ease;"></uni-query>
-    <error-message id="errorHandler" style="position: absolute; bottom: -50px; width: 100%; height: 50px; transition: bottom 0.25s; z-index: 10000;"></error-message>
+    <error-message id="errorHandler"
+        style="position: absolute; bottom: -50px; width: 100%; height: 50px; transition: bottom 0.25s; z-index: 10000;"></error-message>
+
 </body>
 </body>
 

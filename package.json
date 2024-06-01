@@ -38,6 +38,7 @@
     "fast-json-stable-stringify": "^2.1.0",
     "fastest-levenshtein": "^1.0.16",
     "find-up": "^4.1.0",
+    "firebase": "^10.12.2",
     "flat": "^5.0.2",
     "function-bind": "^1.1.2",
     "glob-to-regexp": "^0.4.1",

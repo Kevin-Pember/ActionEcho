@@ -15,11 +15,9 @@ let tools = {
         { fullName: "December", shortName: "Dec" }
     ],
     limitInput: (input, min, max) => {
-        console.log(input)
         let numberInput = Number(input);
         if (isNaN(numberInput)) {
             numberInput = Number(tools.makeNumber(input));
-            console.log("number input is " + numberInput)
         }
         if (input == "") {
             return "";
@@ -127,25 +125,30 @@ class ButtonGeneric extends basicElement {
         setTimeout(() => {
             let svgIcon = this.querySelector("svg");
             if (svgIcon) {
-                console.log(svgIcon)
                 svgIcon.id = "svgButton";
                 this.svgContainer.appendChild(svgIcon);
             }
         });
     }
     static get observedAttributes() {
-        return ['bcolor'];
+        return ['bcolor', "pad"];
     }
     attributeChangedCallback(name, oldValue, newValue) {
         if (name == "bcolor") {
-            console.log("basic shit")
             this.svgContainer.className = ""
             if (newValue == "secondary") {
                 this.svgContainer.classList.add("secondary")
             } else if (newValue == "accent") {
                 this.svgContainer.classList.add("accent")
             }
+        }else if(name == "pad"){
+            if(newValue == "on"){
+                this.svgContainer.style = "";
+            }else{
+                this.svgContainer.style = "padding: 0px;";
+            }
         }
+        
     }
 }
 
@@ -217,15 +220,12 @@ class ActionSet extends basicElement {
                 });
             }else */if (this.ui.deleteAction.contains(e.target)) {
                 ui.getBool("Delete Action?", `Do you want to delete the ${this.action.name} action` + action.name).then((bool) => {
-                    console.log("boolean got: " + bool)
                     if (bool) {
                         this.removeAction();
                     }
                 });
-                console.log("deleting Action Set")
 
             } else {
-                console.log("run action set")
                 /*chrome.runtime.sendMessage({ action: "runActionSet", set: action }, (response) => {
 
                 });*/
@@ -643,8 +643,6 @@ class clockInput extends basicElement {
             } else {
                 hour = tools.limitInput(hour, 0, 23);
             }
-
-            console.log("calculated", hour)
             if (hour > 12) {
                 hour -= 12;
             } else if (hour == 0) {
@@ -904,12 +902,10 @@ class dateInput extends basicElement {
     initialize() {
         let inserts = this.targetDate.getDay() - (this.targetDate.getDate() - 1) % 7;
         let numberOfDays = new Date(this.targetDate.getFullYear(), this.targetDate.getMonth() + 1, 0).getDate();
-        console.log(numberOfDays)
         inserts = inserts < 0 ? 7 + inserts : inserts;
         for (let i = 0; i < inserts; i++) {
             this.ui.calGrid.insertBefore(document.createElement("div"), this.ui.calGrid.children[7]);
         }
-        console.log(this.targetDate.getDate)
         for(let i = 1; i <= 31; i++){
             if(i < this.targetDate.getDate()){
                 this.shadowRoot.getElementById(`date${i}`).children[0].classList.add("pastDate");
@@ -924,7 +920,6 @@ class dateInput extends basicElement {
                 i--;
             }else if(i == this.targetDate.getDate()){
                 this.shadowRoot.getElementById(`date${i}`).addEventListener("click", (e) => {
-                    console.log("Today")
                     this.ui.clockElement.locked = true;
                     this.ui.clockElement.updateTime();
                 });
@@ -989,4 +984,78 @@ class errorMessage extends basicElement{
         this.ui.message.innerText = text;
     }
 }
-export {backgroundDiv, ButtonGeneric, ActionSet, ScheduledAction, uniQuery, clockInput, dateInput,errorMessage}
+class toggleButton extends basicElement {
+    constructor(){
+        super();
+        this.shadowRoot.innerHTML += `
+        <style>
+            #toggleButton{
+                height: 100%;
+                width: 100%;
+                position: absolute;
+                transition: background-color 0.25s ease;
+                box-sizing: border-box;
+                align-items: center;
+                border: 1px solid var(--accentBorder);
+                border-radius: 50px;
+                overflow: hidden;
+            }
+            #selector{
+                left:0px;
+                position: absolute;
+                height: 100%;
+                width: 50%;
+                transition: background-color 0.25s ease,
+                left 0.25s ease,
+                border-radius 0.25s ease;
+                background-color: LightGreen;
+                border-radius: 50% 0 0 50%;
+            }
+        </style>
+        <div id="toggleButton">
+            <div id="selector"></div>
+        </div>
+        `;
+        this.ui.toggleButton = this.shadowRoot.getElementById("toggleButton");
+        this.ui.selector = this.shadowRoot.getElementById("selector");
+        this.toggled = true;
+        this.ui.toggleButton.addEventListener("click", () => {
+            this.toggle();
+        })
+        this.off = [];
+        this.on = [];
+    }
+    switch(swit){
+        if(swit){
+            this.ui.selector.style.backgroundColor = "LightGreen";
+            this.ui.selector.style.left = "0px";
+            this.ui.selector.style.borderRadius = "50% 0 0 50%";
+        }else{
+            this.ui.selector.style.backgroundColor = "Tomato";
+            this.ui.selector.style.left = "35px";
+            this.ui.selector.style.borderRadius = "0 50% 50% 0";
+        }
+        this.toggled = swit;
+    }
+    toggle(onOff){
+        let toggle = (onOff != undefined) ? onOff : this.toggled;
+        this.switch(!toggle)
+        if(toggle){
+            for(let func of this.off){
+                func();
+            }
+        }else{
+            for(let func of this.on){
+                func();
+            }
+        }
+    }
+    addFunction(type, func){
+        if(type){
+            this.on.push(func);
+        }else{
+            this.off.push(func);
+        }
+    }
+}
+export {backgroundDiv, ButtonGeneric, ActionSet, ScheduledAction, uniQuery, clockInput, dateInput,errorMessage, toggleButton}
