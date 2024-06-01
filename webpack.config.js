@@ -8,7 +8,8 @@ module.exports = {
     index: "./JS/index.js",
     siteWorker: "./JS/siteWorker.js",
     background: "./JS/background.js",
-    components: "./JS/components.js"
+    components: "./JS/components.js",
+    firebaseConfig: "./JS/firebaseConfig.js"
   },
   output:{
     path: path.join(__dirname,"dist"),

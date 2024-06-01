@@ -1,19 +1,13 @@
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.1/firebase-app.js'
-import { getFirestore, addDoc, collection } from 'https://www.gstatic.com/firebasejs/10.12.1/firebase-firestore.js'
-//import { initializeApp } from 'firebase/app'
-//import { getFirestore, addDoc, collection } from 'firebase/firestore'
+//import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.1/firebase-app.js'
+//import { getFirestore, addDoc, collection } from 'https://www.gstatic.com/firebasejs/10.12.1/firebase-firestore.js'
+import {Config} from "./firebaseConfig.js"
+import { initializeApp } from 'firebase/app'
+import { getFirestore, addDoc, collection } from 'firebase/firestore'
 
 console.log()
 let firebase = {
-  config: {
-    apiKey: "AIzaSyBj5CGVHf6b15TbJCMISL87koNVvbscNJc",
-    authDomain: "autoecho-70f5b.firebaseapp.com",
-    projectId: "autoecho-70f5b",
-    storageBucket: "autoecho-70f5b.appspot.com",
-    messagingSenderId: "385826425881",
-    appId: "1:385826425881:web:b49db849cbefa0afc8ee88",
-    measurementId: "G-PM216WXQPR"
-  },
+  app: undefined,
+  db: undefined
 }
 let errorLog = []
 let data = {
@@ -666,11 +660,13 @@ chrome.runtime.onMessage.addListener((request, sender, reply) => {
       if (request.preferences) {
         data.preferences = request.preferences;
         if (request.preferences.sendActData === "true" && firebase.app == undefined) {
-          firebase.app = initializeApp(firebase.config);
+          firebase.app = initializeApp(Config);
           firebase.db = getFirestore(firebase.app);
+          console.log("%cFirebase: Firebase Database Connected", data.console.firebase, firebase.app)
         } else if (request.preferences.sendActData === "false" && firebase.app != undefined) {
           firebase.app = undefined;
           firebase.db = undefined;
+          console.log("%cFirebase: Firebase Disconnected", data.console.firebase, firebase)
         }
         reply({ log: "success" });
       } else {

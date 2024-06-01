@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "ActionEcho",
   "description": "ActionEcho actions in chrome",
-  "version": "1.0.1",
+  "version": "1.0.0",
   "permissions": [
     "activeTab",
     "storage",

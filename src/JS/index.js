@@ -399,22 +399,17 @@ window.addEventListener('load', () => {
       console.log(`%cPreferences: Prompting TOS`, data.console.preferences)
       ui.tosPrompt = async () => {
         ui.getBool("User Agreement", `
-        <h2>Data Collection</h2> Actions by default are striped of All identifying information aside 
-        from their name and uploaded to the cloud. This can be changed in settings by toggling the 
-        Save Action Data button. The data uploaded into the cloud is intended for used Large 
-        Language Models to develop a language to web action model. <br><br>
+        <h2>Action Diagnostics</h2> Actions by default are striped of text information and 
+        uploaded to the cloud for Diagnostics. This information helps us improve ActionEcho but can be changed by toggling the 
+        Send Action Diagnostic Data button then Pressing the X button on the Settings Page. Diagnostics previously uploaded aren't deleted upon disabling Diagnostics. <br><br>
         <h2>Sensitive Data</h2>Please be advised that the use of ActionEcho for passwords or any 
       other sensitive data is strictly prohibited. This extension does not 
       provide adequate security measures and should not be relied upon for 
       securing sensitive information. It is important to note that this extension 
       is intended solely for the storage of non-sensitive data. 
-      <br><br><h2>Liability</h2>This extension is 
-      provided "AS IS", without warranty of any kind, express or implied, including 
-      but not limited to the warranties of merchantability, fitness for a particular 
-      purpose, and noninfringement. In no event shall the authors or copyright holders
-      be liable for any claim, damages, or other liability, whether in an action of 
-      contract, tort, or otherwise, arising from, out of, or in connection with the 
-      software or the use or other dealings in the software.`).then((value) => {
+      <br><br><h2>License</h2>This extension is open-source and it's code can be 
+      found at https://github.com/Kevin-Pember/ActionEcho. ActionEcho is under the 
+      GNU General Public License with can be found in full at https://www.gnu.org/licenses/gpl-3.0.en.html.`).then((value) => {
           if (value) {
             preferences.signed = "true";
           } else {
