@@ -3,9 +3,6 @@
   "name": "ActionEcho",
   "description": "ActionEcho actions in chrome",
   "version": "1.0.0",
-  "host_permissions": [
-    "<all_urls>"
-  ],
   "permissions": [
     "scripting",
     "activeTab",
@@ -15,9 +12,26 @@
     "tabs",
     "alarms"
   ],
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "css": [
+        "public/siteStyle.css"
+      ],
+      "js": [
+        "JS/webcomponents.bundle.js",
+        "JS/siteWorker.js"
+      ]
+    }
+  ],
   "background": {
     "service_worker": "JS/background.js",
-    "type": "module"
+    "type": "module",
+    "scripts": [
+      "JS/background.js"
+    ]
   },
   "action": {
     "default_popup": "index.html",

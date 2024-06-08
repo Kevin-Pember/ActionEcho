@@ -340,7 +340,8 @@ window.addEventListener('load', () => {
       ui.setPage("mainPage");
     });
     chrome.runtime.sendMessage({ action: "stopRecord" }, (response) => {
-      if (response.log == "finished") {
+      console.log("%cRecording: Reponse from background worker: ", data.console.recording, response)
+      if (response.actions.length > 1) {
         
           ui.getName("Enter Name").then((name) => {
             let action = {
@@ -351,7 +352,7 @@ window.addEventListener('load', () => {
             data.addAction(action);
             chrome.runtime.sendMessage({ action: "actionLog", actionLog: action });
           }, () => { });
-      } else if ("emptyActions") {
+      } else {
         error.handle("No actions were recorded")
         throw new Error("Failed to stop recording");
       }
