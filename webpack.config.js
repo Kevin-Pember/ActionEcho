@@ -6,7 +6,6 @@ module.exports = {
   context: path.resolve(__dirname,"src"),
   entry: {
     index: "./JS/index.js",
-    siteWorker: "./JS/siteWorker.js",
     background: "./JS/background.js",
     components: "./JS/components.js",
     firebaseConfig: "./JS/firebaseConfig.js"
