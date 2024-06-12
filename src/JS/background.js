@@ -29,23 +29,26 @@ let data = {
   currentEditor: undefined,
   siteCache: undefined,
   uiLink: undefined,
-  promisePorts: {
+  promiseTabs: {
     tabs: [],
     push: (promise) => {
-      data.promisePorts.tabs.push(promise);
+      data.promiseTabs.tabs.push(promise);
     },
     resolveTarget: (tab) => {
+      console.log(`%cSite_Manager: Checking this tab`, data.console.sites, tab)
+      console.log(`%cSite_Manager: Against these Promises`, data.console.sites, data.promiseTabs.tabs)
       let idx;
-      let target = data.promisePorts.tabs.find((promiseTab, index) => {
-        if (tab.url == promiseTab.url) {
+      let target = data.promiseTabs.tabs.find((promiseTab, index) => {
+        if (tab.url === promiseTab.url || promiseTab.url === tab.pendingUrl) {
           idx = index;
           return true;
         }
       })
       if (target) {
-        target.resolve(tab);
-        data.current.tab = tab;
-        data.promisePorts.tabs.splice(idx, 1);
+        let value = { tabId: tab.id, url: (tab.url !== "") ? tab.url : tab.pendingUrl }
+        target.resolve(value);
+        data.current.tab = value;
+        data.promiseTabs.tabs.splice(idx, 1);
       }
     }
   },
@@ -61,7 +64,7 @@ let data = {
       } else {
         chrome.tabs.create({ url: url, active: true }, function (tab) {
         });
-        data.promisePorts.push({ url: url, resolve: resolve, reject: reject });
+        data.promiseTabs.push({ url: url, resolve: resolve, reject: reject });
       }
     });
   },
@@ -69,11 +72,11 @@ let data = {
     console.log(`%cSite_Manager: Loading Url in Current Tab, ${url}`, data.console.sites)
     return new Promise((resolve, reject) => {
       port.postMessage({ action: "setURL", url: url });
-      data.promisePorts.push({ url: url, resolve: resolve, reject: reject });
+      data.promiseTabs.push({ url: url, resolve: resolve, reject: reject });
     });
   },
   addTab: (value) => {
-    data.promisePorts.resolveTarget(value);
+    data.promiseTabs.resolveTarget(value);
     data.tabs.push(value);
   },
   /*disconnectPort: (port) => {
@@ -130,7 +133,8 @@ let runner = {
       } else {
         await data.openTab(url.url);
       }
-      data.current.port.postMessage(packet);
+      //data.current.port.postMessage(packet);
+      chrome.scripting.executeScript({ target: { tabId: data.current.tab.tabId }, func: runner.actionRunnerScript, args: [packet] });
     }
   },
   getUrls: (set) => {
@@ -153,7 +157,176 @@ let runner = {
     });
     return packets;
   },
-  actionRunnerScript: () => {
+  actionRunnerScript: async (echoActions) => {
+    console.log("running action runner script")
+    console.log(echoActions)
+    let input = {
+
+      actionQueue: [],
+      data: {
+        focusedElement: undefined,
+        range: [0, 0],
+      },
+      keyCodes: {
+        Enter: 13,
+      },
+      parsePacket: (packet) => {
+        if (packet.v === 1.0) {
+          for (let action of packet.actions) {
+            console.log(action)
+            input.throwAction(action);
+          }
+        } else {
+          throw new Error("Packet version not supported");
+        }
+      },
+      throwAction: (msg) => {
+        console.log("throwing action")
+        console.log(`State is ${document.readyState}`)
+        if (document.readyState === "complete") {
+          switch (msg.type) {
+            case "click":
+              console.log("Running click action");
+              console.log(`Element Specifier is ${msg.specifier}`)
+              let element = input.getElement(msg.specifier);
+              console.log(element)
+              input.data.focusedElement = element;
+              if (msg.textContext !== undefined) {
+                if ((element.tagName == "INPUT" || element.tagName == "TEXTAREA")) {
+                  element.value = msg.textContext;
+                } else if (element.contentEditable == "true") {
+                  element.innerText = msg.textContext;
+                }
+              }
+              //input.data.range = msg.caret.split("-");
+              if (msg.caret) {
+                let range = msg.caret.split("-");
+                input.setFocus(element, range)
+              }
+              element.dispatchEvent(new MouseEvent('click', {
+                bubbles: true,
+                cancelable: true,
+                view: window
+              }));
+              element.focus();
+              console.log("click event dispatched");
+              break;
+            case "input":
+              console.log("Running input action");
+              input.enterText(input.data.focusedElement, msg);
+              break;
+            case "key":
+              console.log("Running key action")
+              input.enterKey(input.getElement(msg.specifier), msg.key);
+              break;
+          }
+        } else {
+          input.actionQueue.push(msg);
+        }
+      },
+      enterText: (element, log) => {
+        console.log("typing")
+        console.log(log)
+        let typeInput, charArray = log.text.split(""), range = input.data.range;
+        console.log(element)
+        console.log("Typing the text: " + log.text)
+        if (element.contentEditable == "true") {
+          typeInput = (text, range) => {
+            let index = 0,
+              targetChild = undefined;
+            element.innerHTML = element.innerHTML + text;
+            targetChild = element.childNodes[0];
+            index = text.length;
+            input.setFocus(element, range);
+            const inputEvent = new Event('input', { bubbles: true });
+            element.dispatchEvent(inputEvent);
+          }
+        } else {
+          typeInput = (text, range) => {
+            console.log("elemnt value is " + element.value);
+            element.focus();
+            element.value = element.value.substring(0, range[0]) + text + element.value.substring(range[1]);
+            console.log("value is now" + element.value)
+            element.setSelectionRange(range[0] + 1, range[0] + 1);
+          }
+        }
+        for (let char of charArray) {
+          console.log(char)
+          typeInput(char, range);
+          range = [range[0] + 1, range[0] + 1];
+          input.enterKey(element, char);
+        }
+      },
+      enterKey: (elem, key) => {
+        let keyCode = key.length > 1 ? input.keyCodes[key] : key;
+        let eventObject = {
+          key: key,
+          code: key,
+          which: keyCode,
+          keyCode: keyCode,
+          composed: true,
+          bubbles: true,
+          cancelable: true
+        }
+        console.log(eventObject)
+        elem.dispatchEvent(new KeyboardEvent('keydown', eventObject));
+        elem.dispatchEvent(new KeyboardEvent('keypress', eventObject));
+        elem.dispatchEvent(new KeyboardEvent('keyup', eventObject));
+        elem.dispatchEvent(new InputEvent('input', { data: key, inputType: "insertText", bubbles: true }));
+      },
+      runQueue: () => {
+        for (let action of input.actionQueue) {
+          input.throwAction(action);
+        }
+        input.actionQueue = [];
+      },
+      getElement: (specifier) => {
+        let index = specifier.indexOf("--");
+        if (index == 0) {
+          let endIndex = specifier.indexOf("$");
+          let index = Number(specifier.substring(2, endIndex));
+          specifier = specifier.substring(endIndex + 1);
+          return document.querySelectorAll(specifier)[index];
+        } else {
+          let element = document.querySelectorAll(specifier);
+          if (element.length === 1) {
+            return element[0];
+          } else if (element.length > 1) {
+            throw new Error("Multiple Elements found");
+            return null;
+          } else {
+            throw new Error("Element not found");
+            return null;
+          }
+        }
+      },
+      setFocus(elem, range) {
+        if (range || elem.contentEditable === "true") {
+          if ((elem.tagName === "input" && elem.type === "text") || elem.tagName === "TEXTAREA") {
+            elem.setSelectionRange(range[0], range[1])
+          } else if (elem.contentEditable === "true") {
+            let sel = window.getSelection();
+            let range = document.createRange();
+            range.setStart(elem, range[0]);
+            range.setEnd(elem, range[1])
+            sel.removeAllRanges();
+            sel.addRange(range);
+          }
+        } else {
+          elem.focus()
+        }
+      }
+    }
+    document.onreadystatechange = () => {
+      if (document.readyState === "complete") {
+        input.parsePacket(echoActions)
+        return "Done";
+      }
+      /*if (document.readyState === "complete" && input.actionQueue.length > 0) {
+          input.runQueue();
+      }*/
+    }
+
 
   }
 }
@@ -218,7 +391,7 @@ let recorder = {
       if (data.current.tab.url != "") {
         recorder.cacheSite("tab", data.current.tab.url)
       }
-      
+
       recorder.logReport = new Promise(async (resolve) => {
         await chrome.scripting.insertCSS({
           target: { tabId: data.current.tab.tabId },
@@ -814,6 +987,14 @@ chrome.storage.local.get(["scheduledEvents"]).then((result) => {
     tabId: tab.id
   })
 })*/
+chrome.tabs.onCreated.addListener((tab) => {
+  console.log(`%cSite_Manager: New Tab Created`, data.console.sites);
+  if (data.promiseTabs.tabs.length > 0) {
+    console.log(`%cSite_Manager: Checking Promise Tab`, data.console.sites);
+    data.promiseTabs.resolveTarget(tab)
+    console.log(data.current.tab)
+  }
+});
 chrome.tabs.onRemoved.addListener((tabId) => {
   let tabIndex = data.tabs.findIndex((e) => { e.tabId == tabId });
   if (tabIndex != -1) {
@@ -821,7 +1002,7 @@ chrome.tabs.onRemoved.addListener((tabId) => {
     data.tabs.splice(tabIndex, 1)
   }
 })
-chrome.tabs.onUpdated.addListener( async (tabId, changeInfo, tab) => {
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (recorder.recording) {
     let tabInst = data.tabs.find((e) => { e.tabId == tabId });
     console.log(`%cSite_Manager: Tab Updated`, data.console.sites, tab, changeInfo)
@@ -854,24 +1035,24 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
   /*chrome.scripting.executeScript({ target: {tabId: activeInfo.tabId}, func : recorder.clock}).then((r) => {
     console.log(`%cSite_Manager: response Before change`, data.console.recording, r);
   })*/
- console.log("%cSite_Manager: Activated Tab", data.console.sites)
+  console.log("%cSite_Manager: Activated Tab", data.console.sites)
   chrome.tabs.get(activeInfo.tabId, async (tab) => {
     let tabIndex = data.tabs.findIndex((e) => { e.tabId == activeInfo.tabId });
     let tabInst = undefined
-    if(tabIndex === -1){
+    if (tabIndex === -1) {
       tabInst = { tabId: activeInfo.tabId, url: tab.url }
-    }else{
+    } else {
       data.tabs[tabIndex]
     }
     if (recorder.recording) {
-      
+
       console.log(`%cSite_Manager: New Active Tab`, data.console.sites, activeInfo)
       if (tabIndex == -1) {
         data.addTab(tabInst);
         tabIndex = data.tabs.length - 1;
       }
       if (data.current.tab != tabInst) {
-        chrome.scripting.executeScript({ target: {tabId: data.current.tab.tabId}, func : recorder.stopRecordScript})
+        chrome.scripting.executeScript({ target: { tabId: data.current.tab.tabId }, func: recorder.stopRecordScript })
         await recorder.logReport;
         recorder.logReport = new Promise(async (resolve) => {
           await chrome.scripting.insertCSS({
@@ -969,7 +1150,7 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
   }
   data.portArray.push(port);
   console.debug("Port Name: " + port.name)
-  data.promisePorts.resolveTarget(port);
+  data.promiseTabs.resolveTarget(port);
 });*/
 chrome.runtime.onMessage.addListener((request, sender, reply) => {
   console.log("%cIndex: Message from UI", data.console.index, request)

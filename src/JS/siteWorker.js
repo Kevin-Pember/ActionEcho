@@ -182,7 +182,7 @@ let actionRunnerScript = async (echoActions) => {
       }
     }
   }
-  input.awaitLoad = new Promise((r) => {
+  await new Promise((r) => {
     document.onreadystatechange = () => {
       if (document.readyState === "complete") {
         r();
@@ -192,7 +192,6 @@ let actionRunnerScript = async (echoActions) => {
       }*/
     }
   });
-  await input.awaitLoad
   actionQueue = echoActions
   input.runQueue();
 }
