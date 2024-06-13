@@ -2,3 +2,5 @@ node_modules/
 src/JS/firebaseConfig.js
 dist/JS/firebaseConfig.js
 .DS_Store
+dist.crx
+dist.pem

@@ -56,7 +56,7 @@ let data = {
     console.log(`%cSite_Manager: Loading Url in New Tab, ${url}`, data.console.sites)
     return new Promise((resolve, reject) => {
       let match = data.portArray.find((port) => {
-        return port.name == url;
+        return port.name === url;
       });
       if (match) {
         chrome.tabs.update(match.tabId, { active: true }, (tab) => { });
@@ -81,11 +81,11 @@ let data = {
   },
   /*disconnectPort: (port) => {
     port.disconnected = true;
-    let index = data.portArray.findIndex((test) => test.tabId == port.tabId);
+    let index = data.portArray.findIndex((test) => test.tabId === port.tabId);
     data.portArray.splice(index, 1);
-    if (data.portArray.length == 0) {
+    if (data.portArray.length === 0) {
       data.current.port = undefined;
-    } else if (data.current.port == port) {
+    } else if (data.current.port === port) {
       recorder.setCurrentPort(data.portArray[index]);
     }
     if (port.editorActive) {
@@ -106,7 +106,7 @@ let data = {
   anonymizeAction: (action) => {
     action.name += data.generateRandomString();
     for (let act of action.actions) {
-      if (act.type == "input") {
+      if (act.type === "input") {
         act.text = data.generateRandomString();
       }
     }
@@ -126,7 +126,7 @@ let runner = {
     let url;
     for (let packet of packets) {
       url = packet.site;
-      if (url.format == "url") {
+      if (url.format === "url") {
         if (data.current.port.name != url.url) {
           await data.openURL(data.current.port, url.url)
         }
@@ -140,14 +140,14 @@ let runner = {
   getUrls: (set) => {
     let urls = [];
     for (let action of set) {
-      if (action.type == "site" && !urls.includes(action.url)) {
+      if (action.type === "site" && !urls.includes(action.url)) {
         urls.push(action.url);
       }
     }
     return urls;
   },
   getPackets: (actions) => {
-    let urls = actions.filter((action) => action.type == "site");
+    let urls = actions.filter((action) => action.type === "site");
     let packets = [];
     urls.forEach((url, index) => {
       let actionPacket = structuredClone(runner.templates.actionPacket);
@@ -192,9 +192,9 @@ let runner = {
               console.log(element)
               input.data.focusedElement = element;
               if (msg.textContext !== undefined) {
-                if ((element.tagName == "INPUT" || element.tagName == "TEXTAREA")) {
+                if ((element.tagName === "INPUT" || element.tagName === "TEXTAREA")) {
                   element.value = msg.textContext;
-                } else if (element.contentEditable == "true") {
+                } else if (element.contentEditable === "true") {
                   element.innerText = msg.textContext;
                 }
               }
@@ -230,7 +230,7 @@ let runner = {
         let typeInput, charArray = log.text.split(""), range = input.data.range;
         console.log(element)
         console.log("Typing the text: " + log.text)
-        if (element.contentEditable == "true") {
+        if (element.contentEditable === "true") {
           typeInput = (text, range) => {
             let index = 0,
               targetChild = undefined;
@@ -282,7 +282,7 @@ let runner = {
       },
       getElement: (specifier) => {
         let index = specifier.indexOf("--");
-        if (index == 0) {
+        if (index === 0) {
           let endIndex = specifier.indexOf("$");
           let index = Number(specifier.substring(2, endIndex));
           specifier = specifier.substring(endIndex + 1);
@@ -381,7 +381,7 @@ let recorder = {
     return recorder.actionSet;
   },
   startRecord: (reply) => {
-    try {
+    if (data.current.tab !== undefined){
       recorder.logBuffer = []
       recorder.recording = true;
       //recorder.data.actionSet = structuredClone(recorder.templates.actionSet);
@@ -407,7 +407,7 @@ let recorder = {
       //data.current.port
       //data.current.port.postMessage({ action: "startRecord" });
       reply({ log: "started" });
-    } catch {
+    } else {
       reply({ log: "noPort" });
     }
 
@@ -438,7 +438,7 @@ let recorder = {
   cacheSite: (type, location) => {
     let site = structuredClone(recorder.templates.site);
     site.url = location;
-    if (type == "newUrl" && recorder.recording && recorder.logBuffer.length > 0) {
+    if (type === "newUrl" && recorder.recording && recorder.logBuffer.length > 0) {
       site.format = "url";
     } else {
       site.format = "tab";
@@ -460,7 +460,7 @@ let recorder = {
   },*/
   /*setCurrentPort: (port) => {
     if (recorder.recording) {
-      if (data.current.port && data.current.port.disconnected == false) {
+      if (data.current.port && data.current.port.disconnected === false) {
         data.current.port.postMessage({ action: "stopRecord" });
       }
       port.postMessage({ action: "startRecord" });
@@ -485,7 +485,7 @@ let recorder = {
         recorder.actionSet.actions.push(msg);
         if (msg.textContext != undefined) {
 
-          let exists = recorder.data.inputs.find((input) => input.specifier == msg.specifier);
+          let exists = recorder.data.inputs.find((input) => input.specifier === msg.specifier);
           if (!exists) {
             let input = {
               entry: structuredClone(recorder.templates.textAction),
@@ -568,7 +568,7 @@ let recorder = {
         }
         break;
       case "error":
-        if (msg.level == "end") {
+        if (msg.level === "end") {
           chrome.storage.local.set({ recording: false })
           recorder.stopRecord()
         }
@@ -611,7 +611,7 @@ let recorder = {
           }
         },
         toggle: (way) => {
-          if (logger.indicator.elem.className == "") {
+          if (logger.indicator.elem.className === "") {
             logger.indicator.elem.classList.add("actionEchoRecordIcon")
             logger.indicator.elem.innerHTML = `
                     <svg style="height:60px; width: 60px;" viewBox="0 0 1200 1200" xmlns="http://www.w3.org/2000/svg">
@@ -732,23 +732,23 @@ let recorder = {
       eventHandler: async (event) => {
         let target = event.target;
         let log;
-        if (event.type == "click") {
+        if (event.type === "click") {
           log = { ...logger.templates.click };
           log.specifier = logger.getSpecifier(target);
-          if ((target.tagName == "INPUT" && target.type == "text") || target.tagName == "TEXTAREA" || target.contentEditable == "true") {
-            log.textContext = target.contentEditable == "true" ? target.innerText : target.value;
+          if ((target.tagName === "INPUT" && target.type === "text") || target.tagName === "TEXTAREA" || target.contentEditable === "true") {
+            log.textContext = target.contentEditable === "true" ? target.innerText : target.value;
             log.caret = logger.getSelection(target);
             logger.targetElement = log.specifier;
-          } else if (target.tagName == "INPUT" && target.type == "password") {
+          } else if (target.tagName === "INPUT" && target.type === "password") {
             logger.indicator.error();
             log.type = "error";
             log.message = "Password Recording isn't Allowed";
             log.level = "end";
           }
-        } else if (event.type == "keydown" || event.type == "keyup" || event.type == "keypress") {
+        } else if (event.type === "keydown" || event.type === "keyup" || event.type === "keypress") {
           log = { ...logger.templates.input };
           log.specifier = logger.targetElement != undefined ? logger.targetElement : logger.getSpecifier(target);
-          if ((event.metaKey || event.ctrlKey) && event.key.length == 1) {
+          if ((event.metaKey || event.ctrlKey) && event.key.length === 1) {
             if (!logger.browserOS) {
               if (navigator.userAgent.indexOf("Macintosh") != -1) {
                 logger.browserOS = "mac";
@@ -763,32 +763,32 @@ let recorder = {
               }
             }
           } else if (event.key.length > 1) {
-            if (event.key == "Enter") {
+            if (event.key === "Enter") {
               log.key = "Enter";
-            } else if (event.key == "Backspace") {
+            } else if (event.key === "Backspace") {
               log.key = "Backspace";
-            } else if (event.key == "Delete") {
+            } else if (event.key === "Delete") {
               log.key = "Delete";
-            } else if (event.key == "ArrowLeft") {
+            } else if (event.key === "ArrowLeft") {
               log.key = "ArrowLeft";
-            } else if (event.key == "ArrowRight") {
+            } else if (event.key === "ArrowRight") {
               log.key = "ArrowRight";
             }
 
-          } else if (event.key.length == 1) {
+          } else if (event.key.length === 1) {
             log.type = "input";
             log.key = event.key;
             log.selection = logger.getSelection(event.target);
           };
         }
-        if ((log.type == "key" && log.key != undefined) || log.type != "key") {
+        if ((log.type === "key" && log.key != undefined) || log.type != "key") {
           //data.port.postMessage(log);
           logger.actions.push(log)
         }
 
       },
       getSelection: (target) => {
-        if ((target.tagName == "INPUT" && target.type == "text") || target.tagName == "TEXTAREA") {
+        if ((target.tagName === "INPUT" && target.type === "text") || target.tagName === "TEXTAREA") {
           return target.selectionStart + "-" + target.selectionEnd
         } else {
           let sel = window.getSelection()
@@ -968,7 +968,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 });
 checkAlarmState();
 chrome.storage.local.get(["recording"]).then((result) => {
-  recorder.recording = result.recording == undefined ? false : result.recording;
+  recorder.recording = result.recording === undefined ? false : result.recording;
 });
 chrome.storage.local.get(["scheduledEvents"]).then((result) => {
   if (result.scheduledEvents != undefined) {
@@ -996,22 +996,27 @@ chrome.tabs.onCreated.addListener((tab) => {
   }
 });
 chrome.tabs.onRemoved.addListener((tabId) => {
-  let tabIndex = data.tabs.findIndex((e) => { e.tabId == tabId });
+  let tabIndex = data.tabs.findIndex((e) => { e.tabId === tabId });
   if (tabIndex != -1) {
     console.log(`%cSite_Manager: Removing Tab`, data.console.sites, tabId, data.tabs[tabIndex].tab.url)
     data.tabs.splice(tabIndex, 1)
+    
+  }
+  if(data.current.tab !== undefined && data.current.tab.tabId === tabId){
+    console.log(`%cSite_Manager: Removing Current Tab`, data.console.sites)
+    data.current.tab = undefined;
   }
 })
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (recorder.recording) {
-    let tabInst = data.tabs.find((e) => { e.tabId == tabId });
+    let tabInst = data.tabs.find((e) => { e.tabId === tabId });
     console.log(`%cSite_Manager: Tab Updated`, data.console.sites, tab, changeInfo)
     if (tabInst) {
       tabInst.url = tab.url
     } else {
       data.addTab({ tabId: tabId, url: tab.url })
     }
-    if (changeInfo.status == "complete" && data.current.tab.tabId == tabId) {
+    if (changeInfo.status === "complete" && data.current.tab.tabId === tabId) {
       //await recorder.logReport
       //chrome.scripting.insertCSS({target: { tabId: tabId }, files: ["../"]})
       recorder.logReport = new Promise(async (resolve) => {
@@ -1027,7 +1032,11 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
       recorder.cacheSite("newUrl", tab.url)
     }
   }
-  if (data.current.tab === undefined) {
+  console.log("%cSite_Manager: Change Info and tab ", data.console.sites, changeInfo, tab)
+  if (data.current.tab !== undefined && data.current.tab.tabId === tabId) {
+    
+    data.current.tab.url = tab.url
+  }else if (data.current.tab === undefined) {
     data.current.tab = { tabId: tabId, url: tab.url }
   }
 });
@@ -1037,17 +1046,16 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
   })*/
   console.log("%cSite_Manager: Activated Tab", data.console.sites)
   chrome.tabs.get(activeInfo.tabId, async (tab) => {
-    let tabIndex = data.tabs.findIndex((e) => { e.tabId == activeInfo.tabId });
+    let tabIndex = data.tabs.findIndex((e) => { e.tabId === activeInfo.tabId });
     let tabInst = undefined
-    if (tabIndex === -1) {
+    if (tabIndex === -1 && tab.url.indexOf("chrome://") === -1) {
       tabInst = { tabId: activeInfo.tabId, url: tab.url }
     } else {
-      data.tabs[tabIndex]
+      tabInst = data.tabs[tabIndex]
     }
     if (recorder.recording) {
-
       console.log(`%cSite_Manager: New Active Tab`, data.console.sites, activeInfo)
-      if (tabIndex == -1) {
+      if (tabIndex === -1) {
         data.addTab(tabInst);
         tabIndex = data.tabs.length - 1;
       }
@@ -1073,7 +1081,7 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
   /*chrome.tabs.get(activeInfo.tabId, (tab) => {
     console.log(`%cSite_Manager: New Active Tab Info`, data.console.sites, tab)
     if (tab.url != "chrome://newtab/") {
-      let port = data.portArray.find((port) => port.tabId == activeInfo.tabId);
+      let port = data.portArray.find((port) => port.tabId === activeInfo.tabId);
       if (port) {
         recorder.cacheSite("newTab", tab.url);
         recorder.setCurrentPort(port);
@@ -1097,7 +1105,7 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
         break;
       case "closedEditor":
         //handles closed messages from the port and resolve the promise with their action list
-        let match = data.current.editor.editPromises.find((promise) => promise.tabId == port.tabId);
+        let match = data.current.editor.editPromises.find((promise) => promise.tabId === port.tabId);
         if (match) {
           match.resolve(msg.actionList);
           data.current.editor.editPromises.splice(data.current.editor.editPromises.indexOf(match), 1);
@@ -1130,11 +1138,11 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
   let tabIndex = 0;
   let tabMatch = data.portArray.find((test, index) => {
     tabIndex = index;
-    return test.tabId == port.sender.tab.id
+    return test.tabId === port.sender.tab.id
   });
   if (tabMatch) {
     //if the port it is replacing is the current port, replace it
-    if (data.current.port == tabMatch) {
+    if (data.current.port === tabMatch) {
       recorder.cacheSite("newUrl", tabMatch.name);
       recorder.setCurrentPort(port);
       if (recorder.recording) {
@@ -1144,7 +1152,7 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
     //remove the old port from the array
     data.disconnectPort(tabMatch, tabIndex);
   }
-  if (port.tabId == data.current.tab) {
+  if (port.tabId === data.current.tab) {
     recorder.cacheSite("newTab", port.name);
     data.current.port = port;
   }
@@ -1174,7 +1182,7 @@ chrome.runtime.onMessage.addListener((request, sender, reply) => {
       reply({ log: "added" })
       break;
     case "removeScheduledAction":
-      let index = clock.schedule.actionLists.findIndex((test) => test.id == request.id);
+      let index = clock.schedule.actionLists.findIndex((test) => test.id === request.id);
       clock.removeScheduledAction(index);
       reply({ log: "removed" })
       break;
@@ -1207,7 +1215,7 @@ chrome.runtime.onMessage.addListener((request, sender, reply) => {
         addDoc(collection(firebase.db, "actions"), copy);
         reply({ log: "success" });
       } catch (e) {
-        console.error("Error adding document: ", e);
+        console.log("%cError: Firebase Not Connected ", data.console.error, e);
         reply({ log: "failed" });
       }
 
@@ -1215,7 +1223,7 @@ chrome.runtime.onMessage.addListener((request, sender, reply) => {
     case "setPreferences":
       if (request.preferences) {
         data.preferences = request.preferences;
-        if (request.preferences.sendActData === "true" && firebase.app == undefined) {
+        if (request.preferences.sendActData === "true" && firebase.app === undefined) {
           firebase.app = initializeApp(Config);
           firebase.db = getFirestore(firebase.app);
           console.log("%cFirebase: Firebase Database Connected", data.console.firebase, firebase.app)
