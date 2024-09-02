@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EchoPage</title>
+</head>
+<script src="JS/Gridstack/gridstack-all.js"></script>
+<link href="JS/Gridstack/gridstack.min.css" rel="stylesheet" />
+<style type="text/css">
+    .grid-stack {
+        background: #fafad200;
+    }
+    .grid-stack-item-content {
+        background-color: #18BC9C;
+        border-radius: 20px;
+    }
+</style>
+
+<body class="dotMatrix" style="background-color: grey;">
+    <div class="grid-stack"></div>
+</body>
+
+</html>
+<script type="text/javascript">
+    var items = [
+        { content: 'my first widget' }, // will default to location (0,0) and 1x1
+        { w: 2, content: '<h1>Hello</h1>' } // will be placed next at (1,0) and 2x1
+    ];
+    var grid = GridStack.init();
+    grid.load(items);
+</script>

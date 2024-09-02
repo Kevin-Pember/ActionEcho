@@ -18,6 +18,7 @@ let data = {
     recording: "background-color: OrangeRed; font-size: 15px;",
     error: "background-color: Crimson; font-size: 15px;"
   },
+  devClicks:0,
   actionsData: [],
   scheduledEvents: [],
   months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
@@ -273,6 +274,7 @@ let preferences = {
 }
 window.addEventListener('load', () => {
   ui = {
+    titleButton: document.getElementById('title'),
     backgroundDiv: document.getElementById('bgDiv'),
     recordStart: document.getElementById('recordStart'),
     recordStop: document.getElementById('recordStop'),
@@ -372,6 +374,12 @@ window.addEventListener('load', () => {
   ui.privacyButton.addEventListener("click", () => {
     chrome.runtime.sendMessage({ action: "link", url: "https://kevinpember.com/ActionEcho/privacy" }, (response) => { });
   })
+  ui.titleButton.addEventListener("click", () => {
+    ++data.devClicks;
+    if(data.devClicks == 7){
+      
+    }
+  })
   chrome.runtime.sendMessage({ action: "init" }, (response) => {
     for (let scheduled of response.lists) {
       ui.createTimeEntry(scheduled);
@@ -443,6 +451,9 @@ window.addEventListener('load', () => {
     }else if (preferences.data.sendActData == undefined){
       ui.setPage("settingsPage")
       data.setLog.sendActData = "true";
+    }
+    if(preferences.data.devMode != undefined && preferences.data.devMode ){
+
     }
   });
 });

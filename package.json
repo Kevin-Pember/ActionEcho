@@ -43,6 +43,7 @@
     "function-bind": "^1.1.2",
     "glob-to-regexp": "^0.4.1",
     "graceful-fs": "^4.2.11",
+    "gridstack": "^10.3.0",
     "has-flag": "^4.0.0",
     "hasown": "^2.0.0",
     "import-local": "^3.1.0",
