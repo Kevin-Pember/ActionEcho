@@ -11,6 +11,13 @@
   --semi-transparent: #000000c5;
   --neutralColor: #c4c4c480;
 }
+* {
+  color: var(--text);
+  background-color: transparent;
+  font-family: DM Sans;
+  padding: 0;
+  margin: 0;
+}
 /*
 Light Theme
   :root {

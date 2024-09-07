@@ -9,6 +9,7 @@
 </head>
 
 <body style="background-color: grey; height: 100%; width: 100%; top: 0px; left: 0px;">
+    <iframe id="unstyled" style="width: 500px; height: 300px; background-color: azure;"></iframe>
     <style>
         body {
             background-color: grey;
@@ -75,7 +76,7 @@
             <div id="areaIndicator" class="indicator"></div>
         </div>
         <div class="indicatorContainer">
-            <button id="clickableElem" class="Button" onclick="clickEvent()">click me!</button>
+            <button id="clickableElem" class="Button Thing1 thing2" onclick="clickEvent()">click me!</button>
             <div id="clickableIndicator" class="indicator"></div>
         </div>
         <div class="indicatorContainer">
@@ -331,8 +332,46 @@
         time: document.getElementById("timeInput"),
         url: document.getElementById("urlInput"),
         week: document.getElementById("weekInput"),
-    } 
+    }
     console.log(window.getComputedStyle(inputs.button));
+    console.log(window.getComputedStyle(inputs.checkbox));
+    console.log(window.getComputedStyle(inputs.date))
+    let setOperations = (obj1, obj2, op) => {
+        let keys = obj1.keys();
+        if(op = "intersection"){
+
+        }
+        for(let key of keys){
+
+        } 
+    }
+    let identifiers = []
+    let getIdentifiers = (elem) => {
+        if (elem.id != "") {
+            identifiers.push(elem.id)
+        }
+        for (let names of elem.classList) {
+            identifiers.push(names)
+        }
+        if(elem.children.length != 0){
+            for(let child of elem.children){
+                getIdentifiers(child)
+                console.log("recuring")
+            }
+        }
+    }
+    window.addEventListener("mouseup", () => {
+        let selection = window.getSelection()
+        let elements = selection.getRangeAt(0).cloneContents();
+        for (let elem of elements.children) {
+            getIdentifiers(elem)
+        }
+        console.log(elements.children)
+        console.log(identifiers)
+        //const s = new XMLSerializer();
+        //console.log("Extract",s.serializeToString(selection.getRangeAt(0).cloneContents()))
+        document.getElementById("unstyled").contentWindow.document.body.appendChild(elements)
+    })
 </script>
 
 </html>
