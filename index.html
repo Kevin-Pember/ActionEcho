@@ -333,41 +333,103 @@
         url: document.getElementById("urlInput"),
         week: document.getElementById("weekInput"),
     }
-    console.log(window.getComputedStyle(inputs.button));
-    console.log(window.getComputedStyle(inputs.checkbox));
-    console.log(window.getComputedStyle(inputs.date))
     let setOperations = (obj1, obj2, op) => {
-        let keys = obj1.keys();
-        if(op = "intersection"){
+        let keys = Object.keys(obj1);
+        
+        if (op == "intersection") {
 
+        } else if (op == "subtract") {
+            for (let key of keys) {
+                if (obj1[key] === obj2[key]) {
+                    console.log("removing stuff")
+                    obj1[key] = undefined;
+                    delete obj1[key]
+                }
+            }
+            console.log(obj1);
+            return obj1;
         }
-        for(let key of keys){
 
-        } 
     }
-    let identifiers = []
     let getIdentifiers = (elem) => {
+        identifiers = []
         if (elem.id != "") {
             identifiers.push(elem.id)
         }
         for (let names of elem.classList) {
             identifiers.push(names)
         }
-        if(elem.children.length != 0){
-            for(let child of elem.children){
+        if (elem.children.length != 0) {
+            for (let child of elem.children) {
                 getIdentifiers(child)
-                console.log("recuring")
             }
         }
+        return identifiers;
     }
+    let base = document.createElement("div");
+    document.body.appendChild(base)
+    let baseline = {...window.getComputedStyle(base)}
+    let styleMap = {}
+    let computeStyles = (arry) => {
+        let ids;
+        let compStyle;
+        console.log(baseline)
+        for (let elem of arry) {
+            console.log(elem)
+            //compStyle = setOperations({ ...window.getComputedStyle(elem) }, baseline, "subtract")
+            ids = getIdentifiers(elem)
+            console.log(ids)
+            for (let id of ids) {
+                if (styleMap[id] == undefined) {
+                    styleMap[id] = { ...compStyle }
+                }
+            }
+        }
+        console.log(baseline)
+    }
+    let elemInRange = (range) => {
+        const elementsInRange = [];
+        const walker = document.createTreeWalker(
+            range.commonAncestorContainer,
+            NodeFilter.SHOW_ELEMENT,
+            {
+                acceptNode(node) {
+                    const nodeRange = document.createRange();
+                    nodeRange.selectNode(node);
+                    // Check if the node is fully or partially inside the range
+                    if (range.compareBoundaryPoints(Range.END_TO_START, nodeRange) < 0 &&
+                        range.compareBoundaryPoints(Range.START_TO_END, nodeRange) > 0) {
+                        return NodeFilter.FILTER_ACCEPT;
+                    }
+                    return NodeFilter.FILTER_REJECT;
+                }
+            }
+        );
+        let currentNode = walker.currentNode;
+        while (currentNode) {
+            elementsInRange.push(currentNode);
+            currentNode = walker.nextNode();
+        }
+        return elementsInRange
+    }
+
+    // Usage: Get the current selection range and extract its CSS
+    const selection = window.getSelection();
+    if (selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const css = extractCssFromRange(range);
+        console.log(css);  // CSS for the range will be logged
+    }
+
     window.addEventListener("mouseup", () => {
         let selection = window.getSelection()
         let elements = selection.getRangeAt(0).cloneContents();
-        for (let elem of elements.children) {
-            getIdentifiers(elem)
-        }
+
+        computeStyles(elemInRange(selection.getRangeAt(0)))
+        /*for (let elem of elements.children) {
+            setOperations(JSON.parse(JSON.stringify(window.getComputedStyle(elem))),baseline, "subtract")
+        }*/
         console.log(elements.children)
-        console.log(identifiers)
         //const s = new XMLSerializer();
         //console.log("Extract",s.serializeToString(selection.getRangeAt(0).cloneContents()))
         document.getElementById("unstyled").contentWindow.document.body.appendChild(elements)
