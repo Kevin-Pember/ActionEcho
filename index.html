@@ -351,6 +351,21 @@
         }
 
     }
+    let base = document.createElement("div");
+    document.body.appendChild(base)
+    let baseline = {...window.getComputedStyle(base)}
+    let computeStyle = (elem) =>{
+        let compStyle = window.getComputedStyle(elem)
+        let compute = {};
+        for(let param of compStyle){
+            if(compStyle[param] !== baseline[param]){
+                compute[param] = compStyle[param];
+            }else{
+                console.log(`Match: ${param} - ${baseline[param]}`)
+            }
+        }
+        return compute;
+    }
     let getIdentifiers = (elem) => {
         identifiers = []
         if (elem.id != "") {
@@ -366,9 +381,8 @@
         }
         return identifiers;
     }
-    let base = document.createElement("div");
-    document.body.appendChild(base)
-    let baseline = {...window.getComputedStyle(base)}
+    
+    
     let styleMap = {}
     let computeStyles = (arry) => {
         let ids;
@@ -377,6 +391,8 @@
         for (let elem of arry) {
             console.log(elem)
             //compStyle = setOperations({ ...window.getComputedStyle(elem) }, baseline, "subtract")
+            compStyle = computeStyle(elem)
+            console.log(compStyle)
             ids = getIdentifiers(elem)
             console.log(ids)
             for (let id of ids) {
