@@ -333,75 +333,99 @@
         url: document.getElementById("urlInput"),
         week: document.getElementById("weekInput"),
     }
-    let setOperations = (obj1, obj2, op) => {
-        let keys = Object.keys(obj1);
-        
-        if (op == "intersection") {
-
-        } else if (op == "subtract") {
-            for (let key of keys) {
-                if (obj1[key] === obj2[key]) {
-                    console.log("removing stuff")
-                    obj1[key] = undefined;
-                    delete obj1[key]
-                }
+    let likewise = (obj1, obj2) => {
+        console.log(obj1)
+        let obj3 = {};
+        for (let key of Object.keys(obj1)) {
+            if (obj1[key] === obj2[key]) {
+                obj3[key] = obj1[key];
+                obj1[key] = undefined;
+                obj2[key] = undefined;
+                delete obj1[key]
+                delete obj2[key]
             }
-            console.log(obj1);
-            return obj1;
         }
+        return obj3;
 
     }
-    let base = document.createElement("div");
-    document.body.appendChild(base)
-    let baseline = {...window.getComputedStyle(base)}
-    let computeStyle = (elem) =>{
+    let baseline = { ...window.getComputedStyle(document.body) }
+    console.log(baseline)
+    let extractStyle = (elem) => {
         let compStyle = window.getComputedStyle(elem)
         let compute = {};
-        for(let param of compStyle){
-            if(compStyle[param] !== baseline[param]){
+        for (let param of compStyle) {
+            if (compStyle[param] !== baseline[param] && compStyle[param] != "auto" && compStyle[param] != "none" && compStyle[param] != "0px") {
                 compute[param] = compStyle[param];
-            }else{
-                console.log(`Match: ${param} - ${baseline[param]}`)
             }
         }
         return compute;
     }
+    baseline = extractStyle(document.body)
     let getIdentifiers = (elem) => {
         identifiers = []
-        if (elem.id != "") {
-            identifiers.push(elem.id)
-        }
+
         for (let names of elem.classList) {
-            identifiers.push(names)
+            identifiers.push("."+names)
         }
-        if (elem.children.length != 0) {
+        if (elem.id != "") {
+            identifiers.push("#"+elem.id)
+        }
+        /*if (elem.children.length != 0) {
             for (let child of elem.children) {
                 getIdentifiers(child)
             }
-        }
+        }*/
         return identifiers;
     }
+
+
     
-    
-    let styleMap = {}
-    let computeStyles = (arry) => {
-        let ids;
-        let compStyle;
+    let compileStyles = (arry) => {
+        let ids, compStyle, styleMap = {};
         console.log(baseline)
         for (let elem of arry) {
             console.log(elem)
-            //compStyle = setOperations({ ...window.getComputedStyle(elem) }, baseline, "subtract")
-            compStyle = computeStyle(elem)
-            console.log(compStyle)
+            compStyle = extractStyle(elem)
+            //console.log(compStyle)
             ids = getIdentifiers(elem)
-            console.log(ids)
-            for (let id of ids) {
+            for (let i = 0; i < ids.length; ++i) {
+                if (styleMap[ids[i]] != undefined) {
+                    styleMap[ids[i]].styles = likewise(styleMap[ids[i]].styles, compStyle)
+                    styleMap[ids[i]].elements.push({ ids: ids, elem: elem })
+                } else {
+                    styleMap[ids[i]] = {
+                        styles: { ...compStyle },
+                        elements: [{ ids: ids, elem: elem }]
+                    }
+                    break;
+                }
+            }
+            /*for (let id of ids) {
                 if (styleMap[id] == undefined) {
                     styleMap[id] = { ...compStyle }
                 }
-            }
+            }*/
         }
-        console.log(baseline)
+        return styleMap;
+    }
+    let createStyleElem = (styleMap) => {
+        let cssString = ""
+        Object.keys(styleMap).forEach(key => {
+            cssString += key + "{\n"
+            Object.keys(styleMap[key].styles).forEach(subKey => {
+                cssString += "\t" + subKey + ": "+styleMap[key].styles[subKey] + ";\n"
+            })
+            cssString +="}\n"
+        })
+        let style = document.createElement("style")
+        style.type = 'text/css';
+        if (style.styleSheet) {
+            // This is required for IE8 and below.
+            style.styleSheet.cssText = cssString;
+        } else {
+            style.appendChild(document.createTextNode(cssString));
+        }
+        return style;
     }
     let elemInRange = (range) => {
         const elementsInRange = [];
@@ -441,13 +465,14 @@
         let selection = window.getSelection()
         let elements = selection.getRangeAt(0).cloneContents();
 
-        computeStyles(elemInRange(selection.getRangeAt(0)))
+        
         /*for (let elem of elements.children) {
             setOperations(JSON.parse(JSON.stringify(window.getComputedStyle(elem))),baseline, "subtract")
         }*/
         console.log(elements.children)
         //const s = new XMLSerializer();
         //console.log("Extract",s.serializeToString(selection.getRangeAt(0).cloneContents()))
+        document.getElementById("unstyled").contentWindow.document.body.appendChild(createStyleElem(compileStyles(elemInRange(selection.getRangeAt(0)))))
         document.getElementById("unstyled").contentWindow.document.body.appendChild(elements)
     })
 </script>
