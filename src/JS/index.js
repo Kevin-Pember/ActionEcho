@@ -274,7 +274,7 @@ let preferences = {
 }
 window.addEventListener('load', () => {
   ui = {
-    titleButton: document.getElementById('title'),
+    titleButton: document.getElementById('Title'),
     backgroundDiv: document.getElementById('bgDiv'),
     recordStart: document.getElementById('recordStart'),
     recordStop: document.getElementById('recordStop'),
@@ -325,8 +325,11 @@ window.addEventListener('load', () => {
     }
   });
   ui.recordStart.addEventListener('click', () => {
-    console.log(`%cRecording: Starting recording`, data.console.recording);
-    chrome.runtime.sendMessage({ action: "startRecord" }, (response) => {
+    //console.log(`%cRecording: Starting recording`, data.console.recording);
+    // Make pop-out choice for recording an action or creating a widget
+    chrome.tabs.create({url:"../landingPage.html"})
+    //ui.getBool("bool", "Create a title or record an action")
+    /*chrome.runtime.sendMessage({ action: "startRecord" }, (response) => {
       if (response.log == "started") {
         chrome.storage.local.set({ recording: true }).then(() => {
           ui.setPage("recordPage");
@@ -335,7 +338,7 @@ window.addEventListener('load', () => {
         error.handle("Load a Site");
         throw new Error("Failed to start recording");
       }
-    });
+    });*/
   });
   ui.recordStop.addEventListener('click', () => {
     chrome.storage.local.set({ recording: false }).then(() => {

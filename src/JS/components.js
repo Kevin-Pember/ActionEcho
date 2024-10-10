@@ -385,14 +385,14 @@ class uniQuery extends basicElement {
                 </div>
                 <div style="height: 35px; display: flex; gap: 5px; position: absolute; right: 5px; bottom: 5px;">
                     <button-generic id="acceptButton" class="handlerButtons">
-                        <svg fill="none" viewBox="0 0 1324 1033" xmlns="http://www.w3.org/2000/svg">
+                        <svg name="Accept" fill="none" viewBox="0 0 1324 1033" xmlns="http://www.w3.org/2000/svg">
                             <path
                                 d="m1162 8.7868c-11.71-11.716-30.71-11.716-42.42-1e-5l-646.5 646.5-269.08-269.08c-11.715-11.716-30.71-11.716-42.426 0l-152.74 152.74c-11.716 11.716-11.716 30.711-1e-5 42.427l442.74 442.74c5.932 5.93 13.732 8.86 21.507 8.78 7.771 0.08 15.565-2.85 21.495-8.78l820.16-820.16c11.71-11.715 11.71-30.71 0-42.426l-152.74-152.74z"
                                 fill="var(--darkText)" />
                         </svg>
                     </button-generic>
                     <button-generic id="quitButton" class="handlerButtons">
-                        <svg fill="none" viewBox="0 0 1002 1002" xmlns="http://www.w3.org/2000/svg">
+                        <svg name="Reject" fill="none" viewBox="0 0 1002 1002" xmlns="http://www.w3.org/2000/svg">
                             <path d="M9.21265 797.872C-2.50317 809.588 -2.50317 828.583 9.21265 840.299L161.948 993.034C173.664 1004.75 192.659 1004.75 204.375 993.034L501.123 696.285L797.872 993.034C809.588 1004.75 828.583 1004.75 840.298 993.034L993.033 840.299C1004.75 828.583 1004.75 809.588 993.033 797.872L696.284 501.124L993.033 204.375C1004.75 192.659 1004.75 173.664 993.033 161.948L840.299 9.2132C828.583 -2.50238 809.588 -2.50238 797.872 9.2132L501.123 305.962L204.374 9.2132C192.658 -2.50238 173.664 -2.50238 161.948 9.2132L9.21265 161.948C-2.50317 173.664 -2.50317 192.659 9.21265 204.375L305.962 501.124L9.21265 797.872Z" fill="var(--darkText)" />
                         </svg>
                     </button-generic>

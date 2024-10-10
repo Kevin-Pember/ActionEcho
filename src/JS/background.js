@@ -1,8 +1,8 @@
-//import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.1/firebase-app.js'
-//import { getFirestore, addDoc, collection } from 'https://www.gstatic.com/firebasejs/10.12.1/firebase-firestore.js'
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.1/firebase-app.js'
+import { getFirestore, addDoc, collection } from 'https://www.gstatic.com/firebasejs/10.12.1/firebase-firestore.js'
 import { Config } from "./firebaseConfig.js"
-import { initializeApp } from 'firebase/app'
-import { getFirestore, addDoc, collection } from 'firebase/firestore'
+//import { initializeApp } from 'firebase/app'
+//import { getFirestore, addDoc, collection } from 'firebase/firestore'
 let firebase = {
   app: undefined,
   db: undefined
