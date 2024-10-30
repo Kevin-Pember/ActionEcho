@@ -276,7 +276,8 @@ window.addEventListener('load', () => {
   ui = {
     titleButton: document.getElementById('Title'),
     backgroundDiv: document.getElementById('bgDiv'),
-    recordStart: document.getElementById('recordStart'),
+    recordEcho: document.getElementById('recordEcho'),
+    choiceMenu: document.getElementById("choiceMenu"),
     recordStop: document.getElementById('recordStop'),
     editBack: document.getElementById('editBack'),
     editSave: document.getElementById('editSave'),
@@ -324,10 +325,17 @@ window.addEventListener('load', () => {
       ui.setPage("recordPage");
     }
   });
-  ui.recordStart.addEventListener('click', () => {
+  ui.recordEcho.addEventListener('click', () => {
+    //********chrome.tabs.create({url:"../landingPage.html"})
+    if(ui.choiceMenu.style.paddingBottom == "-63.5px"){
+      ui.choiceMenu.style.height = "0px"
+    }else{
+      ui.choiceMenu.style.height = "-63.5px";
+    }
+    
     //console.log(`%cRecording: Starting recording`, data.console.recording);
     // Make pop-out choice for recording an action or creating a widget
-    chrome.tabs.create({url:"../landingPage.html"})
+    
     //ui.getBool("bool", "Create a title or record an action")
     /*chrome.runtime.sendMessage({ action: "startRecord" }, (response) => {
       if (response.log == "started") {
@@ -438,7 +446,7 @@ window.addEventListener('load', () => {
             ui.tosPrompt();
           } else {
             preferences.signed = "false";
-            ui.recordStart.remove();
+            ui.recordEcho.remove();
           }
         });
       }

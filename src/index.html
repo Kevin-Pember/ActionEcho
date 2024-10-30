@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="public/styling.css">
     <script type="module" src="JS/index.js"></script>
 </head>
+
 <body id="bodyID">
     <style>
         * {
@@ -136,14 +137,36 @@
         </div>
         <div style="display: grid; grid-template-rows: calc(100% - 50px) 50px;">
             <h1 id="Title" class="textBorder">ActionEcho</h1>
-            <button-generic id="recordStart"
-                style="background-color: var(--secondary); aspect-ratio: 1; height: 45px; padding: 0; display: grid; justify-items: center; align-items: center; position: relative;">
-                <svg style="height: 30px" ; fill="none" viewBox="0 0 499 499" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                        d="m190.95 486.2c0 7.031 5.7 12.732 12.732 12.732h91.673c7.031 0 12.732-5.701 12.732-12.733v-178.11h178.11c7.032 0 12.732-5.701 12.732-12.732v-91.673c0-7.031-5.701-12.732-12.732-12.732h-178.11v-178.11c0-7.0319-5.701-12.732-12.733-12.732l-91.672-2.18e-4c-7.031 7.3e-5 -12.732 5.7006-12.732 12.732v178.11h-178.11c-7.0318 0-12.732 5.7-12.732 12.732l-7.7e-5 91.673c0 7.031 5.7004 12.732 12.732 12.732h178.11v178.11z"
-                        fill="var(--darkText)" />
-                </svg>
-            </button-generic>
+            <div>
+                <div id="choiceMenu"
+                    style="right: 5px; bottom: 5px; position: absolute; grid-auto-flow: column; gap:5px; display: grid; justify-items: center; align-items: center;">
+                    <button-generic id="createWidget" title="Create Widget"
+                        style="background-color: var(--secondary); width: 45px; height: 45px; padding: 0; display: grid; justify-items: center; align-items: center; position: relative;">
+                        <svg style="height: 35px" fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 502 450">
+                            <path fill="var(--darkText)"
+                                d="M0 248a46 46 0 0 1 46.2-46h155.7a46 46 0 0 1 46.2 46v155.8a46 46 0 0 1-46.2 46.2H46.2A46 46 0 0 1 0 403.8zM361.9 25.2a25.2 25.2 0 0 1 50.5 0v151.5a25.2 25.2 0 0 1-50.5 0z" />
+                            <path fill="var(--darkText)"
+                                d="M311.4 126.2a25.2 25.2 0 0 1 0-50.5h151.4a25.2 25.2 0 0 1 0 50.5z" />
+                            <path fill="var(--darkText)" fill-rule="evenodd" clip-rule="evenodd"
+                                d="M455.8 259.6H317.3a6 6 0 0 0-5.8 5.8v138.4c0 3.2 2.6 5.8 5.8 5.8h138.5c3.2 0 5.7-2.6 5.7-5.8V265.4c0-3.2-2.5-5.8-5.7-5.8m-138.5-40.4a46 46 0 0 0-46.1 46.2v138.4a46 46 0 0 0 46.1 46.2h138.5a46 46 0 0 0 46.1-46.2V265.4a46 46 0 0 0-46.1-46.2z" />
+                            <path fill="var(--darkText)"
+                                d="M90 68a46 46 0 0 1 46.2-46h65.7a46 46 0 0 1 46.2 46v67a46 46 0 0 1-46.2 46.2h-65.7A46 46 0 0 1 90 135z" />
+                        </svg>
+                    </button-generic>
+                    <button-generic id="recordEcho" title="Record Echo"
+                        style="background-color: var(--secondary); width: 45px; height: 45px; padding: 0; display: grid; justify-items: center; align-items: center; position: relative;">
+                        <svg style="height: 45px" viewBox="0 0 632 426" xmlns="http://www.w3.org/2000/svg">
+                            <path fill="var(--darkText)" d="m263.4 248.09c-2.123-7.152 4.533-13.808 11.685-11.685l160.44 47.617c6.83 2.027 9.01 10.619 3.972 15.657l-112.82 112.82c-5.038 5.038-13.63 2.858-15.657-3.972l-47.617-160.44z" />
+                            <path fill="var(--darkText)" d="m365.6 373.7c-4.906 4.779-46.266 46.138-38.924 38.797l112.82-112.82c7.341-7.341-33.685 33.685-38.671 38.798l46.523 46.523c7.341 7.341 7.341 19.243 0 26.584l-8.64 8.64c-7.341 7.341-19.243 7.341-26.584 0l-46.523-46.523z" />
+                            <path fill="var(--darkText)" d="m592.42 141.63c9.733 8.583 24.582 7.651 33.166-2.082 8.583-9.733 7.651-24.582-2.082-33.166-77.516-68.359-177.22-106.19-280.42-106.38-103.2-0.18936-202.81 37.281-280.13 105.4-9.7372 8.579-10.676 23.427-2.097 33.164 8.5791 9.737 23.427 10.676 33.164 2.097 68.695-60.525 157.22-93.837 248.97-93.669 91.759 0.1683 180.45 33.81 249.42 94.634z" />
+                            <path fill="var(--darkText)" d="m505.5 230.72c9.969 8.309 24.786 6.964 33.095-3.005s6.963-24.786-3.006-33.095c-53.736-44.788-121.41-69.395-191.27-69.523-69.863-0.129-137.49 24.233-191.11 68.867-0.44 0.366-0.863 0.745-1.269 1.136l33.336 33.336c44.817-36.526 100.96-56.451 158.96-56.344 58.873 0.108 115.94 20.847 161.27 58.628z" />
+                            <path fill="var(--darkText)" d="m75.721 211.24c0-13.939 11.3-25.24 25.241-25.24 13.939 0 25.24 11.301 25.24 25.24v151.44c0 13.94-11.301 25.24-25.24 25.24-13.94 0-25.241-11.3-25.241-25.24v-151.44z" />
+                            <path fill="var(--darkText)" d="m25.24 312.2c-13.94 0-25.24-11.301-25.24-25.24 0-13.94 11.3-25.241 25.24-25.241h151.44c13.94 0 25.24 11.301 25.24 25.241 0 13.939-11.3 25.24-25.24 25.24h-151.44z" />
+                        </svg>
+                            
+                    </button-generic>
+                </div>
+            </div>
         </div>
         <button-generic id="settingsButton" pad="off"
             style="height:35px; position:absolute; left: 5px; bottom: 5px; background:var(--secondary); aspect-ratio: 1;">
@@ -169,12 +192,16 @@
         </button-generic>
         <h3 style="margin-left: 10px; font-size: 30px; font-weight: 500; display: flex; place-items: center;"
             class="textBorder">Settings</h3>
-        <label title="Send Action Diagnostic Data" style="display: flex; flex-direction: row; flex-wrap: wrap; align-items: center;">
-            <toggle-button  id="firebaseToggle" style="position: relative; width:70px; height: 35px; display: block; margin:5px;"></toggle-button>
+        <label title="Send Action Diagnostic Data"
+            style="display: flex; flex-direction: row; flex-wrap: wrap; align-items: center;">
+            <toggle-button id="firebaseToggle"
+                style="position: relative; width:70px; height: 35px; display: block; margin:5px;"></toggle-button>
             <h2 style="width:fit-content; ">Send Diagnostic Data</h2>
-            
+
         </label>
-        <button id="privacyPolicyButton" style="height: fit-content; width: fit-content; padding: 10px; position: absolute; left: 5px; bottom: 5px;">Privacy Policy</button>
+        <button id="privacyPolicyButton"
+            style="height: fit-content; width: fit-content; padding: 10px; position: absolute; left: 5px; bottom: 5px;">Privacy
+            Policy</button>
     </div>
     <div id="recordPage" class="contentPage hiddenPage" style="display: grid; grid-auto-flow: row;  justify-items: center;
     align-items: center; height: 150px; width: 260px;">
