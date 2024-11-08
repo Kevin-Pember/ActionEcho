@@ -327,17 +327,12 @@ window.addEventListener('load', () => {
   });
   ui.recordEcho.addEventListener('click', () => {
     //********chrome.tabs.create({url:"../landingPage.html"})
-    if(ui.choiceMenu.style.paddingBottom == "-63.5px"){
-      ui.choiceMenu.style.height = "0px"
-    }else{
-      ui.choiceMenu.style.height = "-63.5px";
-    }
     
     //console.log(`%cRecording: Starting recording`, data.console.recording);
     // Make pop-out choice for recording an action or creating a widget
     
     //ui.getBool("bool", "Create a title or record an action")
-    /*chrome.runtime.sendMessage({ action: "startRecord" }, (response) => {
+    chrome.runtime.sendMessage({ action: "startRecord" }, (response) => {
       if (response.log == "started") {
         chrome.storage.local.set({ recording: true }).then(() => {
           ui.setPage("recordPage");
@@ -346,7 +341,7 @@ window.addEventListener('load', () => {
         error.handle("Load a Site");
         throw new Error("Failed to start recording");
       }
-    });*/
+    });
   });
   ui.recordStop.addEventListener('click', () => {
     chrome.storage.local.set({ recording: false }).then(() => {

@@ -1,42 +1,33 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,800;9..40,900&display=swap');
+:root {
+  --primary: #131313;
+  --secondary: #3d3d3d;
+  --accentBorder: #4e4e4e;
+  --accent: #585858;
+  --text: #ffffff;
+  --darkText: #e6e6e6;
+  --translucent: #00000033;
+  --semi-transparent: #000000c5;
+  --neutralColor: #c4c4c480;
+}
 .actionEchoRecordIcon {
     position: relative;
+    font-family: DM Sans;
+    color: var(--darkText);
     display: inline-block;
-    border: 1px solid rgba(0, 0, 0, 0.646);
+    border: 1px solid var(--accentBorder);
     position:fixed; 
     display: grid; 
-    justify-content: center; 
     justify-items: center;
     align-items: center;
-    background-color: #0e0e0e75; 
-    height: 85px; 
-    width:85px; 
+    background-color: var(--primary); 
     top: 10px; 
     right:10px; 
-    z-index: -1000; 
-    backdrop-filter: blur(10px);
+    z-index: -1000;
     overflow:hidden;
     transition: right 0.25s ease;
-    right: -100px
   }
   
-  .actionEchoRecordIcon .actionEchoToolTip {
-    visibility: hidden;
-    padding: 3px 5px;
-    background-color: tomato;
-    color: #fff;
-    text-align: center;
-    border: 1px solid #c94e38;
-    transition: position 0.25s ease;
-    position: absolute;
-    z-index: 1;
-    width:100%;
-  }
-  
-  .actionEchoRecordIcon:hover .actionEchoToolTip {
-    position: relative;
-    visibility: visible;
-
-  }
   :root{
 
   }
