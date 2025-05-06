@@ -8,155 +8,7 @@ let firebase = {
   db: undefined
 }
 let errorLog = []
-let data = {
-  console: {
-    clock: "background-color: PaleVioletRed; font-size: 15px;",
-    firebase: "background-color: Coral; font-size: 15px;",
-    recording: "background-color: DarkOrange; font-size: 15px;",
-    sites: "background-color: RebeccaPurple; font-size: 15px;",
-    error: "background-color: FireBrick; font-size: 15px;",
-    index: "background-color: SeaGreen; font-size: 15px;",
-  },
-  current: {
-    actionSet: undefined,
-    port: undefined,
-    tab: undefined,
-    actionPacket: undefined,
-    editor: undefined,
-  },
-  portArray: [],
-  tabs: [],
-  currentEditor: undefined,
-  siteCache: undefined,
-  uiLink: undefined,
-  promiseTabs: {
-    tabs: [],
-    push: (promise) => {
-      data.promiseTabs.tabs.push(promise);
-    },
-    resolveTarget: (tab) => {
-      console.log(`%cSite_Manager: Checking this tab`, data.console.sites, tab)
-      console.log(`%cSite_Manager: Against these Promises`, data.console.sites, data.promiseTabs.tabs)
-      let idx;
-      let target = data.promiseTabs.tabs.find((promiseTab, index) => {
-        if (tab.url === promiseTab.url || promiseTab.url === tab.pendingUrl) {
-          idx = index;
-          return true;
-        }
-      })
-      if (target) {
-        let value = { tabId: tab.id, url: (tab.url !== "") ? tab.url : tab.pendingUrl }
-        target.resolve(value);
-        data.current.tab = value;
-        data.promiseTabs.tabs.splice(idx, 1);
-      }
-    }
-  },
-  openTab: (url) => {
-    console.log(`%cSite_Manager: Loading Url in New Tab, ${url}`, data.console.sites)
-    return new Promise((resolve, reject) => {
-      let match = data.portArray.find((port) => {
-        return port.name === url;
-      });
-      if (match) {
-        chrome.tabs.update(match.tabId, { active: true }, (tab) => { });
-        resolve(match);
-      } else {
-        chrome.tabs.create({ url: url, active: true }, function (tab) {
-        });
-        data.promiseTabs.push({ url: url, resolve: resolve, reject: reject });
-      }
-    });
-  },
-  openURL: (port, url) => {
-    console.log(`%cSite_Manager: Loading Url in Current Tab, ${url}`, data.console.sites)
-    return new Promise((resolve, reject) => {
-      port.postMessage({ action: "setURL", url: url });
-      data.promiseTabs.push({ url: url, resolve: resolve, reject: reject });
-    });
-  },
-  addTab: (value) => {
-    data.promiseTabs.resolveTarget(value);
-    data.tabs.push(value);
-  },
-  /*disconnectPort: (port) => {
-    port.disconnected = true;
-    let index = data.portArray.findIndex((test) => test.tabId === port.tabId);
-    data.portArray.splice(index, 1);
-    if (data.portArray.length === 0) {
-      data.current.port = undefined;
-    } else if (data.current.port === port) {
-      recorder.setCurrentPort(data.portArray[index]);
-    }
-    if (port.editorActive) {
-      data.closeEditor();
-    }
-    if (!port.disconnected) {
-      port.disconnect();
-    }
-  },*/
-  generateRandomString: (length) => {
-    let string = "";
-    let len = length ? length : 5;
-    for (let i = 0; i < len; i++) {
-      string += String.fromCharCode(Math.floor(47 + Math.random() * 79))
-    }
-    return string;
-  },
-  anonymizeAction: (action) => {
-    action.name += data.generateRandomString();
-    for (let act of action.actions) {
-      if (act.type === "input") {
-        act.text = data.generateRandomString();
-      }
-    }
-  }
-}
-let runner = {
-  templates: {
-    actionPacket: {
-      v: 1.0,
-      site: undefined,
-      action: "actionPacket",
-      actions: [],
-    },
-  },
-  runActions: async (actions) => {
-    let packets = runner.getPackets(actions);
-    let url;
-    for (let packet of packets) {
-      url = packet.site;
-      if (url.format === "url") {
-        if (data.current.port.name != url.url) {
-          await data.openURL(data.current.port, url.url)
-        }
-      } else {
-        await data.openTab(url.url);
-      }
-      //data.current.port.postMessage(packet);
-      chrome.scripting.executeScript({ target: { tabId: data.current.tab.tabId }, func: runner.actionRunnerScript, args: [packet] });
-    }
-  },
-  getUrls: (set) => {
-    let urls = [];
-    for (let action of set) {
-      if (action.type === "site" && !urls.includes(action.url)) {
-        urls.push(action.url);
-      }
-    }
-    return urls;
-  },
-  getPackets: (actions) => {
-    let urls = actions.filter((action) => action.type === "site");
-    let packets = [];
-    urls.forEach((url, index) => {
-      let actionPacket = structuredClone(runner.templates.actionPacket);
-      actionPacket.actions = actions.slice(actions.indexOf(url) + 1, index < urls.length - 1 ? actions.indexOf(urls[index + 1]) : actions.length);
-      actionPacket.site = url;
-      packets.push(actionPacket);
-    });
-    return packets;
-  },
+let scripts = {
   actionRunnerScript: async (echoActions) => {
     console.log("running action runner script")
     console.log(echoActions)
@@ -328,275 +180,6 @@ let runner = {
     }
 
 
-  }
-}
-let recorder = {
-  actionSet: undefined,
-  logBuffer: [],
-  recording: false,
-  v: 1.0,
-  templates: {
-    actionSet: {
-      v: 1.0,
-      name: "",
-      actions: [],
-    },
-    site: {
-      type: "site",
-      url: "",
-      format: "",
-    },
-    textAction: {
-      type: "input",
-      text: "",
-    }
-  },
-  data: {
-    site: {},
-    textAction: {
-      type: "input",
-      text: "",
-    },
-    caret: [],
-    isSelection: false,
-    edit: [],
-    redo: [],
-    inputs: [],
-
-  },
-  compile: (logList) => {
-    recorder.actionSet = { ...recorder.templates.actionSet }
-    for (let log of logList) {
-      switch (log.type) {
-        case "site":
-          recorder.data.caret = []
-          recorder.data.isSelection = false;
-          recorder.actionSet.actions.push(log)
-          break;
-        default:
-          recorder.parseLog(log)
-          break;
-      }
-    }
-    return recorder.actionSet;
-  },
-  startRecord: (reply) => {
-    if (data.current.tab !== undefined){
-      recorder.logBuffer = []
-      recorder.recording = true;
-      //recorder.data.actionSet = structuredClone(recorder.templates.actionSet);
-      /*let site = structuredClone(recorder.templates.site)
-      site.url = data.current.tab.url;
-      site.format = "tab"*/
-      if (data.current.tab.url != "") {
-        recorder.cacheSite("tab", data.current.tab.url)
-      }
-
-      recorder.logReport = new Promise(async (resolve) => {
-        await chrome.scripting.insertCSS({
-          target: { tabId: data.current.tab.tabId },
-          files: ['public/siteStyle.css'],
-        });
-        chrome.scripting.executeScript({ target: { tabId: data.current.tab.tabId }, func: recorder.startRecordScript }).then((r) => {
-          recorder.logBuffer = recorder.logBuffer.concat(r[0].result)
-          resolve();
-        })
-      });
-      //recorder.data.actionSet.actions.push(recorder.data.site)
-
-      //data.current.port
-      //data.current.port.postMessage({ action: "startRecord" });
-      reply({ log: "started" });
-    } else {
-      reply({ log: "noPort" });
-    }
-
-  },
-  stopRecord: async (reply) => {
-    //recorder.data.actionSet.log = "finished";
-    recorder.recording = false;
-    if (reply != undefined) {
-      //data.current.port.postMessage({ action: "stopRecord" });
-      chrome.scripting.executeScript({ target: { tabId: data.current.tab.tabId }, func: recorder.stopRecordScript })
-      await recorder.logReport;
-      if (recorder.logBuffer.length > 1) {
-        recorder.compile(recorder.logBuffer)
-        reply(recorder.actionSet);
-        console.log("%cBRecording: resulting Action:", data.console.recording, recorder.actionSet)
-      } else {
-        reply({ log: "emptyActions" })
-      }
-
-    }
-    recorder.data.inputs = []
-    recorder.data.currentTextAction = {
-      type: "input",
-      text: "",
-    }
-    //recorder.data.actionSet = structuredClone(recorder.templates.actionSet);
-  },
-  cacheSite: (type, location) => {
-    let site = structuredClone(recorder.templates.site);
-    site.url = location;
-    if (type === "newUrl" && recorder.recording && recorder.logBuffer.length > 0) {
-      site.format = "url";
-    } else {
-      site.format = "tab";
-    }
-    if (recorder.recording) {
-      recorder.logBuffer.push(site);
-    }
-
-  },
-  /*postCacheSite: () => {
-    if (recorder.data.site) {
-      //console.log(`%c Adding Site: ${recorder.data.site}`, "font-size: 20px; background-color: green;")
-      let urls = runner.getUrls(recorder.data.actionSet.actions);
-      if (urls[urls.length - 1] != recorder.data.site.url) {
-        recorder.data.actionSet.actions.push(recorder.data.site);
-      }
-      recorder.data.site = undefined;
-    }
-  },*/
-  /*setCurrentPort: (port) => {
-    if (recorder.recording) {
-      if (data.current.port && data.current.port.disconnected === false) {
-        data.current.port.postMessage({ action: "stopRecord" });
-      }
-      port.postMessage({ action: "startRecord" });
-      recorder.data.inputs = []
-      recorder.data.caret = []
-      recorder.data.isSelection = false;
-      recorder.data.edit = []
-      recorder.data.redo = []
-    }
-    data.current.port = port;
-  },*/
-
-  parseLog: (msg) => {
-    //recorder.postCacheSite();
-    /*if(recorder.data.site && !recorder.urlLoad.loading){
-      recorder.data.actionSet.actions.push(recorder.data.site);
-      recorder.data.site = undefined;
-    }*/
-    msg.action = undefined;
-    switch (msg.type) {
-      case "click":
-        recorder.actionSet.actions.push(msg);
-        if (msg.textContext != undefined) {
-
-          let exists = recorder.data.inputs.find((input) => input.specifier === msg.specifier);
-          if (!exists) {
-            let input = {
-              entry: structuredClone(recorder.templates.textAction),
-              specifier: msg.specifier,
-              edit: [],
-              redo: [],
-            }
-            if (msg.textContext != "") {
-              input.entry.text = msg.textContext
-            }
-            recorder.data.inputs.push(input);
-            recorder.actionSet.actions.push(input.entry);
-            recorder.data.caret = msg.caret.split("-").map((num) => {
-              return Number(num);
-            })
-            recorder.data.isSelection = !(recorder.data.caret[0] === recorder.data.caret[1]);
-            exists = input;
-          } else {
-            msg.textContext = undefined;
-          }
-          recorder.data.currentTextAction = exists.entry;
-          recorder.data.redo = exists.redo;
-          recorder.data.edit = exists.edit;
-
-        }
-
-        break;
-      case "input":
-        recorder.inputHandler(msg.key, msg.selection.split("-"));
-        recorder.lastTextLog = msg;
-        break;
-      case "key":
-        switch (msg.key) {
-          case "undo":
-            if (recorder.data.edit.length > 0) {
-              recorder.data.redo.push(recorder.data.currentTextAction.text);
-              recorder.data.currentTextAction.text = recorder.data.edit.pop();
-            }
-            break;
-          case "redo":
-            if (recorder.data.redo.length > 0) {
-              recorder.data.edit.push(recorder.data.currentTextAction.text);
-              recorder.data.currentTextAction.text = recorder.data.redo.pop();
-            }
-            break;
-          case "paste":
-            recorder.inputHandler(msg.text, msg.selection.split("-"));
-            break;
-          case "cut":
-            let range = msg.selection.split("-");
-            recorder.data.edit.push(recorder.data.currentTextAction.text);
-            recorder.data.currentTextAction.text = recorder.data.currentTextAction.text.substring(0, range[0]) + recorder.data.currentTextAction.text.substring(range[1], recorder.data.currentTextAction.text.length);
-            break;
-          case "all":
-            recorder.data.caret[0] = 0
-            recorder.data.caret[1] = recorder.data.currentTextAction.text.length
-            break;
-          case "Enter":
-            //recorder.data.actionSet.actions.push(msg);
-            break;
-          case "Backspace":
-            let text = recorder.data.currentTextAction.text
-            recorder.data.currentTextAction.text = text.substring(0, recorder.data.caret[0] - 1) + text.substring(recorder.data.caret[1])
-            recorder.data.caret = [recorder.data.caret[0] - 1, recorder.data.caret[0] - 1]
-            break;
-          case "ArrowLeft":
-            if (!recorder.data.isSelection) {
-              recorder.data.caret[0] -= 1
-            }
-            recorder.data.caret[1] = recorder.data.caret[0]
-            break;
-          case "ArrowRight":
-            if (!recorder.data.isSelection) {
-              recorder.data.caret[1] += 1
-            }
-            recorder.data.caret[0] = recorder.data.caret[1]
-            break;
-          default:
-          //recorder.data.actionSet.actions.push(msg);
-        }
-        break;
-      case "error":
-        if (msg.level === "end") {
-          chrome.storage.local.set({ recording: false })
-          recorder.stopRecord()
-        }
-
-        errorLog.push(msg.message)
-        break;
-    }
-    /*if (recorder.urlLoad.loading && recorder.data.site) {
-      recorder.data.site.autoLoad = true;
-      recorder.data.actionSet.actions.push(recorder.data.site);
-      recorder.data.site = undefined;
-    }*/
-
-  },
-  inputHandler: (key) => {
-    let text = recorder.data.currentTextAction.text;
-    let keyLength = key.length
-    recorder.data.edit.push(recorder.data.currentTextAction.text);
-    recorder.data.currentTextAction.text = text.substring(0, recorder.data.caret[0]) + key + text.substring(recorder.data.caret[1]);
-    recorder.data.caret = [recorder.data.caret[0] + keyLength, recorder.data.caret[0] + keyLength]
-  },
-  clock: async () => {
-    let tic = new Promise((r) => {
-      window.addEventListener("beforeunload", () => {
-        r("Unload Detected")
-      })
-    })
-    return await tic
   },
   startRecordScript: async () => {
     let logger = {
@@ -836,6 +419,427 @@ let recorder = {
     document.actionEchoRecording();
   }
 }
+let data = {
+  console: {
+    clock: "background-color: PaleVioletRed; font-size: 15px;",
+    firebase: "background-color: Coral; font-size: 15px;",
+    recording: "background-color: DarkOrange; font-size: 15px;",
+    sites: "background-color: RebeccaPurple; font-size: 15px;",
+    error: "background-color: FireBrick; font-size: 15px;",
+    index: "background-color: SeaGreen; font-size: 15px;",
+  },
+  current: {
+    actionSet: undefined,
+    port: undefined,
+    tab: undefined,
+    actionPacket: undefined,
+    editor: undefined,
+  },
+  portArray: [],
+  tabs: [],
+  currentEditor: undefined,
+  siteCache: undefined,
+  uiLink: undefined,
+  promiseTabs: {
+    tabs: [],
+    push: (promise) => {
+      data.promiseTabs.tabs.push(promise);
+    },
+    resolveTarget: (tab) => {
+      console.log(`%cSite_Manager: Checking this tab`, data.console.sites, tab)
+      console.log(`%cSite_Manager: Against these Promises`, data.console.sites, data.promiseTabs.tabs)
+      let idx;
+      let target = data.promiseTabs.tabs.find((promiseTab, index) => {
+        if (tab.url === promiseTab.url || promiseTab.url === tab.pendingUrl) {
+          idx = index;
+          return true;
+        }
+      })
+      if (target) {
+        let value = { tabId: tab.id, url: (tab.url !== "") ? tab.url : tab.pendingUrl }
+        target.resolve(value);
+        data.current.tab = value;
+        data.promiseTabs.tabs.splice(idx, 1);
+      }
+    }
+  },
+  openTab: (url) => {
+    console.log(`%cSite_Manager: Loading Url in New Tab, ${url}`, data.console.sites)
+    return new Promise((resolve, reject) => {
+      let match = data.portArray.find((port) => {
+        return port.name === url;
+      });
+      if (match) {
+        chrome.tabs.update(match.tabId, { active: true }, (tab) => { });
+        resolve(match);
+      } else {
+        chrome.tabs.create({ url: url, active: true }, function (tab) {
+        });
+        data.promiseTabs.push({ url: url, resolve: resolve, reject: reject });
+      }
+    });
+  },
+  openURL: (port, url) => {
+    console.log(`%cSite_Manager: Loading Url in Current Tab, ${url}`, data.console.sites)
+    return new Promise((resolve, reject) => {
+      port.postMessage({ action: "setURL", url: url });
+      data.promiseTabs.push({ url: url, resolve: resolve, reject: reject });
+    });
+  },
+  addTab: (value) => {
+    data.promiseTabs.resolveTarget(value);
+    data.tabs.push(value);
+  },
+  /*disconnectPort: (port) => {
+    port.disconnected = true;
+    let index = data.portArray.findIndex((test) => test.tabId === port.tabId);
+    data.portArray.splice(index, 1);
+    if (data.portArray.length === 0) {
+      data.current.port = undefined;
+    } else if (data.current.port === port) {
+      recorder.setCurrentPort(data.portArray[index]);
+    }
+    if (port.editorActive) {
+      data.closeEditor();
+    }
+    if (!port.disconnected) {
+      port.disconnect();
+    }
+  },*/
+  generateRandomString: (length) => {
+    let string = "";
+    let len = length ? length : 5;
+    for (let i = 0; i < len; i++) {
+      string += String.fromCharCode(Math.floor(47 + Math.random() * 79))
+    }
+    return string;
+  },
+  anonymizeAction: (action) => {
+    action.name += data.generateRandomString();
+    for (let act of action.actions) {
+      if (act.type === "input") {
+        act.text = data.generateRandomString();
+      }
+    }
+  }
+}
+let runner = {
+  templates: {
+    actionPacket: {
+      v: 1.0,
+      site: undefined,
+      action: "actionPacket",
+      actions: [],
+    },
+  },
+  runActions: async (actions) => {
+    let packets = runner.getPackets(actions);
+    let url;
+    for (let packet of packets) {
+      url = packet.site;
+      if (url.format === "url") {
+        if (data.current.port.name != url.url) {
+          await data.openURL(data.current.port, url.url)
+        }
+      } else {
+        await data.openTab(url.url);
+      }
+      //data.current.port.postMessage(packet);
+      chrome.scripting.executeScript({ target: { tabId: data.current.tab.tabId }, func: scripts.actionRunnerScript, args: [packet] });
+    }
+  },
+  getUrls: (set) => {
+    let urls = [];
+    for (let action of set) {
+      if (action.type === "site" && !urls.includes(action.url)) {
+        urls.push(action.url);
+      }
+    }
+    return urls;
+  },
+  getPackets: (actions) => {
+    let urls = actions.filter((action) => action.type === "site");
+    let packets = [];
+    urls.forEach((url, index) => {
+      let actionPacket = structuredClone(runner.templates.actionPacket);
+      actionPacket.actions = actions.slice(actions.indexOf(url) + 1, index < urls.length - 1 ? actions.indexOf(urls[index + 1]) : actions.length);
+      actionPacket.site = url;
+      packets.push(actionPacket);
+    });
+    return packets;
+  },
+  
+}
+let recorder = {
+  actionSet: undefined,
+  logBuffer: [],
+  recording: false,
+  v: 1.0,
+  templates: {
+    actionSet: {
+      v: 1.0,
+      name: "",
+      actions: [],
+    },
+    site: {
+      type: "site",
+      url: "",
+      format: "",
+    },
+    textAction: {
+      type: "input",
+      text: "",
+    }
+  },
+  data: {
+    site: {},
+    textAction: {
+      type: "input",
+      text: "",
+    },
+    caret: [],
+    isSelection: false,
+    edit: [],
+    redo: [],
+    inputs: [],
+
+  },
+  compile: (logList) => {
+    recorder.actionSet = { ...recorder.templates.actionSet }
+    for (let log of logList) {
+      switch (log.type) {
+        case "site":
+          recorder.data.caret = []
+          recorder.data.isSelection = false;
+          recorder.actionSet.actions.push(log)
+          break;
+        default:
+          recorder.parseLog(log)
+          break;
+      }
+    }
+    return recorder.actionSet;
+  },
+  startRecord: (reply) => {
+    if (data.current.tab !== undefined){
+      recorder.logBuffer = []
+      recorder.recording = true;
+      //recorder.data.actionSet = structuredClone(recorder.templates.actionSet);
+      /*let site = structuredClone(recorder.templates.site)
+      site.url = data.current.tab.url;
+      site.format = "tab"*/
+      if (data.current.tab.url != "") {
+        recorder.cacheSite("tab", data.current.tab.url)
+      }
+
+      recorder.logReport = new Promise(async (resolve) => {
+        await chrome.scripting.insertCSS({
+          target: { tabId: data.current.tab.tabId },
+          files: ['public/siteStyle.css'],
+        });
+        chrome.scripting.executeScript({ target: { tabId: data.current.tab.tabId }, func: scripts.startRecordScript }).then((r) => {
+          recorder.logBuffer = recorder.logBuffer.concat(r[0].result)
+          resolve();
+        })
+      });
+      //recorder.data.actionSet.actions.push(recorder.data.site)
+
+      //data.current.port
+      //data.current.port.postMessage({ action: "startRecord" });
+      reply({ log: "started" });
+    } else {
+      reply({ log: "noPort" });
+    }
+
+  },
+  stopRecord: async (reply) => {
+    //recorder.data.actionSet.log = "finished";
+    recorder.recording = false;
+    if (reply != undefined) {
+      //data.current.port.postMessage({ action: "stopRecord" });
+      chrome.scripting.executeScript({ target: { tabId: data.current.tab.tabId }, func: scripts.stopRecordScript })
+      await recorder.logReport;
+      if (recorder.logBuffer.length > 1) {
+        recorder.compile(recorder.logBuffer)
+        reply(recorder.actionSet);
+        console.log("%cBRecording: resulting Action:", data.console.recording, recorder.actionSet)
+      } else {
+        reply({ log: "emptyActions" })
+      }
+
+    }
+    recorder.data.inputs = []
+    recorder.data.currentTextAction = {
+      type: "input",
+      text: "",
+    }
+    //recorder.data.actionSet = structuredClone(recorder.templates.actionSet);
+  },
+  cacheSite: (type, location) => {
+    let site = structuredClone(recorder.templates.site);
+    site.url = location;
+    if (type === "newUrl" && recorder.recording && recorder.logBuffer.length > 0) {
+      site.format = "url";
+    } else {
+      site.format = "tab";
+    }
+    if (recorder.recording) {
+      recorder.logBuffer.push(site);
+    }
+
+  },
+  /*postCacheSite: () => {
+    if (recorder.data.site) {
+      //console.log(`%c Adding Site: ${recorder.data.site}`, "font-size: 20px; background-color: green;")
+      let urls = runner.getUrls(recorder.data.actionSet.actions);
+      if (urls[urls.length - 1] != recorder.data.site.url) {
+        recorder.data.actionSet.actions.push(recorder.data.site);
+      }
+      recorder.data.site = undefined;
+    }
+  },*/
+  /*setCurrentPort: (port) => {
+    if (recorder.recording) {
+      if (data.current.port && data.current.port.disconnected === false) {
+        data.current.port.postMessage({ action: "stopRecord" });
+      }
+      port.postMessage({ action: "startRecord" });
+      recorder.data.inputs = []
+      recorder.data.caret = []
+      recorder.data.isSelection = false;
+      recorder.data.edit = []
+      recorder.data.redo = []
+    }
+    data.current.port = port;
+  },*/
+
+  parseLog: (msg) => {
+    //recorder.postCacheSite();
+    /*if(recorder.data.site && !recorder.urlLoad.loading){
+      recorder.data.actionSet.actions.push(recorder.data.site);
+      recorder.data.site = undefined;
+    }*/
+    msg.action = undefined;
+    switch (msg.type) {
+      case "click":
+        recorder.actionSet.actions.push(msg);
+        if (msg.textContext != undefined) {
+
+          let exists = recorder.data.inputs.find((input) => input.specifier === msg.specifier);
+          if (!exists) {
+            let input = {
+              entry: structuredClone(recorder.templates.textAction),
+              specifier: msg.specifier,
+              edit: [],
+              redo: [],
+            }
+            if (msg.textContext != "") {
+              input.entry.text = msg.textContext
+            }
+            recorder.data.inputs.push(input);
+            recorder.actionSet.actions.push(input.entry);
+            recorder.data.caret = msg.caret.split("-").map((num) => {
+              return Number(num);
+            })
+            recorder.data.isSelection = !(recorder.data.caret[0] === recorder.data.caret[1]);
+            exists = input;
+          } else {
+            msg.textContext = undefined;
+          }
+          recorder.data.currentTextAction = exists.entry;
+          recorder.data.redo = exists.redo;
+          recorder.data.edit = exists.edit;
+
+        }
+
+        break;
+      case "input":
+        recorder.inputHandler(msg.key, msg.selection.split("-"));
+        recorder.lastTextLog = msg;
+        break;
+      case "key":
+        switch (msg.key) {
+          case "undo":
+            if (recorder.data.edit.length > 0) {
+              recorder.data.redo.push(recorder.data.currentTextAction.text);
+              recorder.data.currentTextAction.text = recorder.data.edit.pop();
+            }
+            break;
+          case "redo":
+            if (recorder.data.redo.length > 0) {
+              recorder.data.edit.push(recorder.data.currentTextAction.text);
+              recorder.data.currentTextAction.text = recorder.data.redo.pop();
+            }
+            break;
+          case "paste":
+            recorder.inputHandler(msg.text, msg.selection.split("-"));
+            break;
+          case "cut":
+            let range = msg.selection.split("-");
+            recorder.data.edit.push(recorder.data.currentTextAction.text);
+            recorder.data.currentTextAction.text = recorder.data.currentTextAction.text.substring(0, range[0]) + recorder.data.currentTextAction.text.substring(range[1], recorder.data.currentTextAction.text.length);
+            break;
+          case "all":
+            recorder.data.caret[0] = 0
+            recorder.data.caret[1] = recorder.data.currentTextAction.text.length
+            break;
+          case "Enter":
+            //recorder.data.actionSet.actions.push(msg);
+            break;
+          case "Backspace":
+            let text = recorder.data.currentTextAction.text
+            recorder.data.currentTextAction.text = text.substring(0, recorder.data.caret[0] - 1) + text.substring(recorder.data.caret[1])
+            recorder.data.caret = [recorder.data.caret[0] - 1, recorder.data.caret[0] - 1]
+            break;
+          case "ArrowLeft":
+            if (!recorder.data.isSelection) {
+              recorder.data.caret[0] -= 1
+            }
+            recorder.data.caret[1] = recorder.data.caret[0]
+            break;
+          case "ArrowRight":
+            if (!recorder.data.isSelection) {
+              recorder.data.caret[1] += 1
+            }
+            recorder.data.caret[0] = recorder.data.caret[1]
+            break;
+          default:
+          //recorder.data.actionSet.actions.push(msg);
+        }
+        break;
+      case "error":
+        if (msg.level === "end") {
+          chrome.storage.local.set({ recording: false })
+          recorder.stopRecord()
+        }
+
+        errorLog.push(msg.message)
+        break;
+    }
+    /*if (recorder.urlLoad.loading && recorder.data.site) {
+      recorder.data.site.autoLoad = true;
+      recorder.data.actionSet.actions.push(recorder.data.site);
+      recorder.data.site = undefined;
+    }*/
+
+  },
+  inputHandler: (key) => {
+    let text = recorder.data.currentTextAction.text;
+    let keyLength = key.length
+    recorder.data.edit.push(recorder.data.currentTextAction.text);
+    recorder.data.currentTextAction.text = text.substring(0, recorder.data.caret[0]) + key + text.substring(recorder.data.caret[1]);
+    recorder.data.caret = [recorder.data.caret[0] + keyLength, recorder.data.caret[0] + keyLength]
+  },
+  clock: async () => {
+    let tic = new Promise((r) => {
+      window.addEventListener("beforeunload", () => {
+        r("Unload Detected")
+      })
+    })
+    return await tic
+  },
+  
+}
 /*
   before adding back to extension enable "scripting" permission
   let editor = {
@@ -1024,7 +1028,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
           target: { tabId: data.current.tab.tabId },
           files: ['public/siteStyle.css'],
         });
-        chrome.scripting.executeScript({ target: { tabId: tabId }, func: recorder.startRecordScript }).then((r) => {
+        chrome.scripting.executeScript({ target: { tabId: tabId }, func: scripts.startRecordScript }).then((r) => {
           recorder.logBuffer = recorder.logBuffer.concat(r[0].result)
           resolve();
         })
@@ -1060,14 +1064,14 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
         tabIndex = data.tabs.length - 1;
       }
       if (data.current.tab != tabInst) {
-        chrome.scripting.executeScript({ target: { tabId: data.current.tab.tabId }, func: recorder.stopRecordScript })
+        chrome.scripting.executeScript({ target: { tabId: data.current.tab.tabId }, func: scripts.stopRecordScript })
         await recorder.logReport;
         recorder.logReport = new Promise(async (resolve) => {
           await chrome.scripting.insertCSS({
             target: { tabId: data.current.tab.tabId },
             files: ['public/siteStyle.css'],
           });
-          chrome.scripting.executeScript({ target: { tabId: tabInst.tabId }, func: recorder.startRecordScript }).then((r) => {
+          chrome.scripting.executeScript({ target: { tabId: tabInst.tabId }, func: scripts.startRecordScript }).then((r) => {
             recorder.logBuffer = recorder.logBuffer.concat(r[0].result)
             resolve();
           })
