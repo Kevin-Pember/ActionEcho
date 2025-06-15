@@ -417,6 +417,9 @@ let scripts = {
   },
   stopRecordScript: () => {
     document.actionEchoRecording();
+  },
+  setUrlScript: (url) => {
+    
   }
 }
 let data = {
